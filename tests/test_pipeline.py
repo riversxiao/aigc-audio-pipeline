@@ -533,9 +533,88 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertTrue((tmp / "bundle_out" / "voice_anchors" / "pei_xuandu.wav").is_file())
         self.assertTrue((tmp / "bundle_out.zip").is_file())
 
+    def test_colab_agent_bridge_endpoints(self) -> None:
+        import base64
+        from http.server import ThreadingHTTPServer
+        import importlib.util
+        import json
+        import threading
+        import time
+        import urllib.error
+        import urllib.request
+
+        bridge_py = Path(__file__).resolve().parents[1] / "colab_96gb" / "colab_agent_bridge.py"
+        spec = importlib.util.spec_from_file_location("colab_agent_bridge", bridge_py)
+        assert spec and spec.loader
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        tmp = Path("/tmp/test_colab_agent_bridge")
+        tmp.mkdir(parents=True, exist_ok=True)
+        reg = mod.JobRegistry(tmp / "jobs")
+        token = "test_secret_token_12345"
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), mod.build_handler_class(token, reg))
+        port = srv.server_address[1]
+        t = threading.Thread(target=srv.serve_forever, daemon=True)
+        t.start()
+        try:
+            # 1. Unauthorized check
+            req_unauth = urllib.request.Request(f"http://127.0.0.1:{port}/health")
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(req_unauth, timeout=5)
+            self.assertEqual(ctx.exception.code, 401)
+
+            headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+            # 2. Health check
+            req_h = urllib.request.Request(f"http://127.0.0.1:{port}/health", headers=headers)
+            health = json.loads(urllib.request.urlopen(req_h, timeout=5).read().decode("utf-8"))
+            self.assertTrue(health["ok"])
+
+            # 3. Upload & download round-trip
+            target_file = tmp / "sample_payload.txt"
+            up_body = json.dumps(
+                {
+                    "path": str(target_file),
+                    "content_b64": base64.b64encode("诸界锁仙".encode("utf-8")).decode("ascii"),
+                }
+            ).encode("utf-8")
+            req_up = urllib.request.Request(f"http://127.0.0.1:{port}/upload_file", data=up_body, headers=headers, method="POST")
+            up_res = json.loads(urllib.request.urlopen(req_up, timeout=5).read().decode("utf-8"))
+            self.assertTrue(up_res["ok"])
+
+            req_dl = urllib.request.Request(f"http://127.0.0.1:{port}/download_file?path={target_file}", headers=headers)
+            dl_bytes = urllib.request.urlopen(req_dl, timeout=5).read()
+            self.assertEqual(dl_bytes.decode("utf-8"), "诸界锁仙")
+
+            # 4. Async background job start & incremental log poll
+            job_body = json.dumps(
+                {
+                    "job_id": "unit_job",
+                    "cmd": ["python3", "-c", "print('hello_drama3', flush=True)"],
+                    "cwd": str(tmp),
+                }
+            ).encode("utf-8")
+            req_js = urllib.request.Request(f"http://127.0.0.1:{port}/jobs/start", data=job_body, headers=headers, method="POST")
+            js_res = json.loads(urllib.request.urlopen(req_js, timeout=5).read().decode("utf-8"))
+            self.assertTrue(js_res["ok"])
+
+            for _ in range(20):
+                req_st = urllib.request.Request(f"http://127.0.0.1:{port}/jobs/status?job_id=unit_job&offset=0", headers=headers)
+                st_res = json.loads(urllib.request.urlopen(req_st, timeout=5).read().decode("utf-8"))
+                if not st_res["running"]:
+                    break
+                time.sleep(0.1)
+            self.assertEqual(st_res["returncode"], 0)
+            self.assertIn("hello_drama3", st_res["log_chunk"])
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 
