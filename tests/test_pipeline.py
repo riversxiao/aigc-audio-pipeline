@@ -345,6 +345,89 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertEqual(segs[2].kind, "dialogue")
         self.assertEqual(segs[2].speaker_hint, "lu_jin")
 
+    def test_unabridged_episode_compiler_and_banker_numerals(self) -> None:
+        from aigc_audio_pipeline.compiler import compile_episode_cue_sheet, save_episode_scripts
+
+        tmp = Path("/tmp/test_aigc_audio_compiler")
+        if tmp.exists():
+            subprocess.run(["rm", "-rf", str(tmp)], check=True)
+        tmp.mkdir(parents=True)
+
+        md_file = tmp / "第05章_古骸兽皮卷，莫信头顶月.md"
+        md_file.write_text(
+            "# 第5章 古骸兽皮卷，莫信头顶月\n\n"
+            "夜风呼啸的死寂荒原上，陆烬借着残破石碑投下的幽冷微光，缓缓翻开那卷所谓的“牧场血账”，"
+            "只见泛黄兽皮第一行赫然用暗红血迹写着第柒拾叁号血引已于北渊城再度降临，字字透着刺骨凉意。\n\n"
+            "下一瞬，他丹田废墟深处引气三重的灵力如惊雷般轰然冲破青铜锁扣，掌中玄铁断刀寒意森然，将漫天煞气尽数斩碎。\n\n"
+            "陆烬低声道：“九月廿三，原来当年的真相竟藏在这里。”\n",
+            encoding="utf-8",
+        )
+        reg = VoiceCastingRegistry(
+            project_id="zhujie",
+            project_title="诸界锁仙",
+            roles={
+                "narrator": VoiceProfile(role_id="narrator", display_name="旁白", voice_id="v_nar", status="locked"),
+                "lu_jin": VoiceProfile(role_id="lu_jin", display_name="陆烬", voice_id="v_lu", status="locked"),
+            },
+        )
+        sheet = compile_episode_cue_sheet(
+            episode_id="E005",
+            chapter_number=5,
+            source_md_path=md_file,
+            source_rel_path="02_分章精修正文/第05章.md",
+            registry=reg,
+            acts_blueprint=[
+                {"act_id": "act1", "start_p": 1, "title": "第一幕", "bgm_prompt": "dark guqin instrumental", "bgm_duration_s": 60.0}
+            ],
+            dialogue_specs=[
+                {"role_id": "lu_jin", "tags": "[coldly]", "stability": 0.0, "match": "九月廿三"}
+            ],
+            sfx_blueprint=[
+                {"p": 2, "pos": "before", "slug": "blade", "sfx_prompt": "cold iron blade hum", "duration_seconds": 2.0}
+            ],
+            acoustic_ranges=[(1, 2, "mental_realm")],
+        )
+        self.assertEqual(len(sheet.cues), 4)  # nar p1 + sfx + nar p2 + dialogue p3
+        self.assertIn("第七十三号", sheet.cues[0].tts_text)
+        self.assertIn("再度酱临", sheet.cues[0].tts_text)
+        self.assertEqual(sheet.cues[0].acoustic_space, "mental_realm")
+        self.assertEqual(sheet.cues[2].stability, 0.0)
+        self.assertIn("[dramatically]", sheet.cues[2].text)
+        self.assertIn("引气三崇", sheet.cues[2].tts_text)
+        self.assertIn("九月念三", sheet.cues[3].tts_text)
+
+        jp, mp = save_episode_scripts(sheet, tmp / "scripts", reg)
+        self.assertTrue(jp.is_file())
+        self.assertTrue(mp.is_file())
+
+    def test_batch_queue_ebur128_and_cli_extract_quotes(self) -> None:
+        from aigc_audio_pipeline.batch_queue import canonical_episode_stem, measure_ebur128
+        from aigc_audio_pipeline.cli import main as cli_main
+
+        self.assertEqual(
+            canonical_episode_stem("E006", "第6章 鬼樊楼试水，瞎眼鉴药人"),
+            "E006_第06章_鬼樊楼试水瞎眼鉴药人_电影感多人有声剧",
+        )
+
+        tmp = Path("/tmp/test_aigc_audio_ebur128")
+        tmp.mkdir(parents=True, exist_ok=True)
+        wav = tmp / "tone.wav"
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-f", "lavfi", "-i", "sine=frequency=440:duration=2.0:sample_rate=48000",
+                "-af", "volume=-16dB", "-ac", "2", "-c:a", "pcm_s16le", str(wav),
+            ],
+            check=True,
+        )
+        lufs, tp = measure_ebur128(wav)
+        self.assertLess(lufs, -10.0)
+        self.assertLess(tp, 0.0)
+
+        md = tmp / "ch.md"
+        md.write_text("# 第1章 试音\n\n福伯道：“少主小心！”\n", encoding="utf-8")
+        self.assertEqual(cli_main(["extract-quotes", "--chapter", str(md)]), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -16,8 +16,10 @@ credentials.json
 renders/
 output/
 cache/
+.cache/
 .audio_cache/
-projects/
+_stems_work/
+_synthetic_stems/
 
 # Python build & test artifacts
 __pycache__/

@@ -1,0 +1,84 @@
+{
+  "episode_id": "E001_AUDITION",
+  "chapter_number": 1,
+  "title": "第1章《秋雨退婚夜，碎丹田》核心五角六句定声试听包",
+  "mode": "audition_pack",
+  "source_chapter_file": "02_分章精修正文/第01章_秋雨退婚夜，碎丹田.md",
+  "head_pad_s": 0.3,
+  "tail_pad_s": 0.8,
+  "acts": [],
+  "cues": [
+    {
+      "cue_id": "aud_01_narrator_epic",
+      "act_id": "",
+      "kind": "dialogue",
+      "role_id": "narrator",
+      "text": "[dramatically] 仿佛万古尘封的石门在识海中轰然洞开—— [whispers] 九根断裂的青铜巨柱下，无数暗红如血管般的锁链，正死死缠绕着一口结满寒霜的古老白棺！",
+      "stability": 0.0,
+      "similarity_boost": 0.85,
+      "acoustic_space": "dry",
+      "gap_after_s": 0.8,
+      "director_note": "检验旁白声线的古典苍莽质感，以及前半句轰鸣洞开到后半句凝滞低语的层次对比"
+    },
+    {
+      "cue_id": "aud_02_lujin_cold_restraint",
+      "act_id": "",
+      "kind": "dialogue",
+      "role_id": "lu_jin",
+      "text": "[calmly] 为何不收？苏家欠我父亲一条命，这五十枚灵石与一瓶丹药，连利息的零头都不够， [coldly] 权当苏小姐赎身的路费。至于这枚寒渊佩，拿去便是。",
+      "stability": 0.0,
+      "similarity_boost": 0.85,
+      "acoustic_space": "dry",
+      "gap_after_s": 0.8,
+      "director_note": "检验男主陆烬18岁外冷内韧、不怒自威的克制锋芒，绝不能演成气急败坏"
+    },
+    {
+      "cue_id": "aud_03_lujin_shattered_grit",
+      "act_id": "",
+      "kind": "dialogue",
+      "role_id": "lu_jin",
+      "text": "[gasps] [hoarsely] 裴真传……好威风。",
+      "stability": 0.0,
+      "similarity_boost": 0.85,
+      "acoustic_space": "dry",
+      "gap_after_s": 0.8,
+      "director_note": "检验陆烬丹田被碎、呕血跪地时如砂纸摩擦般的濒死狠劲"
+    },
+    {
+      "cue_id": "aud_04_fubo_heartbreak",
+      "act_id": "",
+      "kind": "dialogue",
+      "role_id": "fu_bo",
+      "text": "[crying] 丹田碎了……全碎了…… [desperately] 少主撑住！老奴这就去西街敲李郎中的门，拿亡妻这支簪子换半粒护心丸，绝不叫少主死在这儿！",
+      "stability": 0.0,
+      "similarity_boost": 0.85,
+      "acoustic_space": "dry",
+      "gap_after_s": 0.8,
+      "director_note": "检验老管家福伯的苍老年纪感与泣血护主的催泪感染力"
+    },
+    {
+      "cue_id": "aud_05_su_qinghan_aloof",
+      "act_id": "",
+      "kind": "dialogue",
+      "role_id": "su_qinghan",
+      "text": "[coldly] 今日清寒特来归还当年庚帖，也请陆公子交还那枚寒渊佩， [softly] 自此男婚女嫁，两不相干。",
+      "stability": 0.5,
+      "similarity_boost": 0.85,
+      "acoustic_space": "dry",
+      "gap_after_s": 0.8,
+      "director_note": "检验苏清寒如冰珠落盘的守礼疏离感，字字周全却冷硬如刀"
+    },
+    {
+      "cue_id": "aud_06_pei_xuandu_hypocrite",
+      "act_id": "",
+      "kind": "dialogue",
+      "role_id": "pei_xuandu",
+      "text": "[dismissive] 紫府之下皆凡尘，而你这辈子连筑基的门槛都摸不到。 [whispers] 方才你撕婚书时眼底藏着杀意，废你丹田，是替你留条残命。",
+      "stability": 0.0,
+      "similarity_boost": 0.85,
+      "acoustic_space": "dry",
+      "gap_after_s": 0.8,
+      "director_note": "检验反派裴玄度前半句居高临下的温和轻蔑，切换至后半句贴耳密语的阴鸷毒辣"
+    }
+  ]
+}

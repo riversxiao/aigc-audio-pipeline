@@ -12,6 +12,8 @@ import sys
 from typing import Any
 
 from .adapter import analyze_markdown_chapter, write_cue_sheet_markdown
+from .batch_queue import BatchWorkspace, measure_ebur128, run_episode_queue
+from .compiler import extract_spoken_quotes_in_chapter, parse_chapter_paragraphs
 from .elevenlabs_client import (
     PERSISTENT_KEY_PATHS,
     ElevenLabsClient,
@@ -658,6 +660,56 @@ def cmd_synth_dry_test(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_extract_quotes(args: argparse.Namespace) -> int:
+    """List numbered spoken dialogue quotes in a Markdown chapter for blueprint authoring."""
+    title, paras = parse_chapter_paragraphs(Path(args.chapter))
+    quotes = extract_spoken_quotes_in_chapter(paras)
+    payload = {
+        "title": title,
+        "paragraph_count": len(paras),
+        "spoken_quote_count": len(quotes),
+        "quotes": [
+            {"index": idx, "paragraph": p_idx, "quote_in_paragraph": q_idx, "text": txt}
+            for idx, (p_idx, q_idx, txt) in enumerate(quotes)
+        ],
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_measure_loudness(args: argparse.Namespace) -> int:
+    """Measure EBU R128 integrated LUFS and True Peak dBFS on an audio file."""
+    lufs, tp = measure_ebur128(Path(args.audio))
+    print(
+        json.dumps(
+            {"audio": str(args.audio), "integrated_lufs": lufs, "true_peak_dbfs": tp},
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
+def cmd_run_queue(args: argparse.Namespace) -> int:
+    """Run resilient episode queue rendering, loudness check, and Drive/ledger checkpointing."""
+    ws = BatchWorkspace(
+        workspace_dir=Path(args.workspace),
+        enable_gdrive=not args.no_gdrive,
+        drive_ledger_file_id=args.drive_ledger_id,
+        drive_runs_file_id=args.drive_runs_id,
+        drive_registry_file_id=args.drive_registry_id,
+    )
+    summary = run_episode_queue(
+        ws,
+        from_ep=args.from_ep,
+        to_ep=args.to_ep,
+        max_count=args.max_count,
+        workers=args.workers,
+    )
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aigc-audio",
@@ -759,6 +811,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_ana.add_argument("--registry", default="")
     p_ana.set_defaults(func=cmd_analyze_chapter)
     p_ana.add_argument("--include-segments", action="store_true")
+
+    p_eq = sub.add_parser("extract-quotes", help="Extract numbered spoken quotes from a Markdown chapter.")
+    p_eq.add_argument("--chapter", required=True, help="Path to Markdown chapter file.")
+    p_eq.set_defaults(func=cmd_extract_quotes)
+
+    p_ml = sub.add_parser("measure-loudness", help="Measure EBU R128 integrated LUFS and True Peak dBFS.")
+    p_ml.add_argument("--audio", required=True, help="Path to WAV or MP3 file.")
+    p_ml.set_defaults(func=cmd_measure_loudness)
+
+    p_rq = sub.add_parser("run-queue", help="Run resilient multi-episode batch queue with checkpointing.")
+    p_rq.add_argument("--workspace", required=True, help="Workspace root directory.")
+    p_rq.add_argument("--from-ep", type=int, required=True, help="Start episode number (1-based).")
+    p_rq.add_argument("--to-ep", type=int, required=True, help="End episode number (inclusive).")
+    p_rq.add_argument("--max-count", type=int, default=40, help="Maximum newly rendered episodes in this run.")
+    p_rq.add_argument("--workers", type=int, default=4, help="Concurrent worker count (default 4, <= 5 API limit).")
+    p_rq.add_argument("--no-gdrive", action="store_true", help="Disable Google Drive CLI uploads.")
+    p_rq.add_argument("--drive-ledger-id", default="", help="Optional Google Drive file ID for ledger sync.")
+    p_rq.add_argument("--drive-runs-id", default="", help="Optional Google Drive file ID for runs.jsonl sync.")
+    p_rq.add_argument("--drive-registry-id", default="", help="Optional Google Drive file ID for registry sync.")
+    p_rq.set_defaults(func=cmd_run_queue)
 
     p_dry = sub.add_parser("synth-dry-test", help="Verify timeline & 3-bus ducking mixer offline with synthetic audio.")
     p_dry.add_argument("--cue-sheet", required=True)

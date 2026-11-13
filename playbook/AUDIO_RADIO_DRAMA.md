@@ -167,14 +167,18 @@ E001 从锁格子的 149.49 秒，变成自然语速的 176.60 秒（约长 27 �
    - `condensed_radio_drama`（浓缩纯广播剧）：大刀阔斧删减叙述性旁白，把视觉描写改写为前景动效（Foley）与潜台词交锋，单集压缩至 3–5 分钟。
 4. **动效顺播 vs 叠拍**：需要留出戏剧空白听清的动效（如深夜叩门三声「咚，咚，咚」、撕毁婚书、烛火爆灯花熄灭）用 `sequential` 独立占时；需要贴着动作瞬间炸开的动效（如雷鸣、破空一指）用 `overlay_next` 与下一句同步切入。
 
-## 接口备忘
+## 接口与长篇量产备忘（《诸界锁仙》40 章实战增补）
 
 - 对白模型：`eleven_v3`。输出建议 `48 kHz`（`wav_48000` 需 Pro 及以上档位；Creator / Starter 档位自动回退 `mp3_44100_192` / `mp3_44100_128` 并在本地无损转码为 `48kHz 16-bit PCM WAV` 上时间轴，绝不裁尾）。
+- 并发上限与熔断：常规订阅最大并发请求数为 **5**（`--workers 8` 会密集触发 `HTTP 429 concurrent_limit_exceeded`）。量产默认锁定 `--workers 4`，配合 6 次带随机抖动的指数退避重试；若响应体出现 `quota_exceeded` 则立即熔断停机，绝不空转重试。
+- 双轨多音字与古典数字纠偏：台本同时维护 `text`（原著文学正字，供 `.srt` 字幕与审阅）与 `tts_text`（自动把 `引气一重..九重`、`真传`、`忝为`、`降生/降临`、`九月廿三`、`白芨/虫豸/龟裂` 及大写数字 `壹号..拾号 / 第柒拾叁号` 替换为同音字喂给 TTS），并在 Scribe 质检层做双参考对齐。
+- 100% 无删节硬门禁：长篇多人有声剧（`immersive_audiobook_drama`）使用 `compiler.py` 编译时，强制校检编译后口播汉字数占原著正文比例 **`>= 96.5%`**（仅剔除独立拟声词行与冗余 `“某某道：”`），杜绝漏段缩写。
 - 配乐接口防坑：`POST /v1/music`（`music_v2_5`）使用 `prompt` 生成时，**严禁同时传 `seed` 字段**，否则官方接口直接返回 `422 Unprocessable Entity`。
-- 双语 ASR 质检：`POST /v1/speech-to-text` 使用 `scribe_v3` 时，传入 `language_code="zh"` 与 `secondary_language_codes=["en"]`，可同时精准检出中文漏字截断与被误念出口的英文方括号标签。
+- 双语 ASR 质检与 SHA-256 缓存：`POST /v1/speech-to-text` 使用 `scribe_v3` 时传入 `language_code="zh"` 与 `secondary_language_codes=["en"]`，并对音频 SHA-256 缓存转写结果，重混母带时零重复扣费。
 - 不要把密钥写进仓库、提示词或文档（推荐存于环境变量 `ELEVENLABS_API_KEY` 或用户级持久化配置 `~/.gemini/config/aigc_audio.env`）。
 - 共享库加声必须带 `new_name`。
 - 额度以订阅页落定后的 used / remaining 为准，不要只信调用当时的即时回读。
+- 完整十二项技术优化点详见：[`docs/OPTIMIZATIONS.md`](../docs/OPTIMIZATIONS.md)。
 
 ## 和 aigc-mv-pipeline 的关系
 
