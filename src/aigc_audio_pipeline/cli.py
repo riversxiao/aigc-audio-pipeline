@@ -22,6 +22,7 @@ from .models import (
     EpisodeCueSheet,
     VoiceCastingRegistry,
     extract_tags_and_spoken_text,
+    next_append_only_path,
     utc_now_iso,
 )
 from .qa import synthesize_with_playbook_qa
@@ -271,7 +272,8 @@ def cmd_audition(args: argparse.Namespace) -> int:
         synth, qa, final_text = synthesize_with_playbook_qa(
             client,
             voice_id=prof.voice_id,
-            tagged_text=cue.text,
+            tagged_text=cue.tts_text or cue.text,
+            canonical_prompt=cue.text,
             output_wav=clip_wav,
             stability=cue.stability,
             similarity_boost=cue.similarity_boost,
@@ -357,6 +359,9 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
     out_dir = Path(args.output_dir)
     stems_dir = out_dir / f"{cue_sheet.episode_id}_stems"
     stems_dir.mkdir(parents=True, exist_ok=True)
+    motifs_dir = Path(args.motifs_dir) if getattr(args, "motifs_dir", "") else None
+    if motifs_dir is not None:
+        motifs_dir.mkdir(parents=True, exist_ok=True)
     cache_dir = Path(args.cache_dir) if args.cache_dir else out_dir / ".cache"
 
     client = ElevenLabsClient(cache_dir=cache_dir)
@@ -375,7 +380,8 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
             synth, qa, final_text = synthesize_with_playbook_qa(
                 client,
                 voice_id=prof.voice_id,
-                tagged_text=cue.text,
+                tagged_text=cue.tts_text or cue.text,
+                canonical_prompt=cue.text,
                 output_wav=stem_wav,
                 stability=cue.stability,
                 similarity_boost=cue.similarity_boost,
@@ -407,7 +413,8 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
             duration_s = cue.duration_seconds
             influence = cue.prompt_influence
             loop = cue.loop
-            if cue.motif_id and cue.motif_id in registry.sonic_motifs:
+            is_reusable_motif = bool(cue.motif_id and cue.motif_id in registry.sonic_motifs)
+            if is_reusable_motif:
                 motif = registry.sonic_motifs[cue.motif_id]
                 if motif.cached_file and Path(motif.cached_file).is_file():
                     cue_audio_map[cue.cue_id] = Path(motif.cached_file)
@@ -417,7 +424,10 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
                 influence = motif.prompt_influence
                 loop = motif.loop
 
-            stem_wav = stems_dir / f"{cue.cue_id}_sfx.wav"
+            if is_reusable_motif and motifs_dir is not None:
+                stem_wav = next_append_only_path(motifs_dir, cue.motif_id, ".wav")
+            else:
+                stem_wav = stems_dir / f"{cue.cue_id}_sfx.wav"
             sfx_res = client.generate_sfx(
                 prompt=prompt,
                 output_wav=stem_wav,
@@ -427,7 +437,7 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
                 model_id=registry.sfx_model_id,
             )
             cue_audio_map[cue.cue_id] = sfx_res.wav_path
-            if cue.motif_id and cue.motif_id in registry.sonic_motifs:
+            if is_reusable_motif:
                 registry.sonic_motifs[cue.motif_id].cached_file = str(sfx_res.wav_path)
 
     # 2. Compose or reuse per-act instrumental BGM beds
@@ -455,6 +465,7 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
         act_bgm_map=act_bgm_map,
         output_dir=out_dir,
         cue_meta_map=cue_meta_map,
+        registry=registry,
     )
     sub_after = client.get_subscription_safe()
 
@@ -597,6 +608,7 @@ def cmd_synth_dry_test(args: argparse.Namespace) -> int:
         cue_audio_map=cue_audio_map,
         act_bgm_map=act_bgm_map,
         output_dir=out_dir,
+        registry=registry,
     )
     print(
         json.dumps(
@@ -696,6 +708,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ren.add_argument("--registry", required=True)
     p_ren.add_argument("--cue-sheet", required=True)
     p_ren.add_argument("--output-dir", required=True)
+    p_ren.add_argument("--motifs-dir", default="", help="Dedicated folder to persist reusable sonic_motifs WAVs.")
     p_ren.add_argument("--cache-dir", default="")
     p_ren.add_argument("--ledger", default="")
     p_ren.add_argument("--skip-asr-qa", action="store_true")

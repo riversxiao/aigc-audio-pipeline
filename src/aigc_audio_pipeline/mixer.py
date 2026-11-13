@@ -396,6 +396,7 @@ def master_episode_three_bus(
     output_dir: Path,
     *,
     cue_meta_map: dict[str, dict[str, Any]] | None = None,
+    registry: Any | None = None,
 ) -> dict[str, Any]:
     """Assemble natural-rate Dialogue Bus + Foreground SFX Bus + Ducked Per-Act BGM Bus."""
     work_dir = output_dir / "_stems_work"
@@ -574,7 +575,12 @@ def master_episode_three_bus(
     for item in resolved_items:
         if item.kind != "dialogue" or not item.spoken_text:
             continue
-        speaker_prefix = "" if item.role_id == "narrator" else f"【{item.role_id}】"
+        if item.role_id == "narrator":
+            speaker_prefix = ""
+        else:
+            prof = registry.resolve_role(item.role_id) if registry is not None else None
+            speaker_label = prof.display_name if prof is not None else item.role_id
+            speaker_prefix = f"【{speaker_label}】"
         srt_blocks.append(
             f"{sub_idx}\n"
             f"{_format_srt_ts(item.start_s)} --> {_format_srt_ts(item.end_s)}\n"

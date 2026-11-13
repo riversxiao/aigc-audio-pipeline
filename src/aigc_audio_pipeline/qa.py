@@ -119,38 +119,65 @@ def evaluate_dialogue_qa(
     peak_dbfs: float,
     attempt: int = 1,
     min_char_recall: float = 0.72,
+    canonical_prompt: str | None = None,
 ) -> LineQAResult:
     """Evaluate ASR transcript & signal stats against Playbook QA criteria."""
     tags, expected_spoken = extract_tags_and_spoken_text(tagged_prompt)
+    canon_tags, canon_spoken = (
+        extract_tags_and_spoken_text(canonical_prompt)
+        if canonical_prompt
+        else ([], expected_spoken)
+    )
     cleaned_asr = _AUDIO_EVENT_ANNOTATIONS.sub("", asr_text)
 
     reasons: list[str] = []
     # 1. Check leaked English audio tags
     prompt_tag_tokens = {
         w.lower()
-        for tag in tags
+        for tag in (*tags, *canon_tags)
         for w in _LATIN_WORDS.findall(tag)
     } | COMMON_TAG_WORDS
     spoken_latin = [w.lower() for w in _LATIN_WORDS.findall(cleaned_asr)]
-    expected_latin = {w.lower() for w in _LATIN_WORDS.findall(expected_spoken)}
+    expected_latin = {
+        w.lower()
+        for w in (*_LATIN_WORDS.findall(expected_spoken), *_LATIN_WORDS.findall(canon_spoken))
+    }
     leaked = sorted({w for w in spoken_latin if w in prompt_tag_tokens and w not in expected_latin})
     if leaked:
         reasons.append(f"Inline English audio tag(s) spoken aloud: {leaked}")
 
-    # 2. Check CJK completeness & tail preservation
+    # 2. Check CJK completeness & tail preservation (against either phonetic tts_text or canonical text)
     exp_cjk = _cjk_chars(expected_spoken)
+    canon_cjk = _cjk_chars(canon_spoken)
     got_cjk = _cjk_chars(cleaned_asr)
     if len(exp_cjk) == 0:
         recall = 1.0
         tail_ok = True
     else:
-        lcs = _longest_common_subsequence_len(exp_cjk, got_cjk)
-        recall = lcs / len(exp_cjk)
-        tail_window = exp_cjk[-min(3, len(exp_cjk)) :]
-        tail_ok = any(ch in got_cjk[-min(6, max(1, len(got_cjk))) :] for ch in tail_window) if got_cjk else False
+        recall_tts = _longest_common_subsequence_len(exp_cjk, got_cjk) / len(exp_cjk)
+        recall_canon = (
+            _longest_common_subsequence_len(canon_cjk, got_cjk) / len(canon_cjk)
+            if canon_cjk
+            else 0.0
+        )
+        recall = max(recall_tts, recall_canon)
+
+        def _check_tail(ref_cjk: str) -> bool:
+            if not ref_cjk:
+                return True
+            if not got_cjk:
+                return False
+            tw = ref_cjk[-min(3, len(ref_cjk)) :]
+            return any(ch in got_cjk[-min(6, max(1, len(got_cjk))) :] for ch in tw)
+
+        tail_ok = _check_tail(exp_cjk) or _check_tail(canon_cjk)
         if len(exp_cjk) >= 4 and recall < min_char_recall:
-            reasons.append(f"Low character recall ({recall:.2f} < {min_char_recall:.2f}): expected={expected_spoken!r}, got={asr_text!r}")
+            reasons.append(
+                f"Low character recall ({recall:.2f} < {min_char_recall:.2f}): "
+                f"expected={canon_spoken!r}, got={asr_text!r}"
+            )
         if len(exp_cjk) >= 6 and not tail_ok:
+            tail_window = canon_cjk[-min(3, len(canon_cjk)) :] if canon_cjk else exp_cjk[-3:]
             reasons.append(f"Potential tail truncation: ending {tail_window!r} missing in ASR {asr_text!r}")
 
     # 3. Signal sanity check
@@ -162,13 +189,13 @@ def evaluate_dialogue_qa(
     return LineQAResult(
         passed=len(reasons) == 0,
         attempt=attempt,
-        expected_spoken=expected_spoken,
+        expected_spoken=canon_spoken,
         asr_transcript=asr_text,
         char_recall=round(recall, 4),
         tail_preserved=tail_ok,
         leaked_tags=leaked,
         peak_dbfs=round(peak_dbfs, 2),
-        duration_s=round(duration_s, 3),
+        duration_s=round(dur_s := duration_s, 3),
         reasons=reasons,
     )
 
@@ -183,6 +210,7 @@ def synthesize_with_playbook_qa(
     similarity_boost: float = 0.85,
     language_code: str = "zh",
     enable_asr_qa: bool = True,
+    canonical_prompt: str | None = None,
 ) -> tuple[SynthesisResult, LineQAResult, str]:
     """Synthesize a dialogue line with Scribe QA and at most 1 simplified-tag retry.
 
@@ -208,7 +236,7 @@ def synthesize_with_playbook_qa(
             qa = LineQAResult(
                 passed=dur_s >= 0.25 and peak_db >= -45.0,
                 attempt=attempt,
-                expected_spoken=extract_tags_and_spoken_text(current_text)[1],
+                expected_spoken=extract_tags_and_spoken_text(canonical_prompt or current_text)[1],
                 asr_transcript="[ASR QA skipped]",
                 char_recall=1.0,
                 tail_preserved=True,
@@ -224,7 +252,7 @@ def synthesize_with_playbook_qa(
                 qa = LineQAResult(
                     passed=dur_s >= 0.25 and peak_db >= -45.0,
                     attempt=attempt,
-                    expected_spoken=extract_tags_and_spoken_text(current_text)[1],
+                    expected_spoken=extract_tags_and_spoken_text(canonical_prompt or current_text)[1],
                     asr_transcript="[ASR QA skipped: scoped key lacks speech_to_text]",
                     char_recall=1.0,
                     tail_preserved=True,
@@ -237,6 +265,7 @@ def synthesize_with_playbook_qa(
         asr_text = str(asr_resp.get("text", "")).strip()
         qa = evaluate_dialogue_qa(
             tagged_prompt=current_text,
+            canonical_prompt=canonical_prompt,
             asr_text=asr_text,
             duration_s=dur_s,
             peak_dbfs=peak_db,

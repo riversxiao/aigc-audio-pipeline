@@ -239,7 +239,85 @@ class AudioPipelineTests(unittest.TestCase):
         )
         self.assertTrue(num_qa.passed)
 
+    def test_tts_text_polyphone_and_srt_chinese_speaker_label(self) -> None:
+        # Polyphone override: tts_text uses homophone '真船' (chuán), canonical text keeps '真传'
+        poly_qa = evaluate_dialogue_qa(
+            tagged_prompt="[gasps] [hoarsely] 裴真船……好威风。",
+            canonical_prompt="[gasps] [hoarsely] 裴真传……好威风。",
+            asr_text="裴真传，好威风。",
+            duration_s=2.1,
+            peak_dbfs=-9.8,
+        )
+        self.assertTrue(poly_qa.passed)
+        self.assertEqual(poly_qa.expected_spoken, "裴真传……好威风。")
+        self.assertEqual(poly_qa.char_recall, 1.0)
+
+        # SRT subtitle should display 【陆烬】 instead of 【lu_jin】 and preserve canonical '真传'
+        tmp = Path("/tmp/test_aigc_audio_srt_label")
+        if tmp.exists():
+            subprocess.run(["rm", "-rf", str(tmp)], check=True)
+        tmp.mkdir(parents=True)
+
+        d_wav = tmp / "d1.wav"
+        b_wav = tmp / "bgm1.wav"
+        for out, freq, dur in [(d_wav, 220, 1.5), (b_wav, 110, 5.0)]:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    f"sine=frequency={freq}:duration={dur}:sample_rate=48000",
+                    "-af",
+                    "pan=stereo|c0=c0|c1=c0,volume=6dB",
+                    "-c:a",
+                    "pcm_s16le",
+                    str(out),
+                ],
+                check=True,
+            )
+
+        reg = VoiceCastingRegistry(
+            project_id="zhujie",
+            project_title="诸界锁仙",
+            roles={"lu_jin": VoiceProfile(role_id="lu_jin", display_name="陆烬", voice_id="v_lujin", status="locked")},
+        )
+        sheet = EpisodeCueSheet(
+            episode_id="TEST_SRT",
+            chapter_number=1,
+            title="多音字字幕测试",
+            acts=[ActMusicSpec(act_id="act1", title="第一幕", bgm_prompt="test", bgm_duration_s=5.0)],
+            cues=[
+                TimelineCue(
+                    cue_id="c1",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="lu_jin",
+                    text="[gasps] [hoarsely] 裴真传……好威风。",
+                    tts_text="[gasps] [hoarsely] 裴真船……好威风。",
+                    stability=0.0,
+                )
+            ],
+        )
+        self.assertEqual(sheet.validate(registry=reg, require_locked_voices=True), [])
+        res = master_episode_three_bus(
+            cue_sheet=sheet,
+            cue_audio_map={"c1": d_wav},
+            act_bgm_map={"act1": b_wav},
+            output_dir=tmp / "renders",
+            registry=reg,
+        )
+        srt_text = res["subtitles_srt"].read_text(encoding="utf-8")
+        self.assertIn("【陆烬】裴真传……好威风。", srt_text)
+        self.assertNotIn("真船", srt_text)
+        self.assertNotIn("lu_jin", srt_text)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

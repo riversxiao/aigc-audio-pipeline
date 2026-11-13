@@ -270,6 +270,7 @@ class TimelineCue:
     # Dialogue fields
     role_id: str = ""
     text: str = ""
+    tts_text: str = ""
     stability: float = 0.5
     similarity_boost: float = 0.85
     acoustic_space: str = "dry"
@@ -325,14 +326,24 @@ class EpisodeCueSheet:
                         f"[{cue.cue_id}] Unknown acoustic_space={cue.acoustic_space!r}; "
                         f"allowed={ALLOWED_ACOUSTIC_SPACES}."
                     )
+                lang = registry.language_code if registry else "zh"
                 errors.extend(
                     validate_v3_dialogue_text(
                         cue.text,
                         cue.stability,
-                        language_code=registry.language_code if registry else "zh",
+                        language_code=lang,
                         item_label=cue.cue_id,
                     )
                 )
+                if cue.tts_text:
+                    errors.extend(
+                        validate_v3_dialogue_text(
+                            cue.tts_text,
+                            cue.stability,
+                            language_code=lang,
+                            item_label=f"{cue.cue_id}.tts_text",
+                        )
+                    )
                 if registry is not None and cue.role_id:
                     profile = registry.resolve_role(cue.role_id)
                     if profile is None:
