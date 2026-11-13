@@ -36,13 +36,14 @@
 ```bash
 # 1. 启动 96GB G4 实例并挂载 Google Drive（若已有 audio96 会话可跳过前两步）
 colab new -s audio96 --gpu G4
-colab dfs mount -s audio96
+colab drivemount -s audio96
 
-# 2. 【极速盲听对比】先跑 6 句方案A试听合集 + 第 1 集完整版（与 ElevenLabs 版同集 A/B 对照）
-colab exec -s audio96 -- python3 "/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py" --episodes AUDITION,E001
+# 2. 【极速盲听对比】先跑 6 句方案A试听合集 + 第 1 集完整版（默认即 AUDITION,E001，与 ElevenLabs 版同集 A/B 对照）
+colab exec -s audio96 -f colab_96gb/launch_g4_zhujie_drama3.py
 
-# 3. 【全量零成本续跑】确认质感满意后，三模型常驻显存一口气跑完第 7–40 集！
-colab exec -s audio96 -- python3 "/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py" --episodes E007-E040 --skip-existing
+# 3. 【全量零成本续跑】确认质感满意后，三模型常驻显存一口气跑完第 7–40 集！（跑完记得释放实例）
+echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E007-E040 --skip-existing" | colab exec -s audio96
+colab stop -s audio96
 ```
 
 - **秒级复用云盘缓存**：启动器会自动检测您云盘现有的 `/content/drive/MyDrive/AI_Workstation/AudioStudio_G4_Cache/{sglang_omni_sm120.tar.gz, moss_tts_v2.tar.gz}` 及已建好的本地虚拟环境，并通过 `127.0.0.1:8012` 高速通道在 1.5 秒内将 164MB 工程包（含 24 角色干音 + 6 母题 + 40 集全剧本）解压至本地 NVMe SSD。

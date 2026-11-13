@@ -64,18 +64,19 @@ _CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 # Persistent isolated worker scripts (MOSS v2.0 uses transformers 4.57 / diffusers 0.37;
 # ACE-Step 1.5 XL uses diffusers >= 0.41 AceStepPipeline)
 _MOSS_WORKER_CODE = r"""
-import json, os, sys, torch
+import json, os, sys
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 import numpy as np
 import soundfile as sf
-from moss_soundeffect_v2 import MossSoundEffectV2Pipeline
+import torch
+from moss_soundeffect_v2 import MossSoundEffectPipeline
 
-os.environ["TORCHDYNAMO_DISABLE"] = "1"
 model_id = sys.argv[1]
 dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
-pipe = MossSoundEffectV2Pipeline.from_pretrained(model_id, torch_dtype=dtype).to("cuda")
-pipe.eval()
-sr = int(getattr(pipe.codec_config, "sampling_rate", 48000))
-print(json.dumps({"ready": True, "sample_rate": sr}), flush=True)
+print(f"[MOSS-SoundEffect v2.0] Loading {model_id} ({dtype}, 48kHz)...", flush=True)
+pipe = MossSoundEffectPipeline.from_pretrained(model_id, torch_dtype=dtype, device="cuda")
+sr = int(getattr(pipe, "sample_rate", 48000))
+print("__RPC__:" + json.dumps({"status": "ready", "sample_rate": sr}), flush=True)
 
 for line in sys.stdin:
     line = line.strip()
@@ -84,41 +85,50 @@ for line in sys.stdin:
     req = json.loads(line)
     if req.get("cmd") == "quit":
         break
-    gen = torch.Generator(device="cuda").manual_seed(int(req.get("seed", 42)))
-    seconds = max(0.6, min(float(req["seconds"]), 28.0))
-    steps = int(req.get("steps", 24))
-    with torch.inference_mode():
-        res = pipe(
-            prompts=[req["prompt"]],
-            duration=[seconds],
-            num_inference_steps=steps,
-            guidance_scale=float(req.get("guidance_scale", 4.5)),
-            generator=gen,
-        )
-    wav = res.audios[0].detach().cpu().float().numpy()
-    if wav.ndim == 2:
-        wav = wav.T  # (C, T) -> (T, C)
-    peak = float(np.max(np.abs(wav))) if wav.size else 0.0
-    if peak > 1e-4:
-        wav = wav / peak * 0.86
-    sf.write(req["out_path"], wav, sr, subtype="PCM_16")
-    print(json.dumps({"ok": True, "out_path": req["out_path"]}), flush=True)
+    try:
+        seconds = float(np.clip(float(req["seconds"]), 0.8, 28.0))
+        steps = int(req.get("steps", 100))
+        cfg = float(req.get("cfg", 4.0))
+        with torch.inference_mode():
+            audio = pipe(
+                prompt=req["prompt"],
+                seconds=seconds,
+                num_inference_steps=steps,
+                cfg_scale=cfg,
+            )
+        wav = audio.detach().cpu()
+        if wav.ndim == 3:
+            wav = wav[0]
+        elif wav.ndim == 1:
+            wav = wav.unsqueeze(0)
+        wav_np = wav.T.float().numpy()
+        peak = float(np.max(np.abs(wav_np))) if wav_np.size else 0.0
+        if peak > 1e-4:
+            wav_np = wav_np / peak * 0.86
+        out_p = req["out_path"]
+        os.makedirs(os.path.dirname(out_p) or ".", exist_ok=True)
+        sf.write(out_p, wav_np, sr, subtype="PCM_16")
+        print("__RPC__:" + json.dumps({"status": "ok", "out_path": out_p}), flush=True)
+    except Exception as exc:
+        print("__RPC__:" + json.dumps({"status": "error", "error": str(exc)}), flush=True)
 """
 
 _ACESTEP_WORKER_CODE = r"""
-import json, os, sys, torch
+import json, os, sys
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 import numpy as np
 import soundfile as sf
+import torch
 from diffusers import AceStepPipeline
 
-os.environ["TORCHDYNAMO_DISABLE"] = "1"
 model_id = sys.argv[1]
 dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+print(f"[ACE-Step 1.5 XL] Loading {model_id} ({dtype}, 48kHz Stereo, VAE tiling)...", flush=True)
 pipe = AceStepPipeline.from_pretrained(model_id, torch_dtype=dtype).to("cuda")
 if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_tiling"):
     pipe.vae.enable_tiling()
 sr = int(getattr(pipe, "sample_rate", 48000))
-print(json.dumps({"ready": True, "sample_rate": sr}), flush=True)
+print("__RPC__:" + json.dumps({"status": "ready", "sample_rate": sr}), flush=True)
 
 for line in sys.stdin:
     line = line.strip()
@@ -127,25 +137,26 @@ for line in sys.stdin:
     req = json.loads(line)
     if req.get("cmd") == "quit":
         break
-    gen = torch.Generator(device="cuda").manual_seed(int(req.get("seed", 108)))
-    dur_s = max(20.0, min(float(req["duration_s"]), 120.0))
-    with torch.inference_mode():
-        out = pipe(
-            prompt=req["prompt"],
-            lyrics=req.get("lyrics", "[inst]"),
-            vocal_language="zh",
-            guidance_scale=float(req.get("guidance_scale", 1.0)),
-            audio_duration=dur_s,
-            generator=gen,
-        )
-    audio = out.audios[0].detach().cpu().float().numpy()
-    if audio.ndim == 2 and audio.shape[0] <= 4:
-        audio = audio.T  # (C, T) -> (T, C)
-    peak = float(np.max(np.abs(audio))) if audio.size else 0.0
-    if peak > 1e-4:
-        audio = audio / peak * 0.88
-    sf.write(req["out_path"], audio, sr, subtype="PCM_16")
-    print(json.dumps({"ok": True, "out_path": req["out_path"]}), flush=True)
+    try:
+        dur_s = float(max(12.0, min(float(req["duration_s"]), 120.0)))
+        with torch.inference_mode():
+            out = pipe(
+                prompt=req["prompt"],
+                lyrics=req.get("lyrics") or "[inst]",
+                audio_duration=dur_s,
+                vocal_language=req.get("vocal_language", "zh"),
+                guidance_scale=float(req.get("guidance_scale", 1.0)),
+            )
+        audio = out.audios[0].T.detach().cpu().float().numpy()
+        peak = float(np.max(np.abs(audio))) if audio.size else 0.0
+        if peak > 1e-4:
+            audio = audio / peak * 0.88
+        out_p = req["out_path"]
+        os.makedirs(os.path.dirname(out_p) or ".", exist_ok=True)
+        sf.write(out_p, audio, sr, subtype="PCM_16")
+        print("__RPC__:" + json.dumps({"status": "ok", "out_path": out_p}), flush=True)
+    except Exception as exc:
+        print("__RPC__:" + json.dumps({"status": "error", "error": str(exc)}), flush=True)
 """
 
 
@@ -217,6 +228,17 @@ class SubprocessJsonWorker:
         self.model_id = model_id
         self.proc: subprocess.Popen[str] | None = None
 
+    def _wait_rpc(self) -> dict[str, Any]:
+        assert self.proc is not None and self.proc.stdout is not None
+        while True:
+            line = self.proc.stdout.readline()
+            if not line:
+                rc = self.proc.poll()
+                raise RuntimeError(f"[{self.label}] 进程意外退出 (rc={rc})")
+            if line.startswith("__RPC__:"):
+                return json.loads(line[len("__RPC__:") :].strip())
+            print(f"  {line}", end="", flush=True)
+
     def start(self) -> None:
         if self.proc is not None and self.proc.poll() is None:
             return
@@ -228,29 +250,26 @@ class SubprocessJsonWorker:
             [self.python_bin, "-u", "-c", self.inline_code, self.model_id],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=sys.stderr,
+            stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
             env=env,
         )
-        assert self.proc.stdout is not None
-        ready_line = self.proc.stdout.readline().strip()
-        if not ready_line:
-            rc = self.proc.poll()
-            raise RuntimeError(f"[{self.label}] 进程启动失败 (rc={rc})")
-        info = json.loads(ready_line)
+        info = self._wait_rpc()
+        if info.get("status") != "ready":
+            raise RuntimeError(f"[{self.label}] 初始化失败: {info}")
         print(f"✅ [{self.label}] 常驻就绪 (sample_rate={info.get('sample_rate')}Hz)", flush=True)
 
     def request(self, payload: dict[str, Any]) -> dict[str, Any]:
         if self.proc is None or self.proc.poll() is not None:
             self.start()
-        assert self.proc is not None and self.proc.stdin is not None and self.proc.stdout is not None
+        assert self.proc is not None and self.proc.stdin is not None
         self.proc.stdin.write(json.dumps(payload, ensure_ascii=False) + "\n")
         self.proc.stdin.flush()
-        resp_line = self.proc.stdout.readline().strip()
-        if not resp_line:
-            raise RuntimeError(f"[{self.label}] 推理中途意外退出 (rc={self.proc.poll()})")
-        return json.loads(resp_line)
+        resp = self._wait_rpc()
+        if resp.get("status") != "ok":
+            raise RuntimeError(f"[{self.label}] 推理异常: {resp.get('error')}")
+        return resp
 
     def close(self) -> None:
         if self.proc is None:
@@ -275,19 +294,48 @@ class Drama3ServerClient:
         sgl_bin: str,
         model_repo: str,
         port: int = 8000,
-        gpu_mem_util: float = 0.62,
+        co_resident_96g: bool = True,
         enable_ras: bool = True,
         log_path: Path,
     ) -> None:
         self.sgl_bin = sgl_bin
         self.model_repo = model_repo
         self.port = port
-        self.gpu_mem_util = gpu_mem_util
+        self.co_resident_96g = co_resident_96g
         self.enable_ras = enable_ras
         self.log_path = log_path
         self.base_url = f"http://127.0.0.1:{port}"
         self.proc: subprocess.Popen[Any] | None = None
         self._log_fh: Any = None
+
+    def _budget_flags(self) -> list[str]:
+        if self.co_resident_96g and not self.model_repo.endswith("-int4"):
+            # ~59.6GB for 35B MoE FP8 Drama 3 -> leaves ~36.4GB free for MOSS v2.0 + ACE-Step 1.5 XL!
+            return [
+                "--tts_engine.gpu_memory_fraction",
+                "0.50",
+                "--vocoder.gpu_memory_fraction",
+                "0.08",
+                "--preprocessing.total_reserve_bytes",
+                "4GiB",
+            ]
+        if self.co_resident_96g:
+            return [
+                "--tts_engine.gpu_memory_fraction",
+                "0.34",
+                "--vocoder.gpu_memory_fraction",
+                "0.08",
+                "--preprocessing.total_reserve_bytes",
+                "4GiB",
+            ]
+        return [
+            "--tts_engine.gpu_memory_fraction",
+            "0.62",
+            "--vocoder.gpu_memory_fraction",
+            "0.12",
+            "--preprocessing.total_reserve_bytes",
+            "3GiB",
+        ]
 
     def _supports_reference_sampling_flag(self) -> bool:
         try:
@@ -315,7 +363,7 @@ class Drama3ServerClient:
                 continue
         return False
 
-    def start(self, timeout_s: int = 900) -> None:
+    def start(self, timeout_s: int = 1500) -> None:
         if self.is_healthy():
             print(f"✅ [Drama 3] 检测到 {self.base_url} 已在线，直接复用！", flush=True)
             return
@@ -328,8 +376,7 @@ class Drama3ServerClient:
             self.model_repo,
             "--port",
             str(self.port),
-            "--gpu-memory-utilization",
-            f"{self.gpu_mem_util:.2f}",
+            *self._budget_flags(),
         ]
         if self.enable_ras and self._supports_reference_sampling_flag():
             cmd.extend(
@@ -346,20 +393,24 @@ class Drama3ServerClient:
         env = os.environ.copy()
         env["TORCHDYNAMO_DISABLE"] = "1"
         self._log_fh = self.log_path.open("a", encoding="utf-8")
-        self.proc = subprocess.Popen(cmd, stdout=self._log_fh, stderr=subprocess.STDOUT, env=env)
+        self.proc = subprocess.Popen(cmd, stdout=self._log_fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, env=env)
 
         t0 = time.time()
+        tick = 0
         while time.time() - t0 < timeout_s:
             if self.proc.poll() is not None:
                 tail = ""
                 if self.log_path.is_file():
-                    tail = "\n".join(self.log_path.read_text(errors="replace").splitlines()[-35:])
+                    tail = "\n".join(self.log_path.read_text(errors="replace").splitlines()[-45:])
                 raise RuntimeError(
                     f"[Drama 3] SGLang-Omni 启动异常退出 (rc={self.proc.returncode}):\n{tail}"
                 )
             if self.is_healthy():
                 print(f"✅ [Drama 3] 服务就绪 ({time.time() - t0:.1f}s) -> {self.base_url}", flush=True)
                 return
+            if tick > 0 and tick % 10 == 0:
+                print(f"   ⏳ [Drama 3] 等待权重加载与 CUDA Graph 编译预热 ({int(time.time() - t0)}s)...", flush=True)
+            tick += 1
             time.sleep(3.0)
         raise TimeoutError(f"[Drama 3] 等待 SGLang-Omni 就绪超时 ({timeout_s}s)")
 
@@ -370,7 +421,7 @@ class Drama3ServerClient:
         anchor_wav: Path,
         anchor_text: str,
         out_wav: Path,
-        timeout_s: int = 240,
+        timeout_s: int = 300,
     ) -> Path:
         import urllib.error
         import urllib.request
@@ -381,14 +432,18 @@ class Drama3ServerClient:
 
         payload = json.dumps(
             {
+                "model": self.model_repo,
                 "input": drama3_input,
+                "response_format": "wav",
                 "references": [
                     {
                         "audio_path": str(anchor_wav.resolve()),
                         "text": anchor_text,
                     }
                 ],
-                "response_format": "wav",
+                "temperature": 1.0,
+                "top_p": 0.9,
+                "max_new_tokens": 1536,
             },
             ensure_ascii=False,
         ).encode("utf-8")
@@ -403,7 +458,7 @@ class Drama3ServerClient:
             with urllib.request.urlopen(req, timeout=timeout_s) as resp:
                 audio_bytes = resp.read()
         except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")[:400]
+            detail = exc.read().decode("utf-8", errors="replace")[:600]
             raise RuntimeError(f"[Drama 3] HTTP {exc.code}: {detail}") from exc
 
         if len(audio_bytes) < 512:
@@ -619,7 +674,7 @@ def main() -> int:
             sgl_bin=args.sgl_bin,
             model_repo=drama_repo,
             port=args.sgl_port,
-            gpu_mem_util=0.62 if co_resident_96g else 0.78,
+            co_resident_96g=co_resident_96g,
             enable_ras=not args.disable_ras,
             log_path=cache_dir / "logs" / "sglang_omni_drama3.log",
         )
@@ -628,8 +683,6 @@ def main() -> int:
 
         if co_resident_96g:
             drama_client.start()
-            moss_worker.start()
-            acestep_worker.start()
 
     rendered_summaries: list[dict[str, Any]] = []
 

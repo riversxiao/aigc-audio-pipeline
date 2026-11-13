@@ -2,7 +2,7 @@
   "project_id": "zhujie_suoxian",
   "project_title": "《诸界锁仙》多人精品有声剧 / 广播剧工程",
   "engine": "fishaudio/drama-3 + OpenMOSS-Team/MOSS-SoundEffect-v2.0 + ACE-Step/acestep-v15-xl-turbo-diffusers",
-  "exported_at": "2026-11-13T08:27:05Z",
+  "exported_at": "2026-11-13T09:12:26Z",
   "anchor_sample_rate_hz": 44100,
   "role_count": 24,
   "characters": {

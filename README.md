@@ -113,11 +113,16 @@ PYTHONPATH=src python3 -m aigc_audio_pipeline preview-drama3 \
 - **零显存本地质检**：CPU `int8 faster-whisper`（自动捕获英文标签外泄、吞字与幻觉复读并降级重试）
 
 ```bash
-# 本地一键连接 Colab G4 先跑试听小样 + 第 01 章做 A/B 听感对比（输出 *_drama3_master_v001.*，绝不覆盖云端成片）
-python3 colab_96gb/launch_g4_zhujie_drama3.py --session audio96 --episodes AUDITION,E001
+# 1. 启动 96GB G4 实例并挂载 Google Drive
+colab new -s audio96 --gpu G4
+colab drivemount -s audio96
 
-# 验收通过后，零 API 成本一键批量跑完剩余第 07–40 章
-python3 colab_96gb/launch_g4_zhujie_drama3.py --session audio96 --episodes E007-E040 --skip-existing
+# 2. 先跑试听小样 + 第 01 章做 A/B 听感对比（默认默认跑 AUDITION,E001，输出 *_drama3_master_v001.* 绝不覆盖云端成片）
+colab exec -s audio96 -f colab_96gb/launch_g4_zhujie_drama3.py
+
+# 3. 验收满意后，零 API 成本一键批量跑完剩余第 07–40 章（跑完记得 colab stop -s audio96 释放实例）
+echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E007-E040 --skip-existing" | colab exec -s audio96
+colab stop -s audio96
 ```
 
 完整部署与 Notebook 交互指南见：[`colab_96gb/README_Colab_96GB_Drama3.md`](colab_96gb/README_Colab_96GB_Drama3.md)。

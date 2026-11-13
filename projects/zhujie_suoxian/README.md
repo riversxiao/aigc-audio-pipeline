@@ -26,11 +26,14 @@
 完整套件与自包含资产包已上传至项目 Google Drive `04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线`（Folder ID：`1GB1Cku8vW88H6p0FAXOjNZAOOr4-iZjH`），详见 [`colab_96gb/README_Colab_96GB_Drama3.md`](../../colab_96gb/README_Colab_96GB_Drama3.md)：
 
 ```bash
-# 1. 先跑试听小样 + E001 做 A/B 听感验收（输出 E001_drama3_master_v001.*，绝不覆盖云端版）
-python3 colab_96gb/launch_g4_zhujie_drama3.py --session audio96 --episodes AUDITION,E001
+# 1. 启动 G4 实例并挂载云盘，先跑试听小样 + E001 做 A/B 听感验收（输出 E001_drama3_master_v001.*，绝不覆盖云端版）
+colab new -s audio96 --gpu G4
+colab drivemount -s audio96
+colab exec -s audio96 -f colab_96gb/launch_g4_zhujie_drama3.py
 
-# 2. 听感满意后，零 API 成本一键跑完剩余第 07–40 章
-python3 colab_96gb/launch_g4_zhujie_drama3.py --session audio96 --episodes E007-E040 --skip-existing
+# 2. 听感满意后，零 API 成本一键跑完剩余第 07–40 章（跑完释放实例）
+echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E007-E040 --skip-existing" | colab exec -s audio96
+colab stop -s audio96
 ```
 
 ### 路线 B：ElevenLabs v3 云端五合一队列续跑

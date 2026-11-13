@@ -189,16 +189,18 @@ def unpack_project_to_nvme() -> Path:
             zf.extractall(local_studio)
         print(f"✅ 工程包本地 NVMe 极速解压完成 ({time.time() - t0:.2f}s) -> {local_studio}", flush=True)
 
-    # Overlay latest run_zhujie_96gb_studio.py / voice_cast_drama3.json from Drive if user edited them
-    if DRIVE_STUDIO_DIR.exists():
-        for rel in ("run_zhujie_96gb_studio.py", "voice_cast_drama3.json"):
-            f_src = DRIVE_STUDIO_DIR / rel
-            f_dst = local_studio / rel
-            if f_src.exists():
-                try:
-                    shutil.copy2(f_src, f_dst)
-                except Exception:
-                    pass
+    # Overlay latest run_zhujie_96gb_studio.py / voice_cast_drama3.json from Drive or /content upload
+    for rel in ("run_zhujie_96gb_studio.py", "voice_cast_drama3.json"):
+        nvme_override = NVME_ROOT / rel
+        drive_override = DRIVE_STUDIO_DIR / rel
+        f_dst = local_studio / rel
+        if nvme_override.is_file():
+            shutil.copy2(nvme_override, f_dst)
+        elif DRIVE_STUDIO_DIR.exists() and drive_override.is_file():
+            try:
+                shutil.copy2(drive_override, f_dst)
+            except Exception:
+                pass
     return local_studio
 
 
