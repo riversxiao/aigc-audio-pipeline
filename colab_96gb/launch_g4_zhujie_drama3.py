@@ -205,7 +205,7 @@ def unpack_project_to_nvme() -> Path:
 
 
 def ensure_uv_and_hf_tools() -> str:
-    sh("apt-get update -qq && apt-get install -y -qq ffmpeg git zstd >/dev/null 2>&1 || true")
+    sh("apt-get update -qq && apt-get install -y -qq ffmpeg git zstd ninja-build build-essential >/dev/null 2>&1 || true")
     uv_bin = shutil.which("uv") or str(Path.home() / ".local/bin/uv")
     if not Path(uv_bin).exists():
         sh("pip install -q uv hf_transfer 'huggingface_hub>=0.26.0'")
@@ -260,8 +260,8 @@ def build_isolated_venvs(uv_bin: str, refresh_envs: bool = False) -> tuple[Path,
             return False
         return subprocess.run([str(py), "-c", check_stmt], capture_output=True).returncode == 0
 
-    # 1. SGLang-Omni (`drama3-venv` — Blackwell sm_120 compatible)
-    if not (drama_venv / "bin/sgl-omni").exists():
+    # 1. SGLang-Omni (`drama3-venv` — Blackwell sm_120 compatible + ninja for FlashInfer JIT)
+    if not (drama_venv / "bin/sgl-omni").exists() or not (drama_venv / "bin/ninja").exists():
         t1 = time.time()
         sgl_tar = DRIVE_REPO_CACHE / "sglang_omni_sm120.tar.gz"
         if not sgl_repo.exists():
@@ -273,7 +273,7 @@ def build_isolated_venvs(uv_bin: str, refresh_envs: bool = False) -> tuple[Path,
                 if can_cache_drive:
                     sh(f"tar -czf '{sgl_tar}' -C '{ENV_ROOT}' sglang-omni || true")
         sh(f"'{uv_bin}' venv '{drama_venv}' --python 3.12 --allow-existing")
-        sh(f"cd '{sgl_repo}' && '{uv_bin}' pip install --python '{drama_venv}/bin/python' --prerelease=allow -e '.[fishaudio]' hf_transfer")
+        sh(f"cd '{sgl_repo}' && '{uv_bin}' pip install --python '{drama_venv}/bin/python' --prerelease=allow -e '.[fishaudio]' hf_transfer ninja")
         print(f"✅ Drama 3 (SGLang-Omni) 隔离推理环境就绪 ({time.time() - t1:.1f}s)", flush=True)
 
     # 2. MOSS-SoundEffect v2.0 + CPU int8 faster-whisper (`moss-venv`)

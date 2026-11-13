@@ -611,6 +611,35 @@ class AudioPipelineTests(unittest.TestCase):
             srv.shutdown()
             srv.server_close()
 
+    def test_moss_foley_and_acestep_bgm_guardrails(self) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "run_zhujie_96gb_studio",
+            Path(__file__).resolve().parents[1] / "colab_96gb" / "run_zhujie_96gb_studio.py",
+        )
+        assert spec and spec.loader
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        foley = mod.sanitize_moss_foley_prompt(
+            "Wooden clogs stepping carefully through shallow courtyard puddles accompanied by an old man's muffled suppressed cough under a rainy corridor"
+        )
+        self.assertNotIn("cough", foley.lower())
+        self.assertIn("no human voice", foley.lower())
+
+        bgm_chamber = mod.enrich_acestep_bgm_prompt(
+            "Melancholic ancient Chinese xianxia soundtrack, sparse guqin plucks and lone xiao flute"
+        )
+        self.assertIn("no drums", bgm_chamber.lower())
+        self.assertIn("no singing", bgm_chamber.lower())
+
+        bgm_war = mod.enrich_acestep_bgm_prompt(
+            "Epic ancient Chinese xianxia battle score with heavy taiko war drums and fast pipa"
+        )
+        self.assertNotIn("no drums", bgm_war.lower())
+        self.assertIn("no singing", bgm_war.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

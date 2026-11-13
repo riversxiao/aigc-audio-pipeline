@@ -142,9 +142,9 @@ for line in sys.stdin:
         with torch.inference_mode():
             out = pipe(
                 prompt=req["prompt"],
-                lyrics=req.get("lyrics") or "[inst]",
+                lyrics=req.get("lyrics") or "[Instrumental]",
                 audio_duration=dur_s,
-                vocal_language=req.get("vocal_language", "zh"),
+                vocal_language=req.get("vocal_language", "unknown"),
                 guidance_scale=float(req.get("guidance_scale", 1.0)),
             )
         audio = out.audios[0].T.detach().cpu().float().numpy()
@@ -392,6 +392,8 @@ class Drama3ServerClient:
         print(f"🚀 [Drama 3] 启动 SGLang-Omni 服务: {' '.join(cmd)}", flush=True)
         env = os.environ.copy()
         env["TORCHDYNAMO_DISABLE"] = "1"
+        sgl_bin_dir = str(Path(self.sgl_bin).resolve().parent)
+        env["PATH"] = f"{sgl_bin_dir}:/usr/local/cuda/bin:{env.get('PATH', '')}"
         self._log_fh = self.log_path.open("a", encoding="utf-8")
         self.proc = subprocess.Popen(cmd, stdout=self._log_fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, env=env)
 
@@ -535,8 +537,39 @@ class LocalWhisperQA:
                 self._available = False
                 return None
 
-        segments, _ = self._model.transcribe(str(wav_path), language="zh", beam_size=2, vad_filter=True)
-        return "".join(seg.text for seg in segments).strip()
+        try:
+            import numpy as np  # type: ignore[import-not-found]
+
+            raw_pcm = subprocess.check_output(
+                [
+                    "ffmpeg",
+                    "-nostdin",
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-i",
+                    str(wav_path),
+                    "-ar",
+                    "16000",
+                    "-ac",
+                    "1",
+                    "-f",
+                    "f32le",
+                    "pipe:1",
+                ]
+            )
+            audio_16k = np.frombuffer(raw_pcm, dtype=np.float32).copy()
+            segments, _ = self._model.transcribe(
+                audio_16k,
+                language="zh",
+                beam_size=2,
+                vad_filter=True,
+                initial_prompt="以下是普通话的句子，请使用简体中文输出。",
+            )
+            return "".join(seg.text for seg in segments).strip()
+        except Exception as exc:
+            print(f"⚠️ [ASR 质检门] 单句转写回退纯语速质检 ({exc})", flush=True)
+            return None
 
 
 def resolve_episode_targets(
@@ -595,6 +628,37 @@ def check_speaking_rate_ok(cue: TimelineCue, duration_s: float) -> tuple[bool, s
     if sec_per_char > 0.72:
         return False, f"语速异常过慢/疑似尾音拖沓 ({sec_per_char:.3f}s/字, dur={duration_s:.2f}s, chars={cjk_n})"
     return True, f"{sec_per_char:.3f}s/字"
+
+
+_HUMAN_VOCAL_CLAUSE_RE = re.compile(
+    r"(?:,?\s*(?:accompanied by|with|and)\s+[^,.]*?\b(?:cough(?:ing|s)?|groan(?:ing|s)?|grunt(?:ing|s)?|sigh(?:ing|s)?|scream(?:ing|s)?|sob(?:bing|s)?|voice|vocal)\b[^,.]*)",
+    re.IGNORECASE,
+)
+_PERCUSSION_ALLOW_RE = re.compile(r"\b(?:war\s+drum|taiko|battle\s+drum|percussion|timpani)\b", re.IGNORECASE)
+
+
+def sanitize_moss_foley_prompt(prompt: str) -> str:
+    """Strip human vocalization clauses so MOSS-SoundEffect v2.0 generates pure clean Foley without synthetic grunts."""
+    cleaned = _HUMAN_VOCAL_CLAUSE_RE.sub("", prompt or "").strip(" ,.")
+    if not cleaned:
+        cleaned = (prompt or "subtle environmental foley movement").strip()
+    if "no human voice" not in cleaned.lower():
+        cleaned = f"{cleaned}, pure foley sound effect only, no human voice, no speech"
+    return cleaned
+
+
+def enrich_acestep_bgm_prompt(prompt: str) -> str:
+    """Enforce pure ancient Chinese instrumental chamber scoring without modern pop/trap beats or vocals."""
+    base = (prompt or "").strip().rstrip(".")
+    lower = base.lower()
+    extras: list[str] = []
+    if "traditional chinese" not in lower and "ancient chinese" not in lower:
+        extras.append("traditional Chinese xianxia instrumental score")
+    if not _PERCUSSION_ALLOW_RE.search(base) and "no drums" not in lower:
+        extras.append("no drums, no modern beat, no pop rhythm")
+    if "no singing" not in lower:
+        extras.append("purely instrumental, no vocals, no singing")
+    return ", ".join([base, *extras]) if extras else base
 
 
 def main() -> int:
@@ -880,9 +944,10 @@ def main() -> int:
                     moss_worker.start()
 
                 for idx, cue in enumerate(novel_sfx_cues, 1):
-                    prompt = cue.sfx_prompt
-                    if not prompt and cue.motif_id in registry.sonic_motifs:
-                        prompt = registry.sonic_motifs[cue.motif_id].sfx_prompt
+                    raw_prompt = cue.sfx_prompt
+                    if not raw_prompt and cue.motif_id in registry.sonic_motifs:
+                        raw_prompt = registry.sonic_motifs[cue.motif_id].sfx_prompt
+                    prompt = sanitize_moss_foley_prompt(raw_prompt)
                     sfx_key = _sha24({"prompt": prompt, "dur": round(cue.duration_seconds, 2)})
                     sfx_wav = cache_dir / "moss_sfx" / f"{sfx_key}.wav"
 
@@ -945,7 +1010,10 @@ def main() -> int:
 
                 for a_idx, act in enumerate(novel_acts, 1):
                     target_dur = min(max(float(act.bgm_duration_s or 65.0), 45.0), 90.0)
-                    bgm_key = _sha24({"prompt": act.bgm_prompt, "dur": round(target_dur, 1)})
+                    bgm_prompt = enrich_acestep_bgm_prompt(act.bgm_prompt)
+                    bgm_key = _sha24(
+                        {"prompt": bgm_prompt, "vocal_language": "unknown", "dur": round(target_dur, 1)}
+                    )
                     bgm_wav = cache_dir / "acestep_bgm" / f"{bgm_key}.wav"
 
                     if args.offline_dry_run:
@@ -956,8 +1024,9 @@ def main() -> int:
                         print(f"   🎵 [ACE-Step 1.5 XL] 生成分幕配乐 {act.act_id} ({target_dur:.0f}s): {act.title}", flush=True)
                         acestep_worker.request(
                             {
-                                "prompt": act.bgm_prompt,
-                                "lyrics": "[inst]",
+                                "prompt": bgm_prompt,
+                                "lyrics": "[Instrumental]",
+                                "vocal_language": "unknown",
                                 "duration_s": target_dur,
                                 "out_path": str(raw_bgm),
                                 "seed": 100 + cue_sheet.chapter_number * 10 + a_idx,
