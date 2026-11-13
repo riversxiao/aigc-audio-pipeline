@@ -1,0 +1,72 @@
+{
+  "project_id": "jiuyu_jianzhu",
+  "project_title": "九狱剑主（公开范例）",
+  "language_code": "zh",
+  "tts_model_id": "eleven_v3",
+  "sfx_model_id": "eleven_text_to_sound_v3",
+  "music_model_id": "music_v2_5",
+  "asr_model_id": "scribe_v3",
+  "updated_at": "2026-11-12T00:00:00Z",
+  "drive_audio_root_id": "",
+  "roles": {
+    "narrator": {
+      "role_id": "narrator",
+      "display_name": "旁白",
+      "aliases": [],
+      "tier": "narrator",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "沉稳低醇叙事男中音，高潮可爆发史诗张力",
+      "persona_summary": "全剧镜头之眼，平时克制冷峻，关键破局句拉满戏剧冲击",
+      "accent_requirement": "大陆普通话戏剧配音",
+      "status": "locked",
+      "voice_id": "pz7hOfW7kgI9kF818eDS",
+      "public_owner_id": "",
+      "library_voice_name": "Jerry",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": ["[dramatically]", "[softly]", "[shouting]"],
+      "forbidden_habits": ["禁止播音腔端腔", "禁止英文口音漂移"],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [1],
+      "audition_line": "[dramatically] 沈渊一口心头血喷在锁骨下的暗金烙印上—— [shouting] 九重镇狱黑匣，轰然开启！",
+      "audition_history": []
+    },
+    "shen_yuan": {
+      "role_id": "shen_yuan",
+      "display_name": "沈渊",
+      "aliases": [],
+      "tier": "protagonist",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "清冷隐忍少年音，绝境燃血时带撕裂爆发感",
+      "persona_summary": "被夺骨少主，隐忍狠绝",
+      "accent_requirement": "大陆普通话戏剧配音",
+      "status": "locked",
+      "voice_id": "lkK6X9yp6sIA3vecwS2p",
+      "public_owner_id": "",
+      "library_voice_name": "Hou Xiaohou",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": ["[coldly]", "[desperately]", "[shouting]"],
+      "forbidden_habits": ["禁止轻浮油腻"],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [1],
+      "audition_line": "[desperately] 开第一层！ [shouting] 用我十年阳寿，换你一缕斩铁剑意！",
+      "audition_history": []
+    }
+  },
+  "sonic_motifs": {
+    "black_box_open": {
+      "motif_id": "black_box_open",
+      "name": "镇狱黑匣开启母题",
+      "description": "重型青铜古匣机括崩开与深渊低频共鸣",
+      "sfx_prompt": "Ancient heavy bronze reliquary mechanism unlocking with deep metallic resonance and dark sub-bass boom",
+      "duration_seconds": 3.5,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    }
+  }
+}

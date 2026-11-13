@@ -1,0 +1,60 @@
+{
+  "episode_id": "E001",
+  "chapter_number": 1,
+  "title": "抽骨之夜与黑匣初鸣（公开范例）",
+  "mode": "condensed_radio_drama",
+  "source_chapter_file": "examples/ch01.md",
+  "head_pad_s": 0.3,
+  "tail_pad_s": 1.2,
+  "acts": [
+    {
+      "act_id": "act1",
+      "title": "寒夜绝境与黑匣初鸣",
+      "bgm_prompt": "Dark Chinese xianxia cinematic score, solo xiao flute and low cello drone building tension in cold rain, no vocals, instrumental",
+      "bgm_duration_s": 45.0,
+      "bgm_gain_speech": 0.11,
+      "bgm_gain_gap": 0.34,
+      "cached_bgm_file": ""
+    }
+  ],
+  "cues": [
+    {
+      "cue_id": "c001",
+      "act_id": "act1",
+      "kind": "dialogue",
+      "role_id": "narrator",
+      "text": "[dramatically] 沈渊一口心头血喷在锁骨下的暗金烙印上—— [shouting] 九重镇狱黑匣，轰然开启！",
+      "stability": 0.0,
+      "similarity_boost": 0.85,
+      "acoustic_space": "dry",
+      "gap_after_s": 0.25,
+      "director_note": "高潮破局旁白，Creative 0.0 激发标签张力"
+    },
+    {
+      "cue_id": "c002",
+      "act_id": "act1",
+      "kind": "sfx",
+      "motif_id": "black_box_open",
+      "sfx_prompt": "Ancient heavy bronze reliquary mechanism unlocking with deep metallic resonance and dark sub-bass boom",
+      "duration_seconds": 3.5,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "placement": "sequential",
+      "gain_db": 0.0,
+      "gap_after_s": 0.3,
+      "director_note": "前景独立音效轨，不随人声闪避"
+    },
+    {
+      "cue_id": "c003",
+      "act_id": "act1",
+      "kind": "dialogue",
+      "role_id": "shen_yuan",
+      "text": "[desperately] 开第一层！ [shouting] 用我十年阳寿，换你一缕斩铁剑意！",
+      "stability": 0.0,
+      "similarity_boost": 0.85,
+      "acoustic_space": "mental_realm",
+      "gap_after_s": 0.6,
+      "director_note": "识海空间混响微染，绝境嘶吼"
+    }
+  ]
+}

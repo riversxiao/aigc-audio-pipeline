@@ -1,0 +1,1580 @@
+{
+  "project_id": "zhujie_suoxian",
+  "project_title": "《诸界锁仙》多人精品有声剧 / 广播剧工程",
+  "language_code": "zh",
+  "tts_model_id": "eleven_v3",
+  "sfx_model_id": "eleven_text_to_sound_v3",
+  "music_model_id": "music_v2_5",
+  "asr_model_id": "scribe_v3",
+  "updated_at": "2026-11-13T07:47:41Z",
+  "drive_audio_root_id": "1wF3upZfT9zG5B06ZGNAkX9YynTJWERjs",
+  "roles": {
+    "narrator": {
+      "role_id": "narrator",
+      "display_name": "旁白",
+      "aliases": [
+        "叙述",
+        "画外音"
+      ],
+      "tier": "narrator",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "低醇沉稳、极具古典仙侠电影质感的大陆男中音；平叙克制苍凉，斗法与识海异象段具备雷霆压迫感",
+      "persona_summary": "《诸界锁仙》全剧叙事主视角，兼顾《凡人》的冷峻细节体感与《仙逆》《诛仙》的苍凉宿命底色",
+      "accent_requirement": "大陆普通话戏剧配音（严禁美式/澳洲/新加坡/港台口音漂移）",
+      "status": "locked",
+      "voice_id": "LFGpHeEhtShcrG0IJ1b4",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_旁白_玄苍电影叙事 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[softly]",
+        "[calmly]",
+        "[dramatically]",
+        "[whispers]"
+      ],
+      "forbidden_habits": [
+        "禁止晚会朗诵腔",
+        "禁止财经快嘴播报腔",
+        "高潮句禁止平铺直叙"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "audition_line": "[dramatically] 万古尘封的石门在识海中轰然洞开—— [whispers] 九根断裂的青铜巨柱下，死死缠绕着一口结满寒霜的古老白棺！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T04:33:16Z",
+          "voice_id": "LFGpHeEhtShcrG0IJ1b4",
+          "library_voice_name": "诸界锁仙_旁白_玄苍电影叙事 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[dramatically] 仿佛万古尘封的石门在识海中轰然洞开—— [whispers] 九根断裂的青铜巨柱下，无数暗红如血管般的锁链，正死死缠绕着一口结满寒霜的古老白棺！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_custom_xianxia/clips/E001_AUDITION_A_CUSTOM_aud_01_narrator_epic_narrator_LFGpHeEh.wav",
+          "drive_file_id": "1TIcjzDBh-T5T19EwmLv443Uzx1L4ABcl",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "ASR QA passed"
+        },
+        {
+          "recorded_at": "2026-11-13T04:30:32Z",
+          "voice_id": "pz7hOfW7kgI9kF818eDS",
+          "library_voice_name": "Jerry (lib)",
+          "sample_text": "[dramatically] 仿佛万古尘封的石门在识海中轰然洞开—— [whispers] 九根断裂的青铜巨柱下，无数暗红如血管般的锁链，正死死缠绕着一口结满寒霜的古老白棺！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_b_library_benchmark/clips/E001_AUDITION_B_LIBRARY_aud_01_narrator_epic_narrator_pz7hOfW7.wav",
+          "drive_file_id": "1I0ZYRepO8cw9wUbRV6_4eAxqIb4hqZ_8",
+          "qa_passed": true,
+          "decision": "rejected",
+          "notes": "ASR QA passed"
+        }
+      ]
+    },
+    "lu_jin": {
+      "role_id": "lu_jin",
+      "display_name": "陆烬",
+      "aliases": [
+        "少主",
+        "陆公子",
+        "陆少主",
+        "零号"
+      ],
+      "tier": "protagonist",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "清冷干净却藏着千钧骨力的18岁青年音；日常极度平静克制，重伤与破基因锁时带着压抑嘶哑与冷冽杀意",
+      "persona_summary": "北渊没落陆氏少主（天渊无脐弃婴/四层身世主魂），外冷内韧、先算后动、绝不赌咒发狠话，出手即见生死",
+      "accent_requirement": "大陆普通话青年戏剧声线",
+      "status": "locked",
+      "voice_id": "yMY8ojQH9HrvDUfScAa9",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_陆烬_清冷孤刃少年 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[calmly]",
+        "[coldly]",
+        "[hoarsely]",
+        "[shouting]"
+      ],
+      "forbidden_habits": [
+        "禁止热血莽夫式乱吼",
+        "禁止少年轻浮油腔",
+        "退婚戏必须冷静而非歇斯底里"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "audition_line": "[coldly] 苏家欠我父亲一条命，这五十枚灵石与一瓶丹药，连利息的零头都不够，权当苏小姐赎身的路费。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T04:33:23Z",
+          "voice_id": "yMY8ojQH9HrvDUfScAa9",
+          "library_voice_name": "诸界锁仙_陆烬_清冷孤刃少年 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[calmly] 为何不收？苏家欠我父亲一条命，这五十枚灵石与一瓶丹药，连利息的零头都不够， [coldly] 权当苏小姐赎身的路费。至于这枚寒渊佩，拿去便是。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_custom_xianxia/clips/E001_AUDITION_A_CUSTOM_aud_02_lujin_cold_restraint_lu_jin_yMY8ojQH.wav",
+          "drive_file_id": "1bOiCdmhqZM6_LCgmt51oxlRkKUybgfjV",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "ASR QA passed"
+        },
+        {
+          "recorded_at": "2026-11-13T04:33:27Z",
+          "voice_id": "yMY8ojQH9HrvDUfScAa9",
+          "library_voice_name": "诸界锁仙_陆烬_清冷孤刃少年 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[gasps] [hoarsely] 裴真传……好威风。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_custom_xianxia/clips/E001_AUDITION_A_CUSTOM_aud_03_lujin_shattered_grit_lu_jin_yMY8ojQH.wav",
+          "drive_file_id": "1MVKtEpgZGgq26Pu_F0HwGlu5RHoBbI6F",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "ASR QA passed"
+        },
+        {
+          "recorded_at": "2026-11-13T04:30:39Z",
+          "voice_id": "lkK6X9yp6sIA3vecwS2p",
+          "library_voice_name": "Hou Xiaohou (lib)",
+          "sample_text": "[calmly] 为何不收？苏家欠我父亲一条命，这五十枚灵石与一瓶丹药，连利息的零头都不够， [coldly] 权当苏小姐赎身的路费。至于这枚寒渊佩，拿去便是。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_b_library_benchmark/clips/E001_AUDITION_B_LIBRARY_aud_02_lujin_cold_restraint_lu_jin_lkK6X9yp.wav",
+          "drive_file_id": "1AtwgQeECZ_lqhj_XET39Pa0T_9xQUo9B",
+          "qa_passed": true,
+          "decision": "rejected",
+          "notes": "ASR QA passed"
+        },
+        {
+          "recorded_at": "2026-11-13T04:30:42Z",
+          "voice_id": "lkK6X9yp6sIA3vecwS2p",
+          "library_voice_name": "Hou Xiaohou (lib)",
+          "sample_text": "[gasps] [hoarsely] 裴真传……好威风。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_b_library_benchmark/clips/E001_AUDITION_B_LIBRARY_aud_03_lujin_shattered_grit_lu_jin_lkK6X9yp.wav",
+          "drive_file_id": "1LWH3GwVNi5_A_C5TyE9niwL2tYS8IBs5",
+          "qa_passed": true,
+          "decision": "rejected",
+          "notes": "ASR QA passed"
+        }
+      ]
+    },
+    "fu_bo": {
+      "role_id": "fu_bo",
+      "display_name": "福伯",
+      "aliases": [
+        "陆忠",
+        "老管家",
+        "老奴"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "old",
+      "vocal_register": "苍老沙哑、带肺伤气短与沧桑温度的60岁大陆老者声线（配置API Key后优先从共享库检索大陆老年戏剧男声试听）",
+      "persona_summary": "陆宅断臂老管家，早年伤肺，拼死护住少主体面与性命，前三十章最戳泪点的人情锚点",
+      "accent_requirement": "大陆普通话老年戏剧声线（自然沧桑，不假捏嗓子）",
+      "status": "locked",
+      "voice_id": "GwFDftWWl0cM0vklLlbt",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_福伯_沧桑忠仆 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[sighs]",
+        "[hoarsely]",
+        "[crying]",
+        "[desperately]"
+      ],
+      "forbidden_habits": [
+        "禁止中气十足像壮年武将",
+        "哭戏要真切哽咽而非干嚎"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8,
+        10,
+        11,
+        14,
+        15,
+        18,
+        19,
+        20,
+        22,
+        27,
+        28,
+        29
+      ],
+      "audition_line": "[crying] 丹田碎了……全碎了…… [desperately] 少主撑住！老奴这就拿亡妻这支簪子换半粒护心丸，绝不叫少主死在这儿！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T04:33:28Z",
+          "voice_id": "GwFDftWWl0cM0vklLlbt",
+          "library_voice_name": "诸界锁仙_福伯_沧桑忠仆 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[crying] 丹田碎了……全碎了…… [desperately] 少主撑住！老奴这就去西街敲李郎中的门，拿亡妻这支簪子换半粒护心丸，绝不叫少主死在这儿！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_custom_xianxia/clips/E001_AUDITION_A_CUSTOM_aud_04_fubo_heartbreak_fu_bo_GwFDftWW.wav",
+          "drive_file_id": "1SrMl_WGzfepav1tDJ5_6mfOsyD_-ESjs",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "ASR QA passed"
+        }
+      ]
+    },
+    "su_qinghan": {
+      "role_id": "su_qinghan",
+      "display_name": "苏清寒",
+      "aliases": [
+        "苏三小姐",
+        "清寒师妹",
+        "苏小姐"
+      ],
+      "tier": "core_supporting",
+      "gender": "female",
+      "age_group": "young",
+      "vocal_register": "清冽如冰珠落盘的世家贵女声线；前期疏离守礼、克制体面，第19/25章得知炉鼎真相后道心崩塌凄惶哭求",
+      "persona_summary": "城南苏氏三小姐，三品冰灵脉，精致利己而不泼妇，终沦为玄剑宗采补药引",
+      "accent_requirement": "大陆普通话青年女声（清冷古风戏剧感）",
+      "status": "locked",
+      "voice_id": "5txYoyqgH78h22OKoJVP",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_苏清寒_清冽冰脉贵女 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[coldly]",
+        "[softly]",
+        "[sighs]",
+        "[crying]"
+      ],
+      "forbidden_habits": [
+        "前期退婚严禁演成泼妇骂街，必须字字守礼却冷硬如刀"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        5,
+        6,
+        8,
+        10,
+        13,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        24,
+        25,
+        27
+      ],
+      "audition_line": "[coldly] 今日清寒特来归还当年庚帖，也请陆公子交还那枚寒渊佩， [softly] 自此男婚女嫁，两不相干。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T04:33:35Z",
+          "voice_id": "5txYoyqgH78h22OKoJVP",
+          "library_voice_name": "诸界锁仙_苏清寒_清冽冰脉贵女 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[coldly] 今日清寒特来归还当年庚帖，也请陆公子交还那枚寒渊佩， [softly] 自此男婚女嫁，两不相干。",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_custom_xianxia/clips/E001_AUDITION_A_CUSTOM_aud_05_su_qinghan_aloof_su_qinghan_5txYoyqg.wav",
+          "drive_file_id": "1f3SGlFjXSKn-vhMLBKeD7xUSNPW_Y8T0",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "ASR QA passed"
+        },
+        {
+          "recorded_at": "2026-11-13T04:30:55Z",
+          "voice_id": "t5SIDRTVMdbNUqrSAycs",
+          "library_voice_name": "Linda (lib)",
+          "sample_text": "[coldly] 今日清寒特来归还当年庚帖，也请陆公子交还那枚寒渊佩， [softly] 自此男婚女嫁，两不相干。",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_b_library_benchmark/clips/E001_AUDITION_B_LIBRARY_aud_05_su_qinghan_aloof_su_qinghan_t5SIDRTV.wav",
+          "drive_file_id": "1z5aANDjjOFHg50haBXjeFDx3dOHNOjGz",
+          "qa_passed": true,
+          "decision": "rejected",
+          "notes": "ASR QA passed"
+        }
+      ]
+    },
+    "pei_xuandu": {
+      "role_id": "pei_xuandu",
+      "display_name": "裴玄度",
+      "aliases": [
+        "裴真传",
+        "裴师兄"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "温润华贵、居高临下的世家公子/名门真传男声；笑意温和却字字视凡人为蝼蚁，后期败亡时转为癫狂怨毒",
+      "persona_summary": "玄剑宗内门真传第七席，表面温文护花、实为赤阳老祖搜集天渊血引的白手套，阴狠伪善",
+      "accent_requirement": "大陆普通话青年公子戏剧声线",
+      "status": "locked",
+      "voice_id": "WX7zQiwvnb3yk5qplrqL",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_裴玄度_温润阴鸷真传 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[dismissive]",
+        "[sarcastic]",
+        "[whispers]",
+        "[angry]"
+      ],
+      "forbidden_habits": [
+        "前期切忌演成粗鄙山贼，越温文尔雅越显阴毒"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "audition_line": "[dismissive] 紫府之下皆凡尘，而你这辈子连筑基的门槛都摸不到。 [whispers] 废你丹田，是替你留条残命。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T04:33:44Z",
+          "voice_id": "WX7zQiwvnb3yk5qplrqL",
+          "library_voice_name": "诸界锁仙_裴玄度_温润阴鸷真传 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[dismissive] 紫府之下皆凡尘，而你这辈子连筑基的门槛都摸不到。 [whispers] 方才你撕婚书时眼底藏着杀意，废你丹田，是替你留条残命。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_custom_xianxia/clips/E001_AUDITION_A_CUSTOM_aud_06_pei_xuandu_hypocrite_pei_xuandu_WX7zQiwv.wav",
+          "drive_file_id": "1bcK1ydg8mIkcCW-L3EYri9Lz_mjtfY8C",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "ASR QA passed"
+        },
+        {
+          "recorded_at": "2026-11-13T04:31:02Z",
+          "voice_id": "5s3UifUu3OJ90z17rRMA",
+          "library_voice_name": "Jun (lib)",
+          "sample_text": "[dismissive] 紫府之下皆凡尘，而你这辈子连筑基的门槛都摸不到。 [whispers] 方才你撕婚书时眼底藏着杀意，废你丹田，是替你留条残命。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_b_library_benchmark/clips/E001_AUDITION_B_LIBRARY_aud_06_pei_xuandu_hypocrite_pei_xuandu_5s3UifUu.wav",
+          "drive_file_id": "1Buno-ubWo0c756byjE_HYGZt6kKV_T5h",
+          "qa_passed": true,
+          "decision": "rejected",
+          "notes": "ASR QA passed"
+        }
+      ]
+    },
+    "zhao_kui": {
+      "role_id": "zhao_kui",
+      "display_name": "赵魁",
+      "aliases": [
+        "暗桩",
+        "灰衣杂役",
+        "钱百草",
+        "钱庄主"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "阴鸷低哑的死士暗桩与毒医男声",
+      "persona_summary": "第4章潜入陆宅验尸死士及第13章试药恶庄主钱百草",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "azKtUp81mLUKHHE3BOA0",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_赵魁_阴鸷低哑暗桩死士 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[sarcastic]",
+        "[coldly]",
+        "[gasps]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 4,
+      "appearance_chapters": [
+        4,
+        13
+      ],
+      "audition_line": "[sarcastic] 装死？引气四重的废人，也配让裴真传挂心！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:25Z",
+          "voice_id": "azKtUp81mLUKHHE3BOA0",
+          "library_voice_name": "诸界锁仙_赵魁_阴鸷低哑暗桩死士 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[sarcastic] 装死？引气四重的废人，也配让裴真传挂心！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_zhao_kui_赵魁_azKtUp81.mp3",
+          "drive_file_id": "1sTOIFPuYFSZzoc_1dL0o9CVr4OlL9ngy",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "chu_xiazi": {
+      "role_id": "chu_xiazi",
+      "display_name": "褚瞎子",
+      "aliases": [
+        "褚九",
+        "鉴药老者"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "old",
+      "vocal_register": "枯瘦滑头却透着几分渗人清醒的黑市盲眼怪医声线（与福伯彻底区分）",
+      "persona_summary": "北渊鬼樊楼筑基鉴药人，早年窥探血月致盲，陆烬地下盟友",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "hojCScWlKVpL4dK1ljh8",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_褚瞎子_黑市盲眼怪医 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[sarcastic]",
+        "[whispers]",
+        "[sighs]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 6,
+      "appearance_chapters": [
+        6,
+        12,
+        15,
+        20,
+        24,
+        29
+      ],
+      "audition_line": "[whispers] 后生，天上的娘娘看不得人睁眼……你这药膏里的古法路数，烂在肚子里才活得长。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:27Z",
+          "voice_id": "hojCScWlKVpL4dK1ljh8",
+          "library_voice_name": "诸界锁仙_褚瞎子_黑市盲眼怪医 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[whispers] 后生，天上的娘娘看不得人睁眼……你这药膏里的古法路数，烂在肚子里才活得长。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_chu_xiazi_褚瞎子_hojCScWl.mp3",
+          "drive_file_id": "1lSmGhzAyFMFmNxWOt6oswx2llSg-NzuN",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "li_cang": {
+      "role_id": "li_cang",
+      "display_name": "厉苍",
+      "aliases": [
+        "执法执事",
+        "严刑",
+        "严二长老"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "铁血冷酷、杀伐狠辣的宗门刑堂执事男中低音",
+      "persona_summary": "玄剑宗执法执事厉苍及刑罚二长老严刑（与莫沧形成双长老声线对比）",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "FR1zHqoxXRnuwYpONjIW",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_厉苍_铁血冷酷刑堂执事 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[coldly]",
+        "[angry]",
+        "[shouting]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 8,
+      "appearance_chapters": [
+        8,
+        9,
+        23,
+        25,
+        26
+      ],
+      "audition_line": "[coldly] 裴师侄心善留你三日，把陆擎苍从天渊带回来的东西交出来，赐你全尸！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:29Z",
+          "voice_id": "FR1zHqoxXRnuwYpONjIW",
+          "library_voice_name": "诸界锁仙_厉苍_铁血冷酷刑堂执事 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[coldly] 裴师侄心善留你三日，把陆擎苍从天渊带回来的东西交出来，赐你全尸！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_li_cang_厉苍_FR1zHqox.mp3",
+          "drive_file_id": "1ndKgq0tTkdKYbNcHJpyBIc7LLTaHZR5Z",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "hongxiu_louzhu": {
+      "role_id": "hongxiu_louzhu",
+      "display_name": "红袖楼主",
+      "aliases": [
+        "红袖",
+        "女楼主"
+      ],
+      "tier": "core_supporting",
+      "gender": "female",
+      "age_group": "middle_aged",
+      "vocal_register": "慵懒磁性、雍容华贵却暗藏执掌生死锋芒的成熟古风御姐音",
+      "persona_summary": "地下黑市鬼樊楼幕后东家（筑基后期），精于筹码权衡，押注陆烬结盟",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "lreFqOKRKWFzRiYosSD9",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_红袖楼主_慵懒锋芒御姐 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[softly]",
+        "[calmly]",
+        "[sarcastic]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 12,
+      "appearance_chapters": [
+        12,
+        20,
+        22,
+        24,
+        28,
+        29
+      ],
+      "audition_line": "[softly] 三张三百年前绝迹的古丹方……陆少主这份筹码，我鬼樊楼接了。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:33Z",
+          "voice_id": "lreFqOKRKWFzRiYosSD9",
+          "library_voice_name": "诸界锁仙_红袖楼主_慵懒锋芒御姐 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[softly] 三张三百年前绝迹的古丹方……陆少主这份筹码，我鬼樊楼接了。",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_hongxiu_louzhu_红袖楼主_lreFqOKR.mp3",
+          "drive_file_id": "1kn_Qzh0Zn1xqKubQ-dkLmG5sengkDJaj",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "shi_meng": {
+      "role_id": "shi_meng",
+      "display_name": "石猛",
+      "aliases": [
+        "铁匠少年"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "憨直瓮声、充满千斤蛮力与滚烫赤诚的北方铁匠青年声线",
+      "persona_summary": "第13章陆烬自百草药庄救出的天生怪力青年，忠心镇守白鹤药庄与福伯",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "WIAtftQi8AWq8FIv97mc",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_石猛_憨直蛮力铁匠少年 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[shouting]",
+        "[calmly]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 13,
+      "appearance_chapters": [
+        13,
+        14,
+        29
+      ],
+      "audition_line": "[shouting] 石猛这条命是大人给的，往后刀山火海，绝不皱一下眉头！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:35Z",
+          "voice_id": "WIAtftQi8AWq8FIv97mc",
+          "library_voice_name": "诸界锁仙_石猛_憨直蛮力铁匠少年 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[shouting] 石猛这条命是大人给的，往后刀山火海，绝不皱一下眉头！",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_shi_meng_石猛_WIAtftQi.mp3",
+          "drive_file_id": "1pwRogeWuqGIy-KR0Kt1O-X_fREnwPs3K",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "qin_lie": {
+      "role_id": "qin_lie",
+      "display_name": "秦烈",
+      "aliases": [
+        "秦队正",
+        "秦统领",
+        "秦老哥"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "粗粝豪迈、金石铿锵的沙场独眼老将军男中低音",
+      "persona_summary": "镇渊猎妖司丙字队队长（筑基中期），曾受陆擎苍救命大恩，护短重义",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "s2xDcV8ULkYFcjNOIQ0m",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_秦烈_铁血独眼老将 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[whispers]",
+        "[angry]",
+        "[shouting]",
+        "[laughs]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 16,
+      "appearance_chapters": [
+        16,
+        17,
+        18,
+        23,
+        25,
+        26,
+        27,
+        29
+      ],
+      "audition_line": "[whispers] 三年前你爹进天渊前，留了半截断刀在我这儿——他说若你丹田破了还能活下来，就把这东西给你！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:37Z",
+          "voice_id": "s2xDcV8ULkYFcjNOIQ0m",
+          "library_voice_name": "诸界锁仙_秦烈_铁血独眼老将 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[whispers] 三年前你爹进天渊前，留了半截断刀在我这儿——他说若你丹田破了还能活下来，就把这东西给你！",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_qin_lie_秦烈_s2xDcV8U.mp3",
+          "drive_file_id": "19-2nXU-SWjluePzcYP-dKJZ_dhjuKzDF",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "su_mu": {
+      "role_id": "su_mu",
+      "display_name": "苏牧",
+      "aliases": [
+        "苏副统领",
+        "苏大少"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "傲慢刻薄、官腔威压、外强中干的世家官僚青年声线",
+      "persona_summary": "苏清寒兄长，镇渊司副统领（筑基初期），校场刁难陆烬被一刀劈碑震慑",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "tDCLjx1Az2YOwR0WtZu9",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_苏牧_势利刻薄世家官僚 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[dismissive]",
+        "[sarcastic]",
+        "[angry]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 10,
+      "appearance_chapters": [
+        10,
+        16
+      ],
+      "audition_line": "[dismissive] 气海已废还敢来镇渊司领死？分去丙字巡夜队，自生自灭罢！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:39Z",
+          "voice_id": "tDCLjx1Az2YOwR0WtZu9",
+          "library_voice_name": "诸界锁仙_苏牧_势利刻薄世家官僚 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[dismissive] 气海已废还敢来镇渊司领死？分去丙字巡夜队，自生自灭罢！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_su_mu_苏牧_tDCLjx1A.mp3",
+          "drive_file_id": "1iaa0BiwiqfVyZ6b0odMPpKLme6K2Z0n3",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "chiyang_laozu": {
+      "role_id": "chiyang_laozu",
+      "display_name": "赤阳老祖",
+      "aliases": [
+        "赤阳紫府老祖",
+        "赤阳老怪"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "old",
+      "vocal_register": "极度嘶哑枯朽、低频共鸣深重如寒冰刮骨的半尸化紫府老怪音",
+      "persona_summary": "玄剑宗幕后紫府老祖，以血丹与天渊遗民续命冲丹，卷一至卷二头号大敌",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "9ZAMIePZ5otydLbwA2jZ",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_赤阳老祖_枯朽阴森尸煞老怪 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[hoarsely]",
+        "[coldly]",
+        "[angry]",
+        "[shouting]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 19,
+      "appearance_chapters": [
+        19,
+        27,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37
+      ],
+      "audition_line": "[hoarsely] [shouting] 零号血胎……你果然没死在天渊！！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:42Z",
+          "voice_id": "9ZAMIePZ5otydLbwA2jZ",
+          "library_voice_name": "诸界锁仙_赤阳老祖_枯朽阴森尸煞老怪 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[hoarsely] [shouting] 零号血胎……你果然没死在天渊！！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_chiyang_laozu_赤阳老祖_9ZAMIePZ.mp3",
+          "drive_file_id": "1lf26zwqPls1hQxTqUMsVmTCip4h9m8UT",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "lu_qingcang": {
+      "role_id": "lu_qingcang",
+      "display_name": "陆擎苍",
+      "aliases": [
+        "陆父",
+        "老爷"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "醇厚威严、饱含深沉父爱与孤勇决绝的北渊第一重刀宗师男低音（留音启用 memory_echo）",
+      "persona_summary": "陆烬养父（紫府初期），十八年前天渊抱回弃婴，孤身入天渊留书引路",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "Alm4bKh9IhYI6Js4fmFB",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_陆擎苍_沧桑威严慈父 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[softly]",
+        "[dramatically]",
+        "[calmly]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 10,
+      "appearance_chapters": [
+        10,
+        16,
+        30,
+        33,
+        38
+      ],
+      "audition_line": "[softly] 烬儿，当你捏碎这枚血玉简时，莫信头顶血月，天外有笼，切记莫追！",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:31Z",
+          "voice_id": "Alm4bKh9IhYI6Js4fmFB",
+          "library_voice_name": "诸界锁仙_陆擎苍_沧桑威严慈父 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[softly] 烬儿，当你捏碎这枚血玉简时，莫信头顶血月，天外有笼，切记莫追！",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_lu_qingcang_陆擎苍_Alm4bKh9.mp3",
+          "drive_file_id": "1m81VHTgXRX6s95ZUSSziyxgKuovMAJS1",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "jiang_qinghuang": {
+      "role_id": "jiang_qinghuang",
+      "display_name": "姜清凰",
+      "aliases": [
+        "玄凰女帝",
+        "棺中女人",
+        "棺中娘娘"
+      ],
+      "tier": "future_nested",
+      "gender": "female",
+      "age_group": "young",
+      "vocal_register": "极寒傲岸、威凌万古却压着三千年恨火与悲凉的帝王御姐音（配合 mental_realm 识海玄霜混响）",
+      "persona_summary": "【第二层身世核心】方寸墟界中心玄霜古棺内的太上仙朝女帝，第1章现棺影、第10章叩棺、第4卷末开棺发声",
+      "accent_requirement": "大陆普通话顶级古风女帝戏剧声线",
+      "status": "pending_audition",
+      "voice_id": "",
+      "public_owner_id": "",
+      "library_voice_name": "预留核心槽位（严禁提前给前期女配使用）",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[coldly]",
+        "[dramatically]",
+        "[sighs]"
+      ],
+      "forbidden_habits": [
+        "此声线为全书灵魂女一专属保留槽，严禁任何前期配角占用"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        7,
+        10
+      ],
+      "audition_line": "[coldly] 顾长渊……你剖我半颗帝心铸成界锁锚点，如今转世重来，连我是谁都不认得了么？",
+      "audition_history": []
+    },
+    "a_mang": {
+      "role_id": "a_mang",
+      "display_name": "阿盲",
+      "aliases": [
+        "白发盲女",
+        "守渊盲女"
+      ],
+      "tier": "recurring",
+      "gender": "female",
+      "age_group": "young",
+      "vocal_register": "清澈空灵、微带凄楚却充满坚韧骨气的古风寒门少女音",
+      "persona_summary": "天渊裂谷底守渊遗民白发盲女，见证天幕破碎漫天真星洒落",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "MZ3di2yR0iZEJHboKLLb",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_阿盲_凄楚坚韧盲眼少女 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[crying]",
+        "[softly]",
+        "[desperately]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 34,
+      "appearance_chapters": [
+        34,
+        35,
+        38
+      ],
+      "audition_line": "[calmly] 阿盲试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:43Z",
+          "voice_id": "MZ3di2yR0iZEJHboKLLb",
+          "library_voice_name": "诸界锁仙_阿盲_凄楚坚韧盲眼少女 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[calmly] 阿盲试听锁定小样",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_a_mang_阿盲_MZ3di2yR.mp3",
+          "drive_file_id": "1a6s3Kr9HLA7WO1oh3ub9AaTZutHkVmta",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "sect_elder_antagonist": {
+      "role_id": "sect_elder_antagonist",
+      "display_name": "宗门长老",
+      "aliases": [
+        "苏鹤图",
+        "孙鹤",
+        "莫沧",
+        "苏二长老",
+        "莫大长老"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "old",
+      "vocal_register": "跋扈威严、苍劲洪亮的修仙世家与大宗实权长老男低音",
+      "persona_summary": "演绎苏氏二长老苏鹤图、玄剑宗外事长老孙鹤、内门大长老莫沧等高阶老修反派",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "rqQXs3W0g83G5DYzt2qI",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_宗门长老_跋扈苍劲老修 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[angry]",
+        "[coldly]",
+        "[shouting]",
+        "[dismissive]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 9,
+      "appearance_chapters": [
+        9,
+        20,
+        21,
+        23,
+        25,
+        26,
+        28
+      ],
+      "audition_line": "[calmly] 宗门长老试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:45Z",
+          "voice_id": "rqQXs3W0g83G5DYzt2qI",
+          "library_voice_name": "诸界锁仙_宗门长老_跋扈苍劲老修 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[calmly] 宗门长老试听锁定小样",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_sect_elder_antagonist_宗门长老_rqQXs3W0.mp3",
+          "drive_file_id": "1XUN5Baw_ltyOevUCBjRymxQLXwYcbBAh",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "snobbish_steward_npc": {
+      "role_id": "snobbish_steward_npc",
+      "display_name": "世家管事",
+      "aliases": [
+        "苏贵",
+        "陆明远",
+        "三叔公"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "油滑市侩、顺风狐假虎威遇险点头哈腰的世家管家与族叔中年男声",
+      "persona_summary": "演绎苏府大管事苏贵（第7-10章）及陆氏旁支三叔公陆明远（第11章）",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "skS6sDSkXpXeRo2ZhNlM",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_世家管事_油滑市侩中年 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[sarcastic]",
+        "[dismissive]",
+        "[trembling]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 7,
+      "appearance_chapters": [
+        7,
+        8,
+        10,
+        11
+      ],
+      "audition_line": "[calmly] 世家管事试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:48Z",
+          "voice_id": "skS6sDSkXpXeRo2ZhNlM",
+          "library_voice_name": "诸界锁仙_世家管事_油滑市侩中年 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[calmly] 世家管事试听锁定小样",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_snobbish_steward_npc_世家管事_skS6sDSk.mp3",
+          "drive_file_id": "1S-1voN4e3xanf8BLOi49WVH1EozuiXHj",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "weathered_elder_npc": {
+      "role_id": "weathered_elder_npc",
+      "display_name": "沧桑老丈",
+      "aliases": [
+        "杂货铺掌柜",
+        "苏正阳",
+        "守碑老卒",
+        "鹤鸣真人",
+        "老族长",
+        "陈福",
+        "陈管事"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "old",
+      "vocal_register": "温和厚道、饱经边塞风霜的民间老掌柜与守碑老卒男声（与福伯区分）",
+      "persona_summary": "演绎西街老掌柜、断头哨守碑老兵、鹤鸣真人遗言、天渊老族长、大胤商队陈福管事",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "33zIzrLo9ZcbbVBQyuAA",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_沧桑老丈_古道边塞老者 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[sighs]",
+        "[softly]",
+        "[calmly]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 3,
+      "appearance_chapters": [
+        3,
+        10,
+        30,
+        31,
+        35,
+        40
+      ],
+      "audition_line": "[calmly] 沧桑老丈试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:50Z",
+          "voice_id": "33zIzrLo9ZcbbVBQyuAA",
+          "library_voice_name": "诸界锁仙_沧桑老丈_古道边塞老者 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[calmly] 沧桑老丈试听锁定小样",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_weathered_elder_npc_沧桑老丈_33zIzrLo.mp3",
+          "drive_file_id": "1T8h4x5N9JF1-MoV4s76wbdfPdM8mmCEv",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "male_guard_captain": {
+      "role_id": "male_guard_captain",
+      "display_name": "军侯统领",
+      "aliases": [
+        "鬼市守门汉子",
+        "周执事",
+        "监考军侯",
+        "紫衣巡察使",
+        "鬼樊楼探子",
+        "周统领",
+        "护卫队长"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "干练沉稳、字正腔圆的衙门军侯与护卫统领中年男声",
+      "persona_summary": "演绎鬼市守卫、苏家周执事、镇渊司监考军侯/王都巡察使、大胤商队周护卫队长",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "DgbBImXQ3GXGGMAWsU7d",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_军侯统领_干练威严军官 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[calmly]",
+        "[shouting]",
+        "[coldly]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 6,
+      "appearance_chapters": [
+        6,
+        16,
+        21,
+        40
+      ],
+      "audition_line": "[calmly] 军侯统领试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:52Z",
+          "voice_id": "DgbBImXQ3GXGGMAWsU7d",
+          "library_voice_name": "诸界锁仙_军侯统领_干练威严军官 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[calmly] 军侯统领试听锁定小样",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_male_guard_captain_军侯统领_DgbBImXQ.mp3",
+          "drive_file_id": "1i0hBa5O7iv7ySLLAZueY21zGuVuQHCZp",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "female_maid_npc": {
+      "role_id": "female_maid_npc",
+      "display_name": "伶俐侍女",
+      "aliases": [
+        "春桃",
+        "白狐面具侍女",
+        "玄剑宗女弟子"
+      ],
+      "tier": "recurring",
+      "gender": "female",
+      "age_group": "young",
+      "vocal_register": "伶俐清脆、吐字端庄的古风世家丫鬟与鬼樊楼侍女青年女声",
+      "persona_summary": "演绎苏清寒贴身丫鬟春桃、鬼樊楼二楼白狐面具侍女及女修弟子",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "qZ3OE66Lxm1Z0acd08pW",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_伶俐侍女_清脆古风女修 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[softly]",
+        "[calmly]",
+        "[gasps]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 6,
+      "appearance_chapters": [
+        6,
+        10,
+        20,
+        25
+      ],
+      "audition_line": "[calmly] 伶俐侍女试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:53Z",
+          "voice_id": "qZ3OE66Lxm1Z0acd08pW",
+          "library_voice_name": "诸界锁仙_伶俐侍女_清脆古风女修 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "[calmly] 伶俐侍女试听锁定小样",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_female_maid_npc_伶俐侍女_qZ3OE66L.mp3",
+          "drive_file_id": "1eG9aI7NU1GfUk40Bvd9e4BjEA_aqlQLy",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "ancient_construct_echo": {
+      "role_id": "ancient_construct_echo",
+      "display_name": "古碑残响",
+      "aliases": [
+        "石碑古篆",
+        "无头古修遗言",
+        "无头药师遗言",
+        "第六环残魂",
+        "守坛血尸卫",
+        "界隙天音"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "庄严冰冷、不带人类七情六欲的上古碑文与机关傀儡男声（配合 mental_realm / memory_echo）",
+      "persona_summary": "演绎墟界古碑铭文、古修/药师遗书留音、守坛血尸卫机械杀令与界隙法则震响",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "vBK1ICucZ4f5G7wjYUBd",
+      "public_owner_id": "",
+      "library_voice_name": "WangSong (Mainland Studio Library)",
+      "default_stability": 1.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[calmly]",
+        "[coldly]",
+        "[dramatically]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 3,
+      "appearance_chapters": [
+        3,
+        5,
+        14,
+        34,
+        36,
+        38,
+        39
+      ],
+      "audition_line": "[calmly] 古碑残响试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:55Z",
+          "voice_id": "vBK1ICucZ4f5G7wjYUBd",
+          "library_voice_name": "WangSong (Mainland Studio Library)",
+          "sample_text": "[calmly] 古碑残响试听锁定小样",
+          "stability": 1.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_ancient_construct_echo_古碑残响_vBK1ICuc.mp3",
+          "drive_file_id": "122pE7f80inGTVPL7rOqwkEZm6lYOjA7j",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "male_disciple_a": {
+      "role_id": "male_disciple_a",
+      "display_name": "青年男修甲",
+      "aliases": [
+        "药童",
+        "考校武者甲",
+        "玄剑宗弟子甲",
+        "商队护卫甲"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "清亮急促的大陆青年男修配音声线甲",
+      "persona_summary": "演绎百草庄药童、校场围观武者甲、玄剑宗围剿弟子甲、大胤商队护卫甲",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "5s3UifUu3OJ90z17rRMA",
+      "public_owner_id": "",
+      "library_voice_name": "Jun (Mainland Studio Library)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[sarcastic]",
+        "[gasps]",
+        "[shouting]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 13,
+      "appearance_chapters": [
+        13,
+        15,
+        16,
+        21,
+        25,
+        40
+      ],
+      "audition_line": "[calmly] 青年男修甲试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:57Z",
+          "voice_id": "5s3UifUu3OJ90z17rRMA",
+          "library_voice_name": "Jun (Mainland Studio Library)",
+          "sample_text": "[calmly] 青年男修甲试听锁定小样",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_male_disciple_a_青年男修甲_5s3UifUu.mp3",
+          "drive_file_id": "1z0rn_3KZdhIjZNNrb6-RBSXIYXAkQp87",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "male_disciple_b": {
+      "role_id": "male_disciple_b",
+      "display_name": "青年男修乙",
+      "aliases": [
+        "秦小石",
+        "笼中少年",
+        "考校武者乙",
+        "溃逃弟子乙",
+        "商队护卫乙"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "情绪张力强、适合惊恐哭喊与少年求救的大陆青年男修配音声线乙",
+      "persona_summary": "演绎笼中濒死少年秦小石、赤松岭道心崩溃溃逃弟子乙、大胤夜魔袭击护卫乙",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "lkK6X9yp6sIA3vecwS2p",
+      "public_owner_id": "",
+      "library_voice_name": "Hou Xiaohou (Mainland Studio Library)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[crying]",
+        "[desperately]",
+        "[shouting]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 13,
+      "appearance_chapters": [
+        13,
+        15,
+        21,
+        25,
+        40
+      ],
+      "audition_line": "[calmly] 青年男修乙试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:54:58Z",
+          "voice_id": "lkK6X9yp6sIA3vecwS2p",
+          "library_voice_name": "Hou Xiaohou (Mainland Studio Library)",
+          "sample_text": "[calmly] 青年男修乙试听锁定小样",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_male_disciple_b_青年男修乙_lkK6X9yp.mp3",
+          "drive_file_id": "1qjaboxqBff6Z6gb1ADe7tKWqHYYeCZKo",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "eternal_night_whisper": {
+      "role_id": "eternal_night_whisper",
+      "display_name": "永夜诡影",
+      "aliases": [
+        "黑暗低语",
+        "无日魅影"
+      ],
+      "tier": "recurring",
+      "gender": "female",
+      "age_group": "young",
+      "vocal_register": "幽冷飘忽、令人毛骨悚然的永夜女声贴耳呢喃（配合 mental_realm）",
+      "persona_summary": "第40章第二认知世界大胤永夜黑暗中诱人熄灯抠眼的诡异呢喃",
+      "accent_requirement": "中国大陆标准普通话戏剧配音（纯净棚录无底噪）",
+      "status": "locked",
+      "voice_id": "t5SIDRTVMdbNUqrSAycs",
+      "public_owner_id": "",
+      "library_voice_name": "Linda (Mainland Studio Library)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[whispers]",
+        "[softly]"
+      ],
+      "forbidden_habits": [
+        "严禁外语口音与底噪"
+      ],
+      "first_appearance_chapter": 40,
+      "appearance_chapters": [
+        40
+      ],
+      "audition_line": "[calmly] 永夜诡影试听锁定小样",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T06:55:00Z",
+          "voice_id": "t5SIDRTVMdbNUqrSAycs",
+          "library_voice_name": "Linda (Mainland Studio Library)",
+          "sample_text": "[calmly] 永夜诡影试听锁定小样",
+          "stability": 0.0,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/suite_a_ch03_40_locked/AUDITION_LOCKED_eternal_night_whisper_永夜诡影_t5SIDRTV.mp3",
+          "drive_file_id": "1CdxaS7763_tKWiiXeDBBQjmyy6lhyvzf",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    }
+  },
+  "sonic_motifs": {
+    "motif_xujie_gate": {
+      "motif_id": "motif_xujie_gate",
+      "name": "方寸墟界·万古石门洞开母题",
+      "description": "眉心识海灰印崩裂，万古尘封巨石门轰然推开并伴随苍茫荒原寒风呼啸",
+      "sfx_prompt": "Crisp crystalline soul-seal crack followed immediately by colossal ancient stone gates grinding open in a vast desolate cavern with deep sub-bass resonance and eerie howling wind",
+      "duration_seconds": 4.8,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "cached_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/04_跨集复用声效与配乐母题/motif_xujie_gate_v001.wav",
+      "drive_file_id": "1KlAFFxezfMCXvDQGRL6FkEDObbGOZSdd"
+    },
+    "motif_frost_coffin_knock": {
+      "motif_id": "motif_frost_coffin_knock",
+      "name": "玄霜古棺·寒铁锁链与叩棺母题",
+      "description": "九根青铜巨柱锁链低沉碰撞与玄霜冰棺散发极寒嗡鸣",
+      "sfx_prompt": "Heavy ancient bronze chains clinking slowly in freezing wind with crystalline frost creeping over a stone sarcophagus and a single deep hollow icy resonance",
+      "duration_seconds": 4.5,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "cached_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/04_跨集复用声效与配乐母题/motif_frost_coffin_knock_v001.wav",
+      "drive_file_id": "1aEeU2hv1LVCdOtUSe__q-iXtWir8_obs"
+    },
+    "motif_genelock_awaken": {
+      "motif_id": "motif_genelock_awaken",
+      "name": "第一阶基因锁·燃血心跳与青铜锁崩",
+      "description": "心脏如重锤战鼓慢速搏动后骤然加速，体内青铜锁链咔嚓崩断",
+      "sfx_prompt": "Slow heavy cinematic heartbeat accelerating into a thunderous pulse, culminating in a sharp metallic bronze chain snapping open with rushing blood energy",
+      "duration_seconds": 3.8,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "cached_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/04_跨集复用声效与配乐母题/motif_genelock_awaken_v002.wav",
+      "drive_file_id": "18DNDjHu03indEpPXliAe0SkxRJP0xnVH"
+    },
+    "motif_qi_sea_shatter": {
+      "motif_id": "motif_qi_sea_shatter",
+      "name": "截脉抽髓指·破丹田闷响",
+      "description": "阴寒指劲隔空刺穿气海穴，如败革被铁锥捅穿的闷响与气流溃散声",
+      "sfx_prompt": "Sharp sinister whistling finger strike piercing thick leather with a heavy muffled internal impact thud and escaping pressurized air",
+      "duration_seconds": 2.4,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "cached_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/04_跨集复用声效与配乐母题/motif_qi_sea_shatter_v001.wav",
+      "drive_file_id": "171_WZ6SC605L_tn0zd4TLE9_ILRO3kl0"
+    },
+    "motif_beiyuan_cold_rain": {
+      "motif_id": "motif_beiyuan_cold_rain",
+      "name": "北渊秋雨·残瓦滴水环境声",
+      "description": "深秋冷雨砸在青瓦飞檐与石阶积水上的清冷真实质感",
+      "sfx_prompt": "Cold autumn night rain pattering steadily on ancient Chinese clay roof tiles and dripping onto wet stone courtyard steps",
+      "duration_seconds": 6.0,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "cached_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/04_跨集复用声效与配乐母题/motif_beiyuan_cold_rain_v001.wav",
+      "drive_file_id": "1K-QcR53zp-67q1L09fawFHMsZvV112aW"
+    },
+    "motif_broken_blade_wipe": {
+      "motif_id": "motif_broken_blade_wipe",
+      "name": "玄铁断刀·麻布擦拭寒锋",
+      "description": "粗麻布缓慢擦过沉重玄铁断刀刀脊的低沉金属摩擦声",
+      "sfx_prompt": "Coarse linen cloth slowly wiping across a heavy dark iron blade spine with subtle cold metallic ring in a quiet room",
+      "duration_seconds": 2.8,
+      "prompt_influence": 0.55,
+      "loop": false,
+      "cached_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/04_跨集复用声效与配乐母题/motif_broken_blade_wipe_v001.wav",
+      "drive_file_id": "1GviW-IuY7X0lBPbHGOkq4SSs6ztn80np"
+    }
+  }
+}
