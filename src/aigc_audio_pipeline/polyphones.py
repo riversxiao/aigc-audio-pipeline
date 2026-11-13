@@ -104,6 +104,19 @@ XIANXIA_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
     ("虫豸", "虫至"),
     ("尸蟞虫", "尸憋虫"),
     ("尸蟞", "尸憋"),
+    # Classical banker's numerals used in blood-sacrifice ledgers & pasture IDs
+    ("第柒拾叁号", "第七十三号"),
+    ("壹号", "一号"),
+    ("贰号", "二号"),
+    ("叁号", "三号"),
+    ("肆号", "四号"),
+    ("伍号", "五号"),
+    ("陆号", "六号"),
+    ("柒号", "七号"),
+    ("捌号", "八号"),
+    ("玖号", "九号"),
+    ("拾号", "十号"),
+    ("玖名", "九名"),
 )
 
 # Leading tag + 祠堂 aspiration slip fix observed in eleven_v3 ('[dramatically] 祠堂' -> cū táng)
