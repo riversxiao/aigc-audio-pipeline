@@ -13,6 +13,8 @@ credentials.json
 *.m4a
 *.aac
 *.pcm
+*.zip
+*.tar.gz
 renders/
 output/
 cache/

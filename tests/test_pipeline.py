@@ -428,8 +428,114 @@ class AudioPipelineTests(unittest.TestCase):
         md.write_text("# 第1章 试音\n\n福伯道：“少主小心！”\n", encoding="utf-8")
         self.assertEqual(cli_main(["extract-quotes", "--chapter", str(md)]), 0)
 
+    def test_drama3_adapter_and_bundle_export(self) -> None:
+        from array import array
+        import wave
+        from aigc_audio_pipeline.cli import main as cli_main
+        from aigc_audio_pipeline.drama3_adapter import (
+            export_colab_96gb_bundle,
+            strip_drama3_markup,
+            translate_cue_to_drama3_input,
+            trim_edge_silence_wav,
+        )
+
+        pei_profile = VoiceProfile(
+            role_id="pei_xuandu",
+            display_name="裴玄度",
+            tier="antagonist",
+            voice_id="v_pei",
+            status="locked",
+        )
+        cue = TimelineCue(
+            cue_id="c_pei",
+            act_id="act1",
+            kind="dialogue",
+            role_id="pei_xuandu",
+            text="[dismissive] [laughs] 引气三重也敢妄言？ [whispers] 裴真传替你留条残命。",
+            stability=0.0,
+        )
+        d3_a1 = translate_cue_to_drama3_input(cue, pei_profile, attempt=1, use_phoneme_pins=False)
+        self.assertIn("[aloof, aristocratic disdain]", d3_a1)
+        self.assertIn("[cold laugh]", d3_a1)
+        self.assertIn("引气三崇", d3_a1)
+        self.assertIn("<whisper>裴真船替你留条残命。</whisper>", d3_a1)
+        self.assertEqual(strip_drama3_markup(d3_a1), "引气三崇也敢妄言？ 裴真船替你留条残命。")
+
+        d3_pins = translate_cue_to_drama3_input(cue, pei_profile, attempt=1, use_phoneme_pins=True)
+        self.assertIn("<|phoneme_start|>yin3 qi4 san1 chong2<|phoneme_end|>", d3_pins)
+        self.assertIn("<|phoneme_start|>zhen1 chuan2<|phoneme_end|>", d3_pins)
+
+        d3_a2 = translate_cue_to_drama3_input(cue, pei_profile, attempt=2)
+        self.assertNotIn("<whisper>", d3_a2)
+        self.assertTrue(d3_a2.startswith("[aloof, aristocratic disdain]"))
+
+        d3_a3 = translate_cue_to_drama3_input(cue, pei_profile, attempt=3)
+        self.assertNotIn("[", d3_a3)
+        self.assertEqual(d3_a3, "引气三崇也敢妄言？ 裴真船替你留条残命。")
+
+        # Verify edge silence trimmer trims outer dead air while keeping active center intact
+        tmp = Path("/tmp/test_drama3_bundle")
+        if tmp.exists():
+            subprocess.run(["rm", "-rf", str(tmp)], check=True)
+        tmp.mkdir(parents=True)
+
+        padded_wav = tmp / "padded.wav"
+        sr = 48000
+        # 0.4s silence + 0.6s 440Hz tone + 0.8s trailing silence = 1.8s total
+        samples = array("h", [0] * int(0.4 * sr))
+        for i in range(int(0.6 * sr)):
+            samples.append(int(12000 * __import__("math").sin(2.0 * 3.14159265 * 440.0 * i / sr)))
+        samples.extend([0] * int(0.8 * sr))
+        with wave.open(str(padded_wav), "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sr)
+            wf.writeframes(samples.tobytes())
+
+        trimmed_dur = trim_edge_silence_wav(padded_wav)
+        self.assertGreater(trimmed_dur, 0.65)
+        self.assertLess(trimmed_dur, 0.85)
+
+        # Verify export_colab_96gb_bundle + preview-drama3 CLI
+        reg_path = tmp / "reg.json"
+        reg = VoiceCastingRegistry(
+            project_id="test_proj",
+            project_title="测试工程",
+            roles={"pei_xuandu": pei_profile},
+        )
+        reg.save(reg_path)
+
+        cs_dir = tmp / "cs"
+        cs_dir.mkdir()
+        sheet = EpisodeCueSheet(
+            episode_id="E001",
+            chapter_number=1,
+            title="第一集",
+            acts=[ActMusicSpec(act_id="act1", title="幕一", bgm_prompt="dark ost")],
+            cues=[cue],
+        )
+        cs_file = cs_dir / "E001_第一集.json"
+        sheet.save(cs_file)
+
+        self.assertEqual(
+            cli_main(["preview-drama3", "--cue-sheet", str(cs_file), "--registry", str(reg_path)]),
+            0,
+        )
+        bundle_info = export_colab_96gb_bundle(
+            registry_path=reg_path,
+            cue_sheets_dir=cs_dir,
+            anchor_specs={"pei_xuandu": {"audio_path": str(padded_wav), "anchor_text": "裴玄度参考干音"}},
+            output_bundle_dir=tmp / "bundle_out",
+            zip_output_path=tmp / "bundle_out.zip",
+        )
+        self.assertEqual(bundle_info["role_count"], 1)
+        self.assertEqual(bundle_info["episode_count"], 1)
+        self.assertTrue((tmp / "bundle_out" / "voice_anchors" / "pei_xuandu.wav").is_file())
+        self.assertTrue((tmp / "bundle_out.zip").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

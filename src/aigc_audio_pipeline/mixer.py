@@ -434,6 +434,8 @@ def master_episode_three_bus(
     registry: Any | None = None,
     workers: int = 4,
     clean_work_dir: bool = False,
+    stem_prefix: str | None = None,
+    mp3_bitrate: str = "192k",
 ) -> dict[str, Any]:
     """Assemble natural-rate Dialogue Bus + Foreground SFX Bus + Ducked Per-Act BGM Bus."""
     work_dir = output_dir / f"_stems_work_{cue_sheet.episode_id}"
@@ -562,7 +564,8 @@ def master_episode_three_bus(
     _write_stereo_s16(bgm_bus_wav, bgm_ducked_buf)
 
     # 4. Final true-peak limited master (append-only naming: never overwrite!)
-    master_wav = next_append_only_path(output_dir, f"{cue_sheet.episode_id}_master", ".wav")
+    resolved_prefix = stem_prefix or f"{cue_sheet.episode_id}_master"
+    master_wav = next_append_only_path(output_dir, resolved_prefix, ".wav")
     master_mp3 = master_wav.with_suffix(".mp3")
     srt_path = master_wav.with_suffix(".srt")
     manifest_path = master_wav.with_suffix(".json")
@@ -606,7 +609,7 @@ def master_episode_three_bus(
             "-c:a",
             "libmp3lame",
             "-b:a",
-            "192k",
+            mp3_bitrate,
             str(master_mp3),
         ],
         check=True,

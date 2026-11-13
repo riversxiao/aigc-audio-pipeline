@@ -1,26 +1,27 @@
-# 中文电影感多人有声剧流水线 · 核心优化点与实战复盘（v1.0.0）
+# 中文电影感多人有声剧流水线 · 核心优化点与实战复盘（v1.1.0）
 
-本文档沉淀 [`aigc-audio-pipeline`](../README.md) 从单集验证脚本演进为**长篇连载工业级多人有声剧生产引擎（v1.0.0）**的全部技术优化点、踩坑根因与量化收益。以下全部机制均已在长篇修仙连载《诸界锁仙》（全 40 章无删节多角色台本编译 + 前 6 集共 95 分 15 秒电影感母带交付）中完成端到端实测验证。
+本文档沉淀 [`aigc-audio-pipeline`](../README.md) 从单集验证脚本演进为**长篇连载工业级双后端多人有声剧生产引擎（v1.1.0）**的全部技术优化点、踩坑根因与量化收益。以下机制已在长篇修仙连载《诸界锁仙》（全 40 章无删节多角色台本编译 + 前 6 集共 95 分 15 秒 ElevenLabs 电影感母带交付 + 全 24 角色 Colab 96GB Fish Drama 3 本地推理资产包闭环）中完成端到端实测验证。
 
 ---
 
-## 一、 全链路架构全景
+## 一、 全链路双后端架构全景
 
 ```mermaid
 flowchart LR
     A["小说精修正文 (.md)"] --> B["无删节拆本编译器 (compiler.py)"]
-    R["24角色声线与母题库 (voice_casting_registry.json)"] --> B
+    R["24角色国风声线与母题库 (voice_casting_registry.json)"] --> B
     P["修仙多音字与大写数字引擎 (polyphones.py)"] --> B
     B --> C["分幕演出台本 (.json + .md)\n原文覆盖率 >= 96.5%"]
-    C --> D["同源五合一合成器 (elevenlabs_client.py)\n--workers 4 + SHA-256 缓存 + 6次退避重试"]
-    D --> Q["Scribe v3 中英双语质检 (qa.py)\n检测英文标签漏读 & 句尾截断"]
-    Q --> M["C加速三总线闪避混音器 (mixer.py)\n人声 + 前景SFX + 分幕BGM闪避 (-16 LUFS)"]
+    C --> D1["云端五合一后端 (elevenlabs_client.py)\n--workers 4 + SHA-256 缓存 + Scribe v3 质检"]
+    C --> D2["Colab 96GB 本地后端 (drama3_adapter.py + colab_96gb/)\nFish Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL + Whisper 质检"]
+    D1 --> M["C加速三总线闪避混音器 (mixer.py)\n人声 + 前景SFX + 分幕BGM闪避 (-16 LUFS)"]
+    D2 --> M
     M --> O["成片归档与断点队列 (batch_queue.py)\nWAV / MP3 / 中文角色SRT / Google Drive / 台账"]
 ```
 
 ---
 
-## 二、 十二项关键工程优化与踩坑解决方案
+## 二、 十三项关键工程优化与踩坑解决方案
 
 ### 1. 原生国风声优定制（`eleven_ttv_v3`）+ 共享库防洋腔二次清洗
 - **痛点**：ElevenLabs 默认共享库即使指定 `language="zh"`，也会混入大量美式、英式、澳洲、新加坡或港台腔多语种自动配音声线（甚至 `locale=cmn-CN` 的老年声线里仍夹杂 `older British` 描述的洋腔声优），且部分用户上传克隆声存在空调底噪，演古风仙侠极易出戏。
@@ -89,3 +90,11 @@ flowchart LR
 ### 12. 单集原子级云端归档与一键断点续跑队列（`run-queue`）
 - **优化方案**（[`batch_queue.py`](../src/aigc_audio_pipeline/batch_queue.py)）：
   - `aigc-audio run-queue` 按单集粒度闭环执行「台本同步 → 多线程合成 → Scribe 质检 → 三总线母带 → 响度检测 → Google Drive 四件套并发上传 → 台账刷新」。任意时刻中断或额度用尽，补充额度后重跑同一条命令即可自动跳过已归档集数，零损耗无缝接续。
+
+### 13. 「`eleven_ttv_v3` 国风捏声定角 + Colab 96GB `Fish Drama 3` 本地三模常驻」零边际成本双后端架构
+- **痛点**：纯云端 API 在面对百章百万字长篇时存在字符额度成本；而早期纯开源 Colab 方案（直接用通用 TTS 合成参考干声喂给 `Fish Audio Drama 3`）容易出现角色音色扁平、多音字错读、单点情绪标签生硬、句尾拖尾死寂或幻觉复读，听感弱于 `eleven_v3`。
+- **优化方案**（[`drama3_adapter.py`](../src/aigc_audio_pipeline/drama3_adapter.py) + [`colab_96gb/run_zhujie_96gb_studio.py`](../colab_96gb/run_zhujie_96gb_studio.py)）：
+  1. **高表现力国风声纹锚点移植**：一次用 `eleven_ttv_v3` 捏好全剧 24 位纯正中国大陆戏剧声优，挑出 100% 逐字对齐的无损纯净干声（`10s–30s`），统一校准至 `44.1kHz 16-bit PCM -16 LUFS` 作为 `Fish Drama 3` 的零样本声纹锚点（`voice_cast_drama3.json`），把顶级声优骨相完整迁移到本地 GPU。
+  2. **Drama 3 原生戏剧语法适配器**：将 `eleven_v3` 的离散标签自动转译为 Drama 3 最擅长的多子句英文舞台指示（如 `[cold, deadly calm, suppressed fury]`）、角色专属冷笑/轻笑（`[cold laugh]`）及局部 XML 韵律跨度（`<whisper>` / `<forceful>` / `<slow>`），并共享 `polyphones.py` 70+ 项修仙多音字与古典大写数字纠偏（支持可选 `--phoneme-pins` `<|phoneme_start|>` 拼音硬钉）。
+  3. **RAS 参考采样 + 零显存 Whisper 质检门禁 + 首尾死寂精裁**：自动探测并开启 SGLang-Omni `--tts_engine.factory.reference_sampling true`（`ras` 回退），配合 CPU `int8 faster-whisper` 检测标签外泄与句尾截断（异常自动简化标签重跑，最多 3 次）及 `trim_edge_silence_wav()` 消除句首句尾拖沓空白。
+  4. **单卡 96GB 三模常驻 + 同源三总线 `-16 LUFS` 母带混音**：在 Colab G4 96GB 显存内同时常驻 `fishaudio/drama-3` + `MOSS-SoundEffect v2.0` + `ACE-Step 1.5 XL Turbo`（复用 `AudioStudio_G4_Cache` 预编译包秒级冷启动），跨集 6 枚 `sonic_motifs` 母题直通复用，最终统一汇入 `mixer.py` 输出 `*_drama3_master_v001.{wav,mp3,srt,json}`，实现**零 API 边际成本下的电影级多人有声剧量产**。

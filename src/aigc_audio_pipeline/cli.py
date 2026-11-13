@@ -14,6 +14,7 @@ from typing import Any
 from .adapter import analyze_markdown_chapter, write_cue_sheet_markdown
 from .batch_queue import BatchWorkspace, measure_ebur128, run_episode_queue
 from .compiler import extract_spoken_quotes_in_chapter, parse_chapter_paragraphs
+from .drama3_adapter import translate_cue_to_drama3_input
 from .elevenlabs_client import (
     PERSISTENT_KEY_PATHS,
     ElevenLabsClient,
@@ -710,10 +711,49 @@ def cmd_run_queue(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_preview_drama3(args: argparse.Namespace) -> int:
+    cue_sheet = EpisodeCueSheet.load(Path(args.cue_sheet))
+    registry = VoiceCastingRegistry.load(Path(args.registry)) if args.registry else None
+    items: list[dict[str, Any]] = []
+    for cue in cue_sheet.cues:
+        if cue.kind != "dialogue":
+            continue
+        prof = registry.resolve_role(cue.role_id) if registry else None
+        items.append(
+            {
+                "cue_id": cue.cue_id,
+                "role_id": cue.role_id,
+                "speaker": prof.display_name if prof else cue.role_id,
+                "eleven_v3_text": cue.text,
+                "drama3_attempt1": translate_cue_to_drama3_input(
+                    cue, prof, attempt=1, use_phoneme_pins=args.phoneme_pins
+                ),
+                "drama3_retry2": translate_cue_to_drama3_input(
+                    cue, prof, attempt=2, use_phoneme_pins=args.phoneme_pins
+                ),
+            }
+        )
+        if len(items) >= args.limit:
+            break
+    print(
+        json.dumps(
+            {
+                "episode_id": cue_sheet.episode_id,
+                "title": cue_sheet.title,
+                "preview_count": len(items),
+                "cues": items,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aigc-audio",
-        description="Chinese radio-drama & multi-cast audio drama pipeline (ElevenLabs v3 + FFmpeg 3-bus master).",
+        description="Chinese radio-drama & multi-cast audio drama pipeline (ElevenLabs v3 + Fish Drama 3 96GB + FFmpeg 3-bus master).",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -837,6 +877,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_dry.add_argument("--output-dir", required=True)
     p_dry.add_argument("--registry", default="")
     p_dry.set_defaults(func=cmd_synth_dry_test)
+
+    p_d3 = sub.add_parser(
+        "preview-drama3",
+        help="Preview how an EpisodeCueSheet translates into Fish Audio Drama 3 acting prompts.",
+    )
+    p_d3.add_argument("--cue-sheet", required=True, help="Path to EpisodeCueSheet JSON.")
+    p_d3.add_argument("--registry", default="", help="Optional VoiceCastingRegistry JSON.")
+    p_d3.add_argument("--limit", type=int, default=15, help="Max dialogue cues to display (default: 15).")
+    p_d3.add_argument("--phoneme-pins", action="store_true", help="Emit <|phoneme_start|> Pinyin pins.")
+    p_d3.set_defaults(func=cmd_preview_drama3)
 
     return parser
 
