@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import random
 import subprocess
 import tempfile
 import time
@@ -216,7 +217,7 @@ class ElevenLabsClient:
         json_body: dict[str, Any] | None = None,
         raw_body: bytes | None = None,
         content_type: str | None = None,
-        retries: int = 2,
+        retries: int = 6,
     ) -> tuple[bytes, dict[str, str]]:
         url = f"{self.base_url}{path}"
         if query:
@@ -257,11 +258,21 @@ class ElevenLabsClient:
             except urllib.error.HTTPError as exc:
                 err_bytes = exc.read()
                 err_text = err_bytes.decode("utf-8", errors="replace")
+                if "quota_exceeded" in err_text:
+                    raise ElevenLabsError(exc.code, err_text[:400], body=err_text) from exc
                 if exc.code in (429, 500, 502, 503, 504) and attempt < retries:
                     attempt += 1
-                    time.sleep(1.5 * (2**attempt))
+                    delay = min(18.0, 1.5 * (1.8**attempt)) + random.uniform(0.2, 1.2)
+                    time.sleep(delay)
                     continue
                 raise ElevenLabsError(exc.code, err_text[:400], body=err_text) from exc
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+                if attempt < retries:
+                    attempt += 1
+                    delay = min(18.0, 1.5 * (1.8**attempt)) + random.uniform(0.2, 1.2)
+                    time.sleep(delay)
+                    continue
+                raise ElevenLabsError(0, f"Network error after {retries} retries: {exc}") from exc
 
     # ------------------------------------------------------------------
     # Subscription & Voices (including eleven_ttv_v3 Voice Design)
