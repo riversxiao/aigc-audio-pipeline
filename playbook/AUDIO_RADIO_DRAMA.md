@@ -132,13 +132,37 @@ E001 从锁格子的 149.49 秒，变成自然语速的 176.60 秒（约长 27 �
 4. **整集重跑**：短试听听过并认可后，再用同一套标签规则重跑整集。未叫跑之前不要自动开。
 5. **归档**：每次只新增文件；把发出去的原文、标签、稳定性、voice_id 写成 JSON 一起存。
 
+## 长篇连载持续生产：声线圣经与母题归档
+
+单集验证跑通后，一旦进入几十到上千章的小说连载有声剧 / 广播剧持续制作，最容易崩的不是单句音质，而是**跨会话遗忘与前后串音**。必须把以下三份结构化记录放进项目专属音频目录持续维护：
+
+1. **角色声线注册表（`voice_casting_registry.json` + 可读选角圣经 `.md`）**：
+   - 每个角色从首次出场起就登记 `role_id`、人物底色、年龄音域、`voice_id`、`public_owner_id`、库声原名、默认 `stability` / `similarity_boost`、标志性标签、禁忌习惯，以及历次试听小样路径与过审状态（`pending_audition` → `auditioning` → `locked`）。
+   - 一旦角色进入 `locked`，后续所有章节严禁擅自更换 `voice_id`；隔了几十章返场的老角色直接查表复用。
+   - 多重身份 / 识海潜魂角色（如前世残魂、棺中人物）必须独立建角色槽位并配合声场标记（如 `mental_realm` / `memory_echo`），与现世主声线拉开听感层次。
+2. **世界观标志性声效母题（`sonic_motifs`）**：
+   - 长篇里反复出现的核心意象（如识海小世界开启、血脉/基因锁崩裂心跳、古棺叩响、特定法器出鞘）统一注册为 `motif_id` 并缓存母带，跨集直接复用，建立听众的巴甫洛夫听觉锚点，同时节省重复生成额度。
+3. **生产进度与用量台账（`production_ledger.jsonl` / `production_progress_ledger.json`）**：
+   - 记录每一章的拆本状态、试听状态、成片版本号、订阅用量前后差值与网盘归档文件 ID，任何新会话接手都能一秒定位续跑位置。
+
+## 小说转有声剧 / 广播剧拆本四条准则
+
+1. **剥离冗余提示语（「某某道」转标签）**：原文写「福伯哑声道：“……”」或「裴玄度轻描淡写道：“……”」，当角色已是独立声优出演时，删除旁白末尾机械的「某某某道」，把神态副词转译为该角色台词前的行内标签（如 `[hoarsely] [crying]`、`[warmly] [dismissive]`），避免旁白演一遍、角色再重复演一遍。
+2. **旁白也要做戏剧分级**：环境铺陈与过渡句用 `stability=0.5`（Natural）；生死一线、丹田破碎、识海洞开等纯视觉高潮段（往往没有角色对话），旁白必须切到 `stability=0.0`（Creative）配合 `[dramatically]`、`[whispers]` 与前景动效撑起场面。
+3. **双密度模式按需切换**：
+   - `immersive_audiobook_drama`（精品多人有声剧，推荐长篇连载）：一章一集（约 8–12 分钟），保留凝练文学旁白与心理暗流，全角色独立配音 + 分幕配乐 + 关键动效，零剧情遗漏。
+   - `condensed_radio_drama`（浓缩纯广播剧）：大刀阔斧删减叙述性旁白，把视觉描写改写为前景动效（Foley）与潜台词交锋，单集压缩至 3–5 分钟。
+4. **动效顺播 vs 叠拍**：需要留出戏剧空白听清的动效（如深夜叩门三声「咚，咚，咚」、撕毁婚书、烛火爆灯花熄灭）用 `sequential` 独立占时；需要贴着动作瞬间炸开的动效（如雷鸣、破空一指）用 `overlay_next` 与下一句同步切入。
+
 ## 接口备忘
 
-- 对白模型：`eleven_v3`。输出建议 `48 kHz`。
-- 不要把密钥写进仓库、提示词或文档。
+- 对白模型：`eleven_v3`。输出建议 `48 kHz`（`wav_48000` 需 Pro 及以上档位；Creator / Starter 档位自动回退 `mp3_44100_192` / `mp3_44100_128` 并在本地无损转码为 `48kHz 16-bit PCM WAV` 上时间轴，绝不裁尾）。
+- 配乐接口防坑：`POST /v1/music`（`music_v2_5`）使用 `prompt` 生成时，**严禁同时传 `seed` 字段**，否则官方接口直接返回 `422 Unprocessable Entity`。
+- 双语 ASR 质检：`POST /v1/speech-to-text` 使用 `scribe_v3` 时，传入 `language_code="zh"` 与 `secondary_language_codes=["en"]`，可同时精准检出中文漏字截断与被误念出口的英文方括号标签。
+- 不要把密钥写进仓库、提示词或文档（推荐存于环境变量 `ELEVENLABS_API_KEY` 或用户级持久化配置 `~/.gemini/config/aigc_audio.env`）。
 - 共享库加声必须带 `new_name`。
 - 额度以订阅页落定后的 used / remaining 为准，不要只信调用当时的即时回读。
 
 ## 和 aigc-mv-pipeline 的关系
 
-影像成片在同级仓库 [aigc-mv-pipeline](https://github.com/riversxiao/aigc-mv-pipeline) 的 [`PIPELINE.md`](https://github.com/riversxiao/aigc-mv-pipeline/blob/master/playbook/PIPELINE.md)（焚诀：先剪后生成、首尾帧硬检、fl2va）。本文件管的是**声音**：广播剧 / 有声书 / 短剧对白床。两套可以配在同一项目里，但两个仓库互不替代——画面过检不等于配音能过，反之亦然。
+影像成片在同级仓库 [aigc-mv-pipeline](https://github.com/riversxiao/aigc-mv-pipeline) 的 [`PIPELINE.md`](https://github.com/riversxiao/aigc-mv-pipeline/blob/master/playbook/PIPELINE.md)（焚诀：先剪后生成、首尾帧硬检、fl2va）。本文件管的是**声音**：广播剧 / 有声书 / 短剧对白床，且本仓产出的逐句精确毫秒时间轴（`.json` + `.srt`）可直接喂给影像流水线做音画对齐。两套可以配在同一项目里，但两个仓库互不替代——画面过检不等于配音能过，反之亦然。

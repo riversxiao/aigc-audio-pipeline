@@ -1,0 +1,31 @@
+# Environment & credentials (never commit keys)
+.env
+.env.*
+*.env
+credentials.json
+
+# Audio masters, stems, cache & local renders (Playbook rule: 大媒体与母带不进 Git)
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.opus
+*.m4a
+*.aac
+*.pcm
+renders/
+output/
+cache/
+.audio_cache/
+projects/
+
+# Python build & test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.venv/
+venv/
