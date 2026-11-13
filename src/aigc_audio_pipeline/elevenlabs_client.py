@@ -774,8 +774,29 @@ class ElevenLabsClient:
         language_code: str = "zh",
         secondary_language_codes: tuple[str, ...] = ("en",),
         model_candidates: tuple[str, ...] = ("scribe_v3", "scribe_v2"),
+        use_cache: bool = True,
     ) -> dict[str, Any]:
         file_bytes = audio_path.read_bytes()
+        cache_path: Path | None = None
+        if use_cache and self.cache_dir is not None:
+            audio_sha = hashlib.sha256(file_bytes).hexdigest()[:24]
+            key_sha = hashlib.sha256(
+                json.dumps(
+                    {
+                        "audio_sha": audio_sha,
+                        "language_code": language_code,
+                        "secondary": list(secondary_language_codes),
+                        "models": list(model_candidates),
+                    },
+                    sort_keys=True,
+                ).encode("utf-8")
+            ).hexdigest()[:24]
+            cache_path = self.cache_dir / "asr" / f"{key_sha}.json"
+            if cache_path.is_file():
+                cached_data = json.loads(cache_path.read_text(encoding="utf-8"))
+                cached_data["_from_cache"] = True
+                return cached_data
+
         last_err: Exception | None = None
         for model_id in model_candidates:
             boundary = f"----AigcAudioBoundary{uuid.uuid4().hex}"
@@ -813,6 +834,9 @@ class ElevenLabsClient:
                 )
                 result = json.loads(body.decode("utf-8"))
                 result["_asr_model_used"] = model_id
+                if cache_path is not None:
+                    cache_path.parent.mkdir(parents=True, exist_ok=True)
+                    cache_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                 return result
             except ElevenLabsError as exc:
                 last_err = exc
