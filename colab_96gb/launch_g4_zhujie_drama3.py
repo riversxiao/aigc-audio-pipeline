@@ -355,12 +355,65 @@ def sync_completed_outputs(
         synced_markers.add(done_file.name)
 
 
+def start_cloudflare_tunnel(port: int = 8000) -> Optional[subprocess.Popen]:
+    """Expose local Drama 3 SGLang-Omni HTTP server via trycloudflare.com and sync URL to Google Drive."""
+    cf_bin = NVME_ROOT / "cloudflared"
+    if not cf_bin.exists():
+        sh(
+            f"curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 "
+            f"-o '{cf_bin}' && chmod +x '{cf_bin}'"
+        )
+    log_path = NVME_ROOT / "cloudflared_drama3.log"
+    log_file = open(log_path, "w", encoding="utf-8")
+    proc = subprocess.Popen(
+        [str(cf_bin), "tunnel", "--url", f"http://127.0.0.1:{port}", "--no-autoupdate"],
+        stdout=log_file,
+        stderr=subprocess.STDOUT,
+    )
+    tunnel_url: Optional[str] = None
+    for _ in range(40):
+        if log_path.exists():
+            txt = log_path.read_text(encoding="utf-8", errors="ignore")
+            m = re.search(r"https://[a-z0-9-]+\.trycloudflare\.com", txt)
+            if m:
+                tunnel_url = m.group(0)
+                break
+        time.sleep(0.5)
+
+    if tunnel_url:
+        url_file = NVME_ROOT / "drama3_colab_tunnel_url.txt"
+        url_file.write_text(tunnel_url + "\n", encoding="utf-8")
+        print(f"🌐 [Cloudflare HTTPS 隧道就绪] {tunnel_url}", flush=True)
+        tok = get_drive_token()
+        if tok:
+            try:
+                drive_api_upsert_file(url_file, DRIVE_PIPELINE_FOLDER_ID, tok)
+            except Exception as exc:
+                print(f"⚠️ 隧道地址写入 Drive API 失败: {exc}", flush=True)
+        elif DRIVE_STUDIO_DIR.exists():
+            shutil.copy2(url_file, DRIVE_STUDIO_DIR / url_file.name)
+    else:
+        print("⚠️ 未能在 20s 内捕获 trycloudflare 隧道地址，继续本地批处理。", flush=True)
+    return proc
+
+
+def release_colab_runtime() -> None:
+    """Destroy the Colab runtime immediately after archiving outputs so 0 idle CCU is burned."""
+    print("🛑 [--auto-unassign] 所有成品已原子归档至 Google Drive，正在主动销毁 G4 运行时立停 CCU 计费...", flush=True)
+    try:
+        from google.colab import runtime  # type: ignore
+
+        runtime.unassign()
+    except Exception as exc:
+        print(f"ℹ️ 当前非交互式 Notebook 内核，跳过 runtime.unassign() ({exc})；若由 CLI 启动请执行 `colab stop`。", flush=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="《诸界锁仙》 96GB G4 Fish Drama 3 黄金三件套全自动冷启动器")
     parser.add_argument(
         "--episodes",
         default="AUDITION,E001",
-        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）或 E007-E040（全量续跑）",
+        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）、E007-E040（全量续跑）或 SERVE（仅常驻HTTP隧道供远程Agent调用）",
     )
     parser.add_argument(
         "--profile",
@@ -374,6 +427,16 @@ def main() -> None:
         "--mirror-to-main-masters",
         action="store_true",
         help="除保存至 05_Colab_96GB.../outputs/ 外，同步抄送一份 _drama3_master_v001 至 03_分集成片音频/",
+    )
+    parser.add_argument(
+        "--public-tunnel",
+        action="store_true",
+        help="对齐 ai-cinema-studio-kit：启动 trycloudflare HTTPS 隧道并将地址同步至 Drive drama3_colab_tunnel_url.txt，供云端 Agent 纯 HTTP 远程驱动",
+    )
+    parser.add_argument(
+        "--auto-unassign",
+        action="store_true",
+        help="对齐 ai-cinema-studio-kit 防烧钱守门员：成品落盘 Google Drive 后自动调用 runtime.unassign() 销毁实例立停 CCU 计费",
     )
     parser.add_argument("--refresh-envs", action="store_true", help="强制重建虚拟环境")
     args = parser.parse_args()
@@ -416,6 +479,34 @@ def main() -> None:
 
     print(f"⚡ G4 预热全部就绪！耗时: {time.time() - t_boot:.1f}s", flush=True)
 
+    tunnel_proc: Optional[subprocess.Popen] = None
+    if args.public_tunnel or args.episodes.strip().upper() == "SERVE":
+        tunnel_proc = start_cloudflare_tunnel(port=8000)
+
+    if args.episodes.strip().upper() == "SERVE":
+        sgl_cmd = [
+            str(drama_venv / "bin/sgl-omni"),
+            "serve",
+            "--model-path",
+            drama_repo,
+            "--port",
+            "8000",
+            "--tts_engine.gpu_memory_fraction",
+            "0.75",
+            "--vocoder.gpu_memory_fraction",
+            "0.10",
+            "--preprocessing.total_reserve_bytes",
+            "4GiB",
+        ]
+        print(f"=== [常驻 HTTP 服务模式] Drama 3 引擎: {drama_repo} (供云端/远程 Agent 直接调用) ===", flush=True)
+        sgl_proc = subprocess.Popen(sgl_cmd, cwd=str(local_studio), env=os.environ.copy())
+        try:
+            sgl_proc.wait()
+        finally:
+            if tunnel_proc and tunnel_proc.poll() is None:
+                tunnel_proc.terminate()
+        return
+
     local_outputs = local_studio / "outputs"
     local_outputs.mkdir(parents=True, exist_ok=True)
     # Persist stem cache on Drive if mounted so interrupted runs across Colab sessions resume instantly!
@@ -451,16 +542,20 @@ def main() -> None:
     proc = subprocess.Popen(cmd, cwd=str(local_studio), env=os.environ.copy())
     synced_markers: set[str] = set()
 
-    while proc.poll() is None:
+    try:
+        while proc.poll() is None:
+            sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
+            time.sleep(4.0)
+
+        if proc.returncode != 0:
+            raise RuntimeError(f"❌ run_zhujie_96gb_studio.py 异常退出 (rc={proc.returncode})")
+
         sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
-        time.sleep(4.0)
-
-    if proc.returncode != 0:
-        raise RuntimeError(f"❌ run_zhujie_96gb_studio.py 异常退出 (rc={proc.returncode})")
-
-    sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
-    os.sync()
-    time.sleep(2.0)
+        os.sync()
+        time.sleep(2.0)
+    finally:
+        if tunnel_proc and tunnel_proc.poll() is None:
+            tunnel_proc.terminate()
 
     print("\n" + "=" * 78, flush=True)
     print(
@@ -470,6 +565,10 @@ def main() -> None:
     print("📂 Google Drive 成品目录: 《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/outputs/", flush=True)
     print("=" * 78, flush=True)
 
+    if args.auto_unassign:
+        release_colab_runtime()
+
 
 if __name__ == "__main__":
     main()
+
