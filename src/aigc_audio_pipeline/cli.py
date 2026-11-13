@@ -43,16 +43,19 @@ def cmd_check_env(args: argparse.Namespace) -> int:
     }
     if key and not args.offline:
         client = ElevenLabsClient(api_key=key)
-        sub = client.get_subscription()
-        used = sub.get("character_count", 0)
-        limit = sub.get("character_limit", 0)
-        info["subscription"] = {
-            "tier": sub.get("tier"),
-            "status": sub.get("status"),
-            "character_count": used,
-            "character_limit": limit,
-            "character_remaining": max(0, int(limit) - int(used)) if limit else None,
-        }
+        sub = client.get_subscription_safe()
+        if sub.get("_permission_skipped"):
+            info["subscription"] = sub
+        else:
+            used = sub.get("character_count", 0)
+            limit = sub.get("character_limit", 0)
+            info["subscription"] = {
+                "tier": sub.get("tier"),
+                "status": sub.get("status"),
+                "character_count": used,
+                "character_limit": limit,
+                "character_remaining": max(0, int(limit) - int(used)) if limit else None,
+            }
     print(json.dumps(info, ensure_ascii=False, indent=2))
     return 0 if ffmpeg_ok else 1
 
@@ -163,6 +166,76 @@ def cmd_voices_bind(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_voices_design(args: argparse.Namespace) -> int:
+    """Design 3 custom native Chinese voice previews via ElevenLabs `eleven_ttv_v3`."""
+    client = ElevenLabsClient()
+    out_dir = Path(args.output_dir)
+    previews, text_used = client.design_voice_previews(
+        voice_description=args.description,
+        sample_text=args.sample_text or None,
+        output_dir=out_dir,
+        filename_prefix=args.prefix,
+        loudness=args.loudness,
+        guidance_scale=args.guidance_scale,
+        auto_generate_text=args.auto_generate_text,
+    )
+    manifest = {
+        "created_at": utc_now_iso(),
+        "model_id": "eleven_ttv_v3",
+        "voice_description": args.description,
+        "sample_text_used": text_used,
+        "previews": [
+            {
+                "generated_voice_id": p.generated_voice_id,
+                "wav_path": str(p.wav_path),
+                "mp3_path": str(p.mp3_path),
+                "duration_s": p.duration_s,
+                "language": p.language,
+            }
+            for p in previews
+        ],
+    }
+    manifest_path = out_dir / f"{args.prefix}_design_manifest.json"
+    idx = 2
+    while manifest_path.exists():
+        manifest_path = out_dir / f"{args.prefix}_design_manifest_v{idx:02d}.json"
+        idx += 1
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"manifest": str(manifest_path), **manifest}, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_voices_create_designed(args: argparse.Namespace) -> int:
+    """Save a chosen `generated_voice_id` into workspace My Voices and optionally bind to registry."""
+    client = ElevenLabsClient()
+    created = client.create_designed_voice(
+        generated_voice_id=args.generated_voice_id,
+        voice_name=args.name,
+        voice_description=args.description,
+    )
+    voice_id = str(created.get("voice_id") or "")
+    out: dict[str, Any] = {
+        "created_voice_id": voice_id,
+        "voice_name": args.name,
+        "generated_voice_id": args.generated_voice_id,
+    }
+    if args.registry and args.role and voice_id:
+        reg_path = Path(args.registry)
+        registry = VoiceCastingRegistry.load(reg_path)
+        prof = registry.resolve_role(args.role)
+        if prof is None:
+            print(f"Error: role {args.role!r} not found in {reg_path}", file=sys.stderr)
+            return 1
+        prof.voice_id = voice_id
+        prof.library_voice_name = f"{args.name} (VoiceDesign eleven_ttv_v3)"
+        prof.status = "locked" if args.lock else "auditioning"
+        registry.save(reg_path)
+        out["bound_role"] = prof.role_id
+        out["status"] = prof.status
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_audition(args: argparse.Namespace) -> int:
     """Run Playbook Step 1 / Step 3 short dialogue-only audition with Scribe QA."""
     reg_path = Path(args.registry)
@@ -176,7 +249,7 @@ def cmd_audition(args: argparse.Namespace) -> int:
     out_dir = Path(args.output_dir)
     cache_dir = Path(args.cache_dir) if args.cache_dir else out_dir / ".cache"
     client = ElevenLabsClient(cache_dir=cache_dir)
-    sub_before = client.get_subscription()
+    sub_before = client.get_subscription_safe()
 
     audition_items: list[dict[str, Any]] = []
     clips_dir = out_dir / "clips"
@@ -238,7 +311,7 @@ def cmd_audition(args: argparse.Namespace) -> int:
 
     registry.save(reg_path)
     reel = render_audition_reel(audition_items, out_dir, f"{cue_sheet.episode_id}_audition_reel")
-    sub_after = client.get_subscription()
+    sub_after = client.get_subscription_safe()
 
     if args.ledger:
         append_ledger_entry(
@@ -287,7 +360,7 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
     cache_dir = Path(args.cache_dir) if args.cache_dir else out_dir / ".cache"
 
     client = ElevenLabsClient(cache_dir=cache_dir)
-    sub_before = client.get_subscription()
+    sub_before = client.get_subscription_safe()
 
     cue_audio_map: dict[str, Path] = {}
     cue_meta_map: dict[str, dict[str, Any]] = {}
@@ -383,7 +456,7 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
         output_dir=out_dir,
         cue_meta_map=cue_meta_map,
     )
-    sub_after = client.get_subscription()
+    sub_after = client.get_subscription_safe()
 
     result_payload = {
         "episode_id": cue_sheet.episode_id,
@@ -559,11 +632,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_val.add_argument("--require-locked-voices", action="store_true", help="Fail if any role lacks voice_id.")
     p_val.set_defaults(func=cmd_validate)
 
-    p_voices = sub.add_parser("voices", help="Search, list, or bind Mainland Mandarin dramatic voices.")
+    p_voices = sub.add_parser("voices", help="Search, design, list, or bind Mainland Mandarin dramatic voices.")
     v_sub = p_voices.add_subparsers(dest="voices_cmd", required=True)
 
     p_vs = v_sub.add_parser("search", help="Search ElevenLabs Shared Voice Library (Mainland Mandarin filtered).")
-    p_vs.add_argument("--locale", default="zh-CN")
+    p_vs.add_argument("--locale", default="cmn-CN", help="ElevenLabs locale (default: cmn-CN).")
     p_vs.add_argument("--gender", default=None, choices=["male", "female", "neutral"])
     p_vs.add_argument("--age", default=None, choices=["young", "middle_aged", "old"])
     p_vs.add_argument("--search", default=None, help="Keyword (e.g. drama, audiobook, cold, narrator, old).")
@@ -573,6 +646,31 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_vl = v_sub.add_parser("list-mine", help="List voices already in your ElevenLabs workspace.")
     p_vl.set_defaults(func=cmd_voices_list_mine)
+
+    p_vd = v_sub.add_parser(
+        "design",
+        help="Create 3 brand-new native Chinese voice candidates from text prompt via eleven_ttv_v3.",
+    )
+    p_vd.add_argument("--description", required=True, help="20..1000 char Chinese/English timbre & persona prompt.")
+    p_vd.add_argument("--sample-text", default="", help="100..1000 char Chinese audition text.")
+    p_vd.add_argument("--auto-generate-text", action="store_true")
+    p_vd.add_argument("--output-dir", required=True)
+    p_vd.add_argument("--prefix", default="designed_voice")
+    p_vd.add_argument("--loudness", type=float, default=0.5)
+    p_vd.add_argument("--guidance-scale", type=float, default=6.0)
+    p_vd.set_defaults(func=cmd_voices_design)
+
+    p_vc = v_sub.add_parser(
+        "create-designed",
+        help="Save a chosen generated_voice_id permanently into My Voices and optionally bind to registry.",
+    )
+    p_vc.add_argument("--generated-voice-id", required=True)
+    p_vc.add_argument("--name", required=True, help="Permanent voice name in My Voices.")
+    p_vc.add_argument("--description", required=True, help="20..1000 char description.")
+    p_vc.add_argument("--registry", default="")
+    p_vc.add_argument("--role", default="")
+    p_vc.add_argument("--lock", action="store_true")
+    p_vc.set_defaults(func=cmd_voices_create_designed)
 
     p_vb = v_sub.add_parser("bind", help="Bind (and optionally add from shared library) a voice_id to a role.")
     p_vb.add_argument("--registry", required=True)
@@ -613,8 +711,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ana = sub.add_parser("analyze-chapter", help="Analyze novel chapter dialogue & speaker distribution.")
     p_ana.add_argument("--chapter", required=True)
     p_ana.add_argument("--registry", default="")
-    p_ana.add_argument("--include-segments", action="store_true")
     p_ana.set_defaults(func=cmd_analyze_chapter)
+    p_ana.add_argument("--include-segments", action="store_true")
 
     p_dry = sub.add_parser("synth-dry-test", help="Verify timeline & 3-bus ducking mixer offline with synthetic audio.")
     p_dry.add_argument("--cue-sheet", required=True)
@@ -633,3 +731,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

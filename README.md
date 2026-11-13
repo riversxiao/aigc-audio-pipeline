@@ -14,9 +14,9 @@
   - 强制校验 `eleven_v3` 三档离散稳定性（`0.0` Creative / `0.5` Natural / `1.0` Robust），拦截 SSML 误用与非英文行内标签。
   - 维护跨百章连载的持久化角色声线库（`voice_casting_registry.json`）与世界观标志性声效母题（`sonic_motifs`），杜绝长篇连载跨会话串音。
   - 强制追加式版本命名（`_v001`、`_v002`），旧试听与旧母带永不覆盖。
-- **`elevenlabs_client.py`（同源四合一接口与档位自适应）**：
-  - 仅需单个 `ELEVENLABS_API_KEY` 打通对白（`eleven_v3`）、音效（`eleven_text_to_sound_v3`）、分幕纯配乐（`music_v2_5`，自动规避 `prompt`+`seed` 422 冲突）与双语质检（`scribe_v3`）。
-  - 共享库加声强制注入 `new_name`（防 422），订阅档位受限时自动降级采样格式并在本地无损归一为 `48kHz 16-bit PCM WAV`，带内容哈希缓存避免重复扣费。
+- **`elevenlabs_client.py`（同源五合一接口、原生国风捏声与档位自适应）**：
+  - 仅需单个 `ELEVENLABS_API_KEY`（兼容细粒度 Scoped API Key）打通：原生国风声线捏造（`eleven_ttv_v3` Voice Design）、戏剧对白（`eleven_v3`）、动效（`eleven_text_to_sound_v3`）、分幕纯配乐（`music_v2_5`，自动规避 `prompt`+`seed` 422 冲突）与双语质检（`scribe_v3`）。
+  - 共享库默认按 `locale=cmn-CN` 过滤外语母语配音洋腔并强制注入 `new_name`（防 422）；订阅档位受限时自动降级采样格式并在本地无损归一为 `48kHz 16-bit PCM WAV`，带内容哈希缓存避免重复扣费。
 - **`qa.py`（Scribe v3 中英双语 ASR 质检）**：
   - 自动检测英文方括号标签是否被误念出口、句尾是否截断漏字；若首轮异常自动简化标签重试一次，满两次即停机保护额度。
 - **`mixer.py`（48kHz 采样级自然语速三总线母带引擎）**：
@@ -42,8 +42,19 @@ PYTHONPATH=src python3 -m aigc_audio_pipeline synth-dry-test \
   --cue-sheet templates/episode_cue_sheet.example.json \
   --output-dir /tmp/audio_dry_test
 
-# 4. 搜索大陆普通话戏剧声优 → 先跑 6 句短试听 → 认可后渲染整集母带
-PYTHONPATH=src python3 -m aigc_audio_pipeline voices search --gender male --search "drama"
+# 4. 从零捏造纯正大陆普通话专属国风声线（eleven_ttv_v3）或检索共享库（cmn-CN）
+PYTHONPATH=src python3 -m aigc_audio_pipeline voices design \
+  --description "一位六十五岁的中国北方老管家，纯正标准中国大陆普通话，嗓音苍老沙哑却透着温厚忠心，绝无外国口音。" \
+  --sample-text "少主撑住！外头秋雨寒重，您丹田刚受了反噬，老奴这就去西街敲李郎中的门，拿亡妻这支簪子换半粒护心丸，哪怕拼了这把老骨头，老奴也绝不叫少主死在这冷堂里！" \
+  --output-dir /tmp/voice_design_fubo --prefix fubo_old_butler
+
+PYTHONPATH=src python3 -m aigc_audio_pipeline voices create-designed \
+  --generated-voice-id <CHOSEN_GENERATED_VOICE_ID> \
+  --name "诸界锁仙_福伯_苍老忠仆" \
+  --description "65岁中国北方老管家，沧桑沙哑温厚忠仆声线" \
+  --registry path/to/voice_casting_registry.json --role fu_bo --lock
+
+# 5. 先跑 6 句短试听（含 Scribe v3 质检） → 认可后渲染整集三总线母带
 PYTHONPATH=src python3 -m aigc_audio_pipeline audition \
   --registry path/to/voice_casting_registry.json \
   --cue-sheet path/to/e001_audition.json \

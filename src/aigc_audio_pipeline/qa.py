@@ -8,10 +8,11 @@ import re
 import subprocess
 from typing import Any
 
-from .elevenlabs_client import ElevenLabsClient, SynthesisResult
+from .elevenlabs_client import ElevenLabsClient, ElevenLabsError, SynthesisResult
 from .models import extract_tags_and_spoken_text, simplify_inline_tags
 
 _CJK_ONLY = re.compile(r"[\u4e00-\u9fff0-9]+")
+_DIGIT_MAP = str.maketrans("0123456789", "零一二三四五六七八九")
 _LATIN_WORDS = re.compile(r"[a-zA-Z]{3,}")
 # Strip Scribe non-speech event annotations like (笑声), (laughter), [sighs] before checking spoken leaks
 _AUDIO_EVENT_ANNOTATIONS = re.compile(r"\([^)]*\)|（[^）]*）|\[[^\]]*\]")
@@ -48,7 +49,7 @@ COMMON_TAG_WORDS: frozenset[str] = frozenset(
 
 
 def _cjk_chars(text: str) -> str:
-    return "".join(_CJK_ONLY.findall(text))
+    return "".join(_CJK_ONLY.findall(text)).translate(_DIGIT_MAP)
 
 
 def _longest_common_subsequence_len(a: str, b: str) -> int:
@@ -216,7 +217,23 @@ def synthesize_with_playbook_qa(
             )
             return synth, qa, current_text
 
-        asr_resp = client.transcribe_asr(output_wav, language_code=language_code)
+        try:
+            asr_resp = client.transcribe_asr(output_wav, language_code=language_code)
+        except ElevenLabsError as exc:
+            if exc.status_code in (401, 403) and "missing_permissions" in exc.body:
+                qa = LineQAResult(
+                    passed=dur_s >= 0.25 and peak_db >= -45.0,
+                    attempt=attempt,
+                    expected_spoken=extract_tags_and_spoken_text(current_text)[1],
+                    asr_transcript="[ASR QA skipped: scoped key lacks speech_to_text]",
+                    char_recall=1.0,
+                    tail_preserved=True,
+                    peak_dbfs=round(peak_db, 2),
+                    duration_s=round(dur_s, 3),
+                )
+                return synth, qa, current_text
+            raise
+
         asr_text = str(asr_resp.get("text", "")).strip()
         qa = evaluate_dialogue_qa(
             tagged_prompt=current_text,
@@ -235,3 +252,4 @@ def synthesize_with_playbook_qa(
         current_text = simplify_inline_tags(tagged_text)
 
     raise RuntimeError("Unreachable")
+

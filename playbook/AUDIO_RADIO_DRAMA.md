@@ -42,9 +42,22 @@
 
 ## 声线
 
-从 ElevenLabs 共享库加入我的声音库时，`POST /v1/voices/add/{public_owner_id}/{voice_id}` 必须带 `new_name`，否则会返回 422。
+### 1. 共享库中文筛选与防洋腔漏网
 
-《九狱剑主》E001 已过审的中文声优套（只作范例，新项目按角色重选，但筛选标准不变）：
+- 共享库检索 `GET /v1/shared-voices` 的大陆普通话 `locale` 参数必须传 **`cmn-CN`**（传 `zh-CN` 会直接报 `400 Invalid locale`）。
+- 注意：即便指定 `locale=cmn-CN`，共享库在 `age=old` 等稀缺标签下仍会混入外语母语声优的多语种自动配音（例如描述里写着 `older British` 却挂在 `cmn-CN` 下），说中文会有明显「老外腔」。必须结合 `accent` 与 `description` 二次过滤。
+- 从共享库加入我的声音库时，`POST /v1/voices/add/{public_owner_id}/{voice_id}` 必须带 `new_name`，否则会返回 `422`。
+
+### 2. 原生国风声线捏造（Voice Design `eleven_ttv_v3`）
+
+当现有库声缺少特定国风人物质感（如 60 岁沧桑忠仆老管家、黑市怪医老头、极寒清冷古风仙子、深沉厚重电影感古风旁白）时，直接用同一个 API Key 调用 **Voice Design v3** 从零创造纯正中国大陆普通话专属声线：
+
+1. **生成 3 条候选试听**：`POST /v1/text-to-voice/design`，`model_id="eleven_ttv_v3"`。
+   - `voice_description`（`20–1000` 字符）：用中文写清年龄、籍贯/普通话标准度、共鸣位置、人物性格与禁忌（例如：`一位六十五岁的中国北方老管家，纯正标准中国大陆普通话，嗓音苍老沙哑却透着温厚慈爱与忠心耿耿，带有古典仙侠影视剧老戏骨的沧桑颗粒感与自然呼吸感，绝无外国口音或播音腔`）。
+   - `text`（**必须 `100–1000` 字符**，过短会报 `422`）：直接放入一段约 120–200 字的本剧高张力中文台词，一次返回 3 个不同音色的 `generated_voice_id` 与试听音频。
+2. **固化为永久角色声优**：挑中最贴脸的一条 `generated_voice_id`，调用 `POST /v1/text-to-voice`（附带 `voice_name`、`voice_description`、`labels={"language": "zh", "accent": "cmn-CN"}`）存入工作区，拿到永久 `voice_id`，后续即可在 `eleven_v3` 中配合 `[crying]`、`[whispers]`、`[coldly]` 等全套行内标签出演整部连载。
+
+《九狱剑主》E001 已过审的中文库声范例（新项目可「库声 + `eleven_ttv_v3` 原创定制声线」混合选角）：
 
 | 角色 | 库声 | voice_id |
 | --- | --- | --- |

@@ -182,6 +182,64 @@ class AudioPipelineTests(unittest.TestCase):
         md_out = export_cue_sheet_markdown(sheet, registry=reg)
         self.assertIn("福伯 (`fu_bo`)", md_out)
 
+    def test_voice_design_and_shared_voice_mainland_filter(self) -> None:
+        from aigc_audio_pipeline.elevenlabs_client import (
+            filter_mainland_mandarin_voices,
+            normalize_shared_voice_locale,
+            validate_voice_design_inputs,
+        )
+
+        self.assertEqual(normalize_shared_voice_locale("zh-CN"), "cmn-CN")
+        self.assertEqual(normalize_shared_voice_locale("cmn-CN"), "cmn-CN")
+
+        raw_shared = [
+            {
+                "voice_id": "v_british_leak",
+                "name": "Older Joe",
+                "accent": "british",
+                "locale": "cmn-CN",
+                "description": "A friendly, polished older British narrator",
+            },
+            {
+                "voice_id": "v_tw",
+                "name": "Taipei Girl",
+                "accent": "taiwan mandarin",
+                "locale": "cmn-TW",
+                "description": "Sweet voice",
+            },
+            {
+                "voice_id": "v_cn_good",
+                "name": "Alvinluo",
+                "accent": "beijing mandarin",
+                "locale": "cmn-CN",
+                "description": "Warm standard Mainland Chinese dramatic actor",
+            },
+        ]
+        filtered = filter_mainland_mandarin_voices(raw_shared)
+        self.assertEqual([v["voice_id"] for v in filtered], ["v_cn_good"])
+
+        # Voice design sample text < 100 chars must fail validation
+        errs_short = validate_voice_design_inputs(
+            "一位六十五岁的中国北方老管家，纯正标准中国大陆普通话，嗓音苍老沙哑。",
+            "太短的试听文本。",
+        )
+        self.assertTrue(any("100..1000" in e for e in errs_short))
+        errs_ok = validate_voice_design_inputs(
+            "一位六十五岁的中国北方老管家，纯正标准中国大陆普通话，嗓音苍老沙哑。",
+            "少主撑住！外头秋雨寒重，您丹田刚受了反噬，老奴这就去西街敲李郎中的门，绝不叫少主死在这儿！" * 3,
+        )
+        self.assertEqual(errs_ok, [])
+
+        # Arabic numeral in ASR ('50') should match Chinese numeral ('五十') cleanly
+        num_qa = evaluate_dialogue_qa(
+            tagged_prompt="[coldly] 这五十枚灵石拿去便是。",
+            asr_text="这50枚灵石拿去便是。",
+            duration_s=2.4,
+            peak_dbfs=-10.0,
+        )
+        self.assertTrue(num_qa.passed)
+
 
 if __name__ == "__main__":
     unittest.main()
+
