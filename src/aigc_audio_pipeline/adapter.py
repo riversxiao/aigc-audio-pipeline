@@ -9,9 +9,36 @@ import re
 from .models import EpisodeCueSheet, VoiceCastingRegistry
 
 _QUOTE_SPLIT = re.compile(r"(“[^”]+”)")
-_SPEECH_VERB_TAIL = re.compile(
-    r"[，,：:\s]*(?:[^，。！？“”]{0,12}?)(?:低声道|淡声道|平静道|哑声道|冷声道|温声反问了一句|轻描淡写道|低声反问|沉声道|冷笑道|喝道|哭喊道|喃喃道|开口道|说道|道)[：:]\s*$"
+_PURE_SPEAKER_TAG = re.compile(
+    r"^\s*(?:[^，,。！？“”]{1,10}?)"
+    r"(?:低声道|淡声道|平静道|哑声道|冷声道|温声道|沉声道|冷笑道|怒声道|急声道|失声道|瓮声道|颤声道|厉声道|狞声道|"
+    r"咬牙切齿道|瓮声瓮气道|压低声音道|压低嗓音道|压低嗓门道|沙哑冷笑道|沙哑道|平静开口|沙哑开口|淡淡开口|"
+    r"低声问道|淡声问道|沉声问道|追问了一句|开口道|问道|答道|说道)[：:]\s*$"
 )
+_SPEECH_VERB_TAIL = re.compile(
+    r"[，,]\s*(?:压低声音|压低嗓音|压低嗓门|哑着嗓子|咬牙切齿|瓮声瓮气|斩钉截铁|慢条斯理|一字一句|似笑非笑|哭笑不得|痛心疾首|战战兢兢|连滚带爬)?"
+    r"(?:低声道|淡声道|平静道|哑声道|冷声道|温声道|沉声道|冷笑道|怒声道|急声道|失声道|瓮声道|颤声道|厉声道|狞声道|"
+    r"低声问道|淡声问道|沉声问道|追问了一句|温声反问了一句|轻描淡写道|低声反问|厉声下令|厉声喝道|狞声喝道|嘶声喊道|"
+    r"高声喊道|低声禀报|通禀道|复述道|补充道|提醒道|叮嘱道|吩咐道|应道|笑道|叹道|骂道|喝道|哭喊道|喃喃道|自语道|"
+    r"开口道|沙哑开口|平静开口|淡淡开口|淡声吩咐|喃喃低语|低声自语道|问道|答道|说道|道)[：:]\s*$"
+)
+_INLINE_QUOTE_SUFFIXES = ("的", "二字", "三字", "四字", "五字", "六个字", "字样", "时，", "时,")
+_WRITTEN_INTRO_TAILS = ("写着：", "刻着：", "字痕：", "写有：")
+
+
+def is_spoken_dialogue_quote(prev_text: str, inner_quote: str, next_text: str) -> bool:
+    """Return True if `“inner_quote”` is spoken dialogue rather than an inline scare-quote/term."""
+    if not inner_quote.strip():
+        return False
+    prev_s = prev_text.rstrip()
+    next_s = next_text.lstrip()
+    if any(prev_s.endswith(w) for w in _WRITTEN_INTRO_TAILS):
+        return False
+    if any(next_s.startswith(sfx) for sfx in _INLINE_QUOTE_SUFFIXES):
+        return False
+    if prev_s and prev_s[-1] not in "：:，,。！？…—”":
+        return False
+    return True
 
 
 @dataclass
@@ -55,8 +82,35 @@ def analyze_markdown_chapter(
             segments.append(ParsedSegment(p_idx, "narration", para, "narrator"))
             continue
 
-        # Infer speaker for quoted lines in this paragraph from attribution text
-        narration_context = " ".join(parts[0::2])
+        # Merge inline non-spoken scare-quotes ("血锁", "饲笼", etc.) back into narration first
+        merged_tokens: list[tuple[str, str]] = []  # (kind, text)
+        for idx, chunk in enumerate(parts):
+            if idx % 2 == 1 and chunk.startswith("“") and chunk.endswith("”"):
+                prev_txt = parts[idx - 1] if idx > 0 else ""
+                next_txt = parts[idx + 1] if idx + 1 < len(parts) else ""
+                inner = chunk[1:-1].strip()
+                if is_spoken_dialogue_quote(prev_txt, inner, next_txt):
+                    merged_tokens.append(("dialogue", inner))
+                else:
+                    if merged_tokens and merged_tokens[-1][0] == "narration":
+                        merged_tokens[-1] = ("narration", merged_tokens[-1][1] + chunk)
+                    else:
+                        merged_tokens.append(("narration", chunk))
+            else:
+                if not chunk:
+                    continue
+                if merged_tokens and merged_tokens[-1][0] == "narration":
+                    merged_tokens[-1] = ("narration", merged_tokens[-1][1] + chunk)
+                else:
+                    merged_tokens.append(("narration", chunk))
+
+        if all(k == "narration" for k, _ in merged_tokens):
+            full_narr = "".join(t for _, t in merged_tokens).strip()
+            if full_narr:
+                segments.append(ParsedSegment(p_idx, "narration", full_narr, "narrator"))
+            continue
+
+        narration_context = " ".join(t for k, t in merged_tokens if k == "narration")
         inferred_role = "unknown"
         for name_str, r_id in role_names:
             if name_str in narration_context:
@@ -65,19 +119,21 @@ def analyze_markdown_chapter(
         if inferred_role == "unknown":
             inferred_role = last_speaker
 
-        for idx, chunk in enumerate(parts):
-            chunk = chunk.strip()
-            if not chunk:
+        for tok_idx, (kind, tok_text) in enumerate(merged_tokens):
+            tok_text = tok_text.strip()
+            if not tok_text:
                 continue
-            if idx % 2 == 1 and chunk.startswith("“") and chunk.endswith("”"):
-                inner = chunk[1:-1].strip()
-                if inner:
-                    segments.append(ParsedSegment(p_idx, "dialogue", inner, inferred_role))
-                    if inferred_role != "unknown":
-                        last_speaker = inferred_role
+            if kind == "dialogue":
+                segments.append(ParsedSegment(p_idx, "dialogue", tok_text, inferred_role))
+                if inferred_role != "unknown":
+                    last_speaker = inferred_role
             else:
-                # Strip trailing redundant speech verb ("福伯低声道：") before an acted quote
-                cleaned = _SPEECH_VERB_TAIL.sub("", chunk).strip(" ，,：:")
+                has_following_dialogue = any(k == "dialogue" for k, _ in merged_tokens[tok_idx + 1 :])
+                if has_following_dialogue:
+                    cleaned = _PURE_SPEAKER_TAG.sub("", tok_text)
+                    cleaned = _SPEECH_VERB_TAIL.sub("", cleaned).strip(" ，,：:")
+                else:
+                    cleaned = tok_text.strip(" ，,：:")
                 if cleaned:
                     segments.append(ParsedSegment(p_idx, "narration", cleaned, "narrator"))
 

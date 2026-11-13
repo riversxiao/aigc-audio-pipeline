@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 import json
 from pathlib import Path
@@ -25,6 +26,7 @@ from .models import (
     next_append_only_path,
     utc_now_iso,
 )
+from .polyphones import apply_xianxia_polyphone_overrides
 from .qa import synthesize_with_playbook_qa
 
 
@@ -272,7 +274,7 @@ def cmd_audition(args: argparse.Namespace) -> int:
         synth, qa, final_text = synthesize_with_playbook_qa(
             client,
             voice_id=prof.voice_id,
-            tagged_text=cue.tts_text or cue.text,
+            tagged_text=cue.tts_text or apply_xianxia_polyphone_overrides(cue.text),
             canonical_prompt=cue.text,
             output_wav=clip_wav,
             stability=cue.stability,
@@ -363,6 +365,7 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
     if motifs_dir is not None:
         motifs_dir.mkdir(parents=True, exist_ok=True)
     cache_dir = Path(args.cache_dir) if args.cache_dir else out_dir / ".cache"
+    workers = max(1, int(getattr(args, "workers", 4)))
 
     client = ElevenLabsClient(cache_dir=cache_dir)
     sub_before = client.get_subscription_safe()
@@ -371,16 +374,43 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
     cue_meta_map: dict[str, dict[str, Any]] = {}
     qa_failures: list[dict[str, Any]] = []
 
-    # 1. Synthesize all dialogue & SFX cues
+    # 1a. Pre-resolve/generate reusable sonic motifs sequentially (prevents duplicate motif races)
+    pending_cues: list[Any] = []
     for cue in cue_sheet.cues:
+        if cue.kind == "sfx" and cue.motif_id and cue.motif_id in registry.sonic_motifs:
+            motif = registry.sonic_motifs[cue.motif_id]
+            if motif.cached_file and Path(motif.cached_file).is_file():
+                cue_audio_map[cue.cue_id] = Path(motif.cached_file)
+                continue
+            stem_wav = (
+                next_append_only_path(motifs_dir, cue.motif_id, ".wav")
+                if motifs_dir is not None
+                else stems_dir / f"{cue.cue_id}_sfx.wav"
+            )
+            sfx_res = client.generate_sfx(
+                prompt=cue.sfx_prompt or motif.sfx_prompt,
+                output_wav=stem_wav,
+                duration_seconds=cue.duration_seconds or motif.duration_seconds,
+                prompt_influence=motif.prompt_influence,
+                loop=motif.loop,
+                model_id=registry.sfx_model_id,
+            )
+            motif.cached_file = str(sfx_res.wav_path)
+            cue_audio_map[cue.cue_id] = sfx_res.wav_path
+        else:
+            pending_cues.append(cue)
+
+    # 1b. Synthesize all dialogue & custom SFX cues concurrently
+    def _synth_cue(cue: Any) -> tuple[str, Path, dict[str, Any] | None, dict[str, Any] | None]:
         if cue.kind == "dialogue":
             prof = registry.resolve_role(cue.role_id)
             assert prof is not None
             stem_wav = stems_dir / f"{cue.cue_id}_{prof.role_id}.wav"
+            effective_tts = cue.tts_text or apply_xianxia_polyphone_overrides(cue.text)
             synth, qa, final_text = synthesize_with_playbook_qa(
                 client,
                 voice_id=prof.voice_id,
-                tagged_text=cue.tts_text or cue.text,
+                tagged_text=effective_tts,
                 canonical_prompt=cue.text,
                 output_wav=stem_wav,
                 stability=cue.stability,
@@ -388,73 +418,72 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
                 language_code=registry.language_code,
                 enable_asr_qa=not args.skip_asr_qa,
             )
-            cue_audio_map[cue.cue_id] = synth.wav_path
-            cue_meta_map[cue.cue_id] = {
+            meta = {
                 "voice_id": prof.voice_id,
                 "final_text": final_text,
                 "qa_passed": qa.passed,
                 "qa": qa.to_dict(),
             }
-            if not qa.passed:
-                qa_failures.append({"cue_id": cue.cue_id, "role_id": prof.role_id, "qa": qa.to_dict()})
-                if args.strict_qa:
-                    print(
-                        json.dumps(
-                            {"aborted_on_qa_failure": cue.cue_id, "qa": qa.to_dict()},
-                            ensure_ascii=False,
-                            indent=2,
-                        ),
-                        file=sys.stderr,
-                    )
-                    return 3
-        else:
-            # Resolve reusable sonic motif if specified
-            prompt = cue.sfx_prompt
-            duration_s = cue.duration_seconds
-            influence = cue.prompt_influence
-            loop = cue.loop
-            is_reusable_motif = bool(cue.motif_id and cue.motif_id in registry.sonic_motifs)
-            if is_reusable_motif:
-                motif = registry.sonic_motifs[cue.motif_id]
-                if motif.cached_file and Path(motif.cached_file).is_file():
-                    cue_audio_map[cue.cue_id] = Path(motif.cached_file)
-                    continue
-                prompt = prompt or motif.sfx_prompt
-                duration_s = duration_s or motif.duration_seconds
-                influence = motif.prompt_influence
-                loop = motif.loop
+            fail = {"cue_id": cue.cue_id, "role_id": prof.role_id, "qa": qa.to_dict()} if not qa.passed else None
+            return cue.cue_id, synth.wav_path, meta, fail
 
-            if is_reusable_motif and motifs_dir is not None:
-                stem_wav = next_append_only_path(motifs_dir, cue.motif_id, ".wav")
-            else:
-                stem_wav = stems_dir / f"{cue.cue_id}_sfx.wav"
-            sfx_res = client.generate_sfx(
-                prompt=prompt,
-                output_wav=stem_wav,
-                duration_seconds=duration_s,
-                prompt_influence=influence,
-                loop=loop,
-                model_id=registry.sfx_model_id,
-            )
-            cue_audio_map[cue.cue_id] = sfx_res.wav_path
-            if is_reusable_motif:
-                registry.sonic_motifs[cue.motif_id].cached_file = str(sfx_res.wav_path)
+        stem_wav = stems_dir / f"{cue.cue_id}_sfx.wav"
+        sfx_res = client.generate_sfx(
+            prompt=cue.sfx_prompt,
+            output_wav=stem_wav,
+            duration_seconds=cue.duration_seconds,
+            prompt_influence=cue.prompt_influence,
+            loop=cue.loop,
+            model_id=registry.sfx_model_id,
+        )
+        return cue.cue_id, sfx_res.wav_path, None, None
 
-    # 2. Compose or reuse per-act instrumental BGM beds
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futs = [pool.submit(_synth_cue, c) for c in pending_cues]
+        for fut in as_completed(futs):
+            cid, wav_path, meta, fail = fut.result()
+            cue_audio_map[cid] = wav_path
+            if meta is not None:
+                cue_meta_map[cid] = meta
+            if fail is not None:
+                qa_failures.append(fail)
+
+    qa_failures.sort(key=lambda x: x["cue_id"])
+    if qa_failures and args.strict_qa:
+        print(
+            json.dumps(
+                {"aborted_on_qa_failure": qa_failures[0]["cue_id"], "qa_failures": qa_failures},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 3
+
+    # 2. Compose or reuse per-act instrumental BGM beds concurrently
     act_bgm_map: dict[str, Path] = {}
+    pending_acts: list[Any] = []
     for act in cue_sheet.acts:
         if act.cached_bgm_file and Path(act.cached_bgm_file).is_file():
             act_bgm_map[act.act_id] = Path(act.cached_bgm_file)
-            continue
-        bgm_wav = stems_dir / f"bgm_{act.act_id}.wav"
-        bgm_res = client.compose_music(
-            prompt=act.bgm_prompt,
-            output_wav=bgm_wav,
-            duration_seconds=act.bgm_duration_s,
-            force_instrumental=True,
-            model_id=registry.music_model_id,
-        )
-        act_bgm_map[act.act_id] = bgm_res.wav_path
+        else:
+            pending_acts.append(act)
+
+    if pending_acts:
+        def _compose_act(act: Any) -> tuple[str, Path]:
+            bgm_wav = stems_dir / f"bgm_{act.act_id}.wav"
+            bgm_res = client.compose_music(
+                prompt=act.bgm_prompt,
+                output_wav=bgm_wav,
+                duration_seconds=act.bgm_duration_s,
+                force_instrumental=True,
+                model_id=registry.music_model_id,
+            )
+            return act.act_id, bgm_res.wav_path
+
+        with ThreadPoolExecutor(max_workers=min(workers, len(pending_acts))) as pool:
+            for aid, bpath in pool.map(_compose_act, pending_acts):
+                act_bgm_map[aid] = bpath
 
     registry.save(reg_path)
 
@@ -466,6 +495,8 @@ def cmd_render_episode(args: argparse.Namespace) -> int:
         output_dir=out_dir,
         cue_meta_map=cue_meta_map,
         registry=registry,
+        workers=workers,
+        clean_work_dir=bool(getattr(args, "clean_work_dir", False)),
     )
     sub_after = client.get_subscription_safe()
 
@@ -711,6 +742,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ren.add_argument("--motifs-dir", default="", help="Dedicated folder to persist reusable sonic_motifs WAVs.")
     p_ren.add_argument("--cache-dir", default="")
     p_ren.add_argument("--ledger", default="")
+    p_ren.add_argument("--workers", type=int, default=4, help="Concurrent synthesis/conditioning worker threads.")
+    p_ren.add_argument("--clean-work-dir", action="store_true", help="Remove temporary _stems_work folder after mastering.")
     p_ren.add_argument("--skip-asr-qa", action="store_true")
     p_ren.add_argument("--strict-qa", action="store_true", help="Abort immediately if a line fails QA twice.")
     p_ren.set_defaults(func=cmd_render_episode)

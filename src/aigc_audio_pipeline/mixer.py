@@ -3,13 +3,20 @@
 from __future__ import annotations
 
 from array import array
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 import json
 import math
 from pathlib import Path
+import shutil
 import subprocess
 import wave
 from typing import Any
+
+try:
+    import audioop as _audioop
+except ImportError:  # pragma: no cover - Python 3.13+ fallback
+    _audioop = None  # type: ignore[assignment]
 
 from .elevenlabs_client import probe_duration_seconds
 from .models import EpisodeCueSheet, extract_tags_and_spoken_text, next_append_only_path
@@ -221,6 +228,17 @@ def _mix_into_buffer(buf: array, clip: array, start_frame: int, gain: float = 1.
     count = end_idx - start_idx
     if count <= 0:
         return
+    if _audioop is not None:
+        buf_bytes = memoryview(buf)[start_idx:end_idx].tobytes()
+        clip_bytes = memoryview(clip)[:count].tobytes()
+        if abs(gain - 1.0) >= 1e-6:
+            clip_bytes = _audioop.mul(clip_bytes, 2, gain)
+        mixed_bytes = _audioop.add(buf_bytes, clip_bytes, 2)
+        mixed_arr = array("h")
+        mixed_arr.frombytes(mixed_bytes)
+        buf[start_idx:end_idx] = mixed_arr
+        return
+
     if abs(gain - 1.0) < 1e-6:
         for i in range(count):
             val = buf[start_idx + i] + clip[i]
@@ -270,31 +288,48 @@ def apply_bgm_ducking_envelope(
     total_frames = len(bgm_samples) // CHANNELS
     merged = _merge_speech_intervals(speech_intervals, bridge_gap_s=0.45)
 
-    # Compute envelope at 100 Hz control rate (every 480 frames = 10ms) for speed & smoothness
+    # Compute envelope at 100 Hz control rate (every 480 frames = 10ms) in O(steps + intervals)
     step_frames = 480
     num_steps = (total_frames + step_frames - 1) // step_frames
     ctrl_gains = [gain_gap] * (num_steps + 1)
 
+    iv_start_idx = 0
+    n_merged = len(merged)
     for step_idx in range(num_steps + 1):
         t = (step_idx * step_frames) / SAMPLE_RATE
+        while iv_start_idx < n_merged and merged[iv_start_idx][1] + release_s < t:
+            iv_start_idx += 1
         g = gain_gap
-        for st, en in merged:
+        for j in range(iv_start_idx, n_merged):
+            st, en = merged[j]
             if t < st - attack_s:
                 break
             if st <= t <= en:
                 g = gain_speech
                 break
             if st - attack_s <= t < st:
-                # Smooth cosine ramp down from gain_gap -> gain_speech
                 alpha = (t - (st - attack_s)) / max(attack_s, 1e-3)
                 blend = 0.5 * (1.0 - math.cos(math.pi * alpha))
                 g = min(g, gain_gap + (gain_speech - gain_gap) * blend)
             elif en < t <= en + release_s:
-                # Smooth cosine ramp up from gain_speech -> gain_gap
                 alpha = (t - en) / max(release_s, 1e-3)
                 blend = 0.5 * (1.0 - math.cos(math.pi * alpha))
                 g = min(g, gain_speech + (gain_gap - gain_speech) * blend)
         ctrl_gains[step_idx] = g
+
+    if _audioop is not None and len(bgm_samples) > 0:
+        raw_bytes = bgm_samples.tobytes()
+        mv = memoryview(raw_bytes)
+        bytes_per_frame = CHANNELS * 2
+        out_chunks: list[bytes] = []
+        for step_idx in range(num_steps):
+            b_start = step_idx * step_frames * bytes_per_frame
+            b_end = min(len(raw_bytes), b_start + step_frames * bytes_per_frame)
+            g_mid = 0.5 * (ctrl_gains[step_idx] + ctrl_gains[step_idx + 1])
+            out_chunks.append(_audioop.mul(mv[b_start:b_end], 2, g_mid))
+        out = array("h")
+        out.frombytes(b"".join(out_chunks))
+        return out
 
     out = array("h", [0]) * len(bgm_samples)
     for step_idx in range(num_steps):
@@ -397,30 +432,38 @@ def master_episode_three_bus(
     *,
     cue_meta_map: dict[str, dict[str, Any]] | None = None,
     registry: Any | None = None,
+    workers: int = 4,
+    clean_work_dir: bool = False,
 ) -> dict[str, Any]:
     """Assemble natural-rate Dialogue Bus + Foreground SFX Bus + Ducked Per-Act BGM Bus."""
-    work_dir = output_dir / "_stems_work"
+    work_dir = output_dir / f"_stems_work_{cue_sheet.episode_id}"
     work_dir.mkdir(parents=True, exist_ok=True)
     cue_meta_map = cue_meta_map or {}
 
-    # 1. Condition each cue clip & compute exact natural timeline
-    cursor_s = cue_sheet.head_pad_s
-    max_end_s = cursor_s
-    resolved_items: list[ResolvedTimelineItem] = []
-    conditioned_map: dict[str, array] = {}
-    act_spans: dict[str, list[float]] = {}
-
-    for cue in cue_sheet.cues:
+    # 1. Condition each cue clip concurrently & compute exact natural timeline
+    def _cond_one(cue: Any) -> tuple[str, array]:
         raw_path = cue_audio_map[cue.cue_id]
         cond_path = work_dir / f"{cue.cue_id}_cond.wav"
         if cue.kind == "dialogue":
             condition_dialogue_clip(raw_path, cond_path, acoustic_space=cue.acoustic_space)
         else:
             condition_sfx_clip(raw_path, cond_path, gain_db=cue.gain_db)
+        return cue.cue_id, _read_stereo_s16(cond_path)
 
-        samples = _read_stereo_s16(cond_path)
+    conditioned_map: dict[str, array] = {}
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        for cid, samples in pool.map(_cond_one, cue_sheet.cues):
+            conditioned_map[cid] = samples
+
+    cursor_s = cue_sheet.head_pad_s
+    max_end_s = cursor_s
+    resolved_items: list[ResolvedTimelineItem] = []
+    act_spans: dict[str, list[float]] = {}
+
+    for cue in cue_sheet.cues:
+        raw_path = cue_audio_map[cue.cue_id]
+        samples = conditioned_map[cue.cue_id]
         dur_s = (len(samples) // CHANNELS) / SAMPLE_RATE
-        conditioned_map[cue.cue_id] = samples
 
         start_s = cursor_s
         end_s = start_s + dur_s
@@ -607,6 +650,8 @@ def master_episode_three_bus(
         "timeline": [asdict(it) for it in resolved_items],
     }
     manifest_path.write_text(json.dumps(manifest_data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if clean_work_dir and work_dir.is_dir():
+        shutil.rmtree(work_dir, ignore_errors=True)
     return {
         "master_wav": master_wav,
         "master_mp3": master_mp3,

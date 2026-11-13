@@ -316,6 +316,35 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertNotIn("真船", srt_text)
         self.assertNotIn("lu_jin", srt_text)
 
+    def test_polyphones_and_inline_scare_quotes(self) -> None:
+        from aigc_audio_pipeline.polyphones import apply_xianxia_polyphone_overrides, compute_tts_text_override
+
+        raw = "[dramatically] 祠堂内，裴真传翻阅九月廿三与九月卅日的参汤卷宗。"
+        over = apply_xianxia_polyphone_overrides(raw)
+        self.assertEqual(over, "[dramatically] 磁堂内，裴真船翻阅九月念三与九月萨日的深汤卷宗。")
+        self.assertEqual(compute_tts_text_override("风雪漫过北渊城。"), "")
+
+        md = (
+            "# 第3章 测试\n\n"
+            "那凶兽体内的精血，岂不正是冲开体内“血锁”最好的大药！\n\n"
+            "纸鹤并未设下“人死即燃”的魂血禁制。\n\n"
+            "陆烬低声道：“先试试边界在哪。”\n"
+        )
+        reg = VoiceCastingRegistry(
+            project_id="zhujie",
+            project_title="诸界锁仙",
+            roles={"lu_jin": VoiceProfile(role_id="lu_jin", display_name="陆烬")},
+        )
+        rep = analyze_markdown_chapter(md, registry=reg)
+        segs = rep["segments"]
+        self.assertEqual(len(segs), 3)
+        self.assertEqual(segs[0].kind, "narration")
+        self.assertIn("“血锁”", segs[0].text)
+        self.assertEqual(segs[1].kind, "narration")
+        self.assertIn("“人死即燃”", segs[1].text)
+        self.assertEqual(segs[2].kind, "dialogue")
+        self.assertEqual(segs[2].speaker_hint, "lu_jin")
+
 
 if __name__ == "__main__":
     unittest.main()
