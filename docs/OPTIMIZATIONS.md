@@ -97,4 +97,13 @@ flowchart LR
   1. **高表现力国风声纹锚点移植**：一次用 `eleven_ttv_v3` 捏好全剧 24 位纯正中国大陆戏剧声优，挑出 100% 逐字对齐的无损纯净干声（`10s–30s`），统一校准至 `44.1kHz 16-bit PCM -16 LUFS` 作为 `Fish Drama 3` 的零样本声纹锚点（`voice_cast_drama3.json`），把顶级声优骨相完整迁移到本地 GPU。
   2. **Drama 3 原生戏剧语法适配器**：将 `eleven_v3` 的离散标签自动转译为 Drama 3 最擅长的多子句英文舞台指示（如 `[cold, deadly calm, suppressed fury]`）、角色专属冷笑/轻笑（`[cold laugh]`）及局部 XML 韵律跨度（`<whisper>` / `<forceful>` / `<slow>`），并共享 `polyphones.py` 70+ 项修仙多音字与古典大写数字纠偏（支持可选 `--phoneme-pins` `<|phoneme_start|>` 拼音硬钉）。
   3. **RAS 参考采样 + 零显存 Whisper 质检门禁 + 首尾死寂精裁**：自动探测并开启 SGLang-Omni `--tts_engine.factory.reference_sampling true`（`ras` 回退），配合 CPU `int8 faster-whisper` 检测标签外泄与句尾截断（异常自动简化标签重跑，最多 3 次）及 `trim_edge_silence_wav()` 消除句首句尾拖沓空白。
-  4. **单卡 96GB 三模常驻 + 同源三总线 `-16 LUFS` 母带混音**：在 Colab G4 96GB 显存内同时常驻 `fishaudio/drama-3` + `MOSS-SoundEffect v2.0` + `ACE-Step 1.5 XL Turbo`（复用 `AudioStudio_G4_Cache` 预编译包秒级冷启动），跨集 6 枚 `sonic_motifs` 母题直通复用，最终统一汇入 `mixer.py` 输出 `*_drama3_master_v001.{wav,mp3,srt,json}`，实现**零 API 边际成本下的电影级多人有声剧量产**。
+  4. **单卡 96GB 三模常驻 + 同源三总线 `-16 LUFS` 母带混音**：在 Colab G4 96GB 显存内同时常驻 `fishaudio/drama-3` + `MOSS-SoundEffect v2.0` + `ACE-Step 1.5 XL Turbo`（复用 `AudioStudio_G4_Cache` 预编译包秒级冷启动），跨集 6 枚 `sonic_motifs` 母题直通复用，最终统一汇入 `mixer.py` 输出母带四件套，实现**零 API 边际成本下的电影级多人有声剧量产**。
+
+### 14. 全本 120 章量产实测排障、纯古风 OST 母题缓存与无人值守止费闭环
+- **痛点**：在 Colab 96GB `RTX PRO 6000 Blackwell (sm_120)` 实跑首集并扩展至全本 120 章（7 大认知世界 + 终局凌霄殿）时，暴露出五类工程级长尾问题：① FlashInfer `sm_120` 即时编译缺 `ninja`；② `faster-whisper` 默认输出繁体字导致简体字召回率误报重抽；③ `ACE-Step 1.5 XL` 默认 `vocal_language="zh"` 偶发混入现代鼓点与人声采样，`MOSS v2.0` 含人类动作词时偶发假人声杂音；④ 跨世界数十位配角共用声优时 `.srt` 字幕若写声优母角名会穿帮；⑤ 百集长跑直接写 Google Drive FUSE 存在小文件延迟且过夜无人值守需自动关机止费。
+- **优化方案**（[`colab_96gb/`](../colab_96gb/) + [`world_ost_palette.py`](../projects/zhujie_suoxian/scripts/world_ost_palette.py) + [`mixer.py`](../src/aigc_audio_pipeline/mixer.py)）：
+  1. **`sm_120` 与简体中文 ASR 零误判**：预装 `ninja-build` + `ninja` 并注入 `sgl-omni` `PATH`；`LocalWhisperQA` 改走 `ffmpeg 16kHz f32le` 管道直喂并注入 `initial_prompt="以下是普通话的句子，请使用简体中文输出。"`，消除 PyAV 元数据报错与繁简误判重抽（单集提速约 2.4 倍）。
+  2. **纯正中国古典器乐与纯净拟音守门员**：构建 `WORLD_OST` 23 首跨世界纯英文古风器乐母题，强制 `vocal_language="unknown"`、`lyrics="[Instrumental]"` 并量化配乐时长档位实现跨 120 集 SHA-256 100% 缓存命中（节省约 85% 配乐算力）；`sanitize_moss_foley_prompt()` 自动剥离咳嗽/呻吟等人声描述词，确保拟音轨 100% 纯物理声效。
+  3. **`TimelineCue.speaker_name` 动态角色真名字幕**：扩展 28 位锁定大陆普通话棚录声优（新增姜清凰、太一、终局残魂、守墓老人），并支持群像声优按章注入 `speaker_name`（如 `【铁山】`、`【玄冥尊】`），音色统一而 `.srt` 字幕精准对位。
+  4. **本地 NVMe 干音缓存 + 无人值守 `.colab_auto_unassign` 自动关机**：将万级 TTS 干音读写全量放在本地高速 NVMe，仅在单集 `.done` 时通过 Drive REST API v3 原子上传四件套并增量回写复用的 BGM 母带；全本 `E120` 归档完毕后自动写入 `.colab_auto_unassign` 唤醒 Notebook 主内核调用 `google.colab.runtime.unassign()` 立停 CCU 计费。
+

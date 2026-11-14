@@ -344,13 +344,27 @@ def build_handler_class(secret_token: str, registry: JobRegistry) -> type[BaseHT
                 self._send_json(200, {"ok": True, "message": "Shutting down Colab runtime in 2s..."})
 
                 def _delayed_unassign() -> None:
-                    time.sleep(2.0)
+                    time.sleep(1.5)
+                    (NVME_ROOT / ".colab_auto_unassign").write_text("shutdown_requested\n", encoding="utf-8")
+                    for bp in (
+                        NVME_ROOT / "colab_agent_bridge.json",
+                        Path("/content/drive/MyDrive") / DEFAULT_DRIVE_BRIDGE_REL,
+                    ):
+                        try:
+                            bp.unlink(missing_ok=True)
+                        except Exception:
+                            pass
+                    os.sync()
                     try:
                         from google.colab import runtime  # type: ignore
 
                         runtime.unassign()
                     except Exception as exc:
-                        print(f"[AgentBridge] runtime.unassign() fallback: {exc}", flush=True)
+                        print(f"[AgentBridge] Delegating runtime.unassign() to parent Notebook cell ({exc})", flush=True)
+                    try:
+                        self.server.shutdown()
+                    except Exception:
+                        pass
 
                 threading.Thread(target=_delayed_unassign, daemon=True).start()
                 return
@@ -400,6 +414,9 @@ def serve_colab_bridge(port: int = 8765, bridge_file: Optional[str] = None, no_t
     if os.path.isdir("/content/drive/My Drive") and not os.path.exists("/content/drive/MyDrive"):
         os.symlink("/content/drive/My Drive", "/content/drive/MyDrive")
 
+    auto_sentinel = NVME_ROOT / ".colab_auto_unassign"
+    auto_sentinel.unlink(missing_ok=True)
+
     secret_token = secrets.token_urlsafe(32)
     registry = JobRegistry(JOBS_DIR)
     handler_cls = build_handler_class(secret_token, registry)
@@ -431,12 +448,32 @@ def serve_colab_bridge(port: int = 8765, bridge_file: Optional[str] = None, no_t
         except Exception as exc:
             print(f"⚠️ 写入 {p} 失败: {exc}", flush=True)
 
+    def _watch_auto_unassign() -> None:
+        while True:
+            if auto_sentinel.exists():
+                print("🛑 [AgentBridge] 检测到自动关机哨兵文件，正在退出桥接服务并交由 Notebook 销毁实例...", flush=True)
+                for p in target_paths:
+                    try:
+                        p.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                os.sync()
+                time.sleep(1.5)
+                try:
+                    server.shutdown()
+                except Exception:
+                    pass
+                return
+            time.sleep(2.0)
+
+    threading.Thread(target=_watch_auto_unassign, daemon=True).start()
+
     print("=" * 76, flush=True)
     print("🚀 《诸界锁仙》 Colab G4 纯 HTTPS 云端接管桥接服务已就绪！", flush=True)
     print(f"🖥️  当前 GPU : {gpu_info}", flush=True)
     print(f"🌐 隧道地址 : {public_url}", flush=True)
-    print("👉 现在请保持本单元格运行，直接回到聊天窗口对 Agent 说：「已启动，开始跑吧」即可！", flush=True)
-    print("   （Agent 跑完并把成片归档回 Google Drive 后，会自动关停本实例止费）", flush=True)
+    print("👉 现在请保持本单元格运行，直接回到聊天窗口对 Agent 说：「开了」即可！", flush=True)
+    print("   （Agent 跑完并把成片归档回 Google Drive 后，即使网页无人值守也会自动关停实例止费）", flush=True)
     print("=" * 76, flush=True)
 
     try:

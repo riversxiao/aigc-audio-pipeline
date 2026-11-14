@@ -661,6 +661,15 @@ def enrich_acestep_bgm_prompt(prompt: str) -> str:
     return ", ".join([base, *extras]) if extras else base
 
 
+def canonical_drama3_stem(cue_sheet: EpisodeCueSheet) -> str:
+    """Build human-readable Chinese master filename stem matching E001-E006 archive convention."""
+    clean_title = re.sub(r'[\\/:*?"<>|\s，。！？：；、“”‘’·—]+', "_", cue_sheet.title).strip("_")
+    m = re.match(r"^第(\d+)章_(.*)$", clean_title)
+    if m:
+        clean_title = f"第{int(m.group(1)):02d}章_{m.group(2)}"
+    return f"{cue_sheet.episode_id}_{clean_title}_Drama3同源古风母带"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="《诸界锁仙》 96GB GPU (Fish Audio Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL) 全自动合成引擎"
@@ -673,9 +682,10 @@ def main() -> int:
     parser.add_argument(
         "--episodes",
         default="E001",
-        help="要渲染的集数：AUDITION（6句极速试听）、E001（首集A/B对比）、或 E007-E040（全量续跑）",
+        help="要渲染的集数：AUDITION（6句极速试听）、E001（首集A/B对比）、或 E007-E120（全本收官续跑）",
     )
     parser.add_argument("--output-dir", default="", help="成品输出目录（默认: <studio-dir>/outputs）")
+    parser.add_argument("--existing-dir", default="", help="额外检查已完成成片的目录（如挂载的 Google Drive outputs/）")
     parser.add_argument("--cache-dir", default="", help="分轨干音与配乐断点续传缓存目录（默认: <studio-dir>/cache）")
     parser.add_argument("--sgl-bin", default="sgl-omni", help="drama3-venv 中的 sgl-omni 可执行文件路径")
     parser.add_argument("--sgl-port", type=int, default=8000)
@@ -690,12 +700,13 @@ def main() -> int:
     parser.add_argument(
         "--offline-dry-run",
         action="store_true",
-        help="CPU 离线全链路干跑自检（无需 GPU，验证 24 角色锚点、台本转译、母题复用与三母线 -16 LUFS 混音）",
+        help="CPU 离线全链路干跑自检（无需 GPU，验证全剧角色锚点、台本转译、母题复用与三母线 -16 LUFS 混音）",
     )
     args = parser.parse_args()
 
     root = Path(args.studio_dir).resolve()
     out_dir = Path(args.output_dir).resolve() if args.output_dir else (root / "outputs")
+    extra_existing_dir = Path(args.existing_dir).resolve() if args.existing_dir else None
     cache_dir = Path(args.cache_dir).resolve() if args.cache_dir else (root / "cache")
     out_dir.mkdir(parents=True, exist_ok=True)
     for sub in ("drama3_tts", "moss_sfx", "acestep_bgm", "logs"):
@@ -705,7 +716,7 @@ def main() -> int:
     voice_cast = json.loads((root / "voice_cast_drama3.json").read_text(encoding="utf-8"))
     characters: dict[str, dict[str, Any]] = voice_cast["characters"]
 
-    # Pre-verify all 24 vocal anchor WAVs exist on disk before touching GPU
+    # Pre-verify all vocal anchor WAVs exist on disk before touching GPU
     for role_id, cinfo in characters.items():
         ap = root / cinfo["anchor_wav"]
         if not ap.is_file():
@@ -719,13 +730,13 @@ def main() -> int:
     acestep_repo = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 
     print("=" * 78, flush=True)
-    print(f"🎬 《诸界锁仙》 Fish Audio Drama 3 影视级有声剧合成台 | 待处理任务: {[t[0] for t in targets]}", flush=True)
+    print(f"🎬 《诸界锁仙》 Fish Audio Drama 3 影视级有声剧合成台 | 待处理任务数: {len(targets)} ({targets[0][0]}..{targets[-1][0]})", flush=True)
     print(
         f"🖥️  设备: {gpu_name} ({vram_gb:.1f} GB, sm_{cc[0]}{cc[1]}) | "
         f"模式: {'离线干跑自检' if args.offline_dry_run else ('96GB 三模型同卡满血常驻' if co_resident_96g else '显存分阶段接力')}",
         flush=True,
     )
-    print(f"🎙️  已加载 24 位国风角色声线锚点 | 跨集母题库: {len(registry.sonic_motifs)} 枚", flush=True)
+    print(f"🎙️  已加载 {len(characters)} 位国风角色声线锚点 | 跨集母题库: {len(registry.sonic_motifs)} 枚", flush=True)
     print("=" * 78, flush=True)
 
     drama_client: Drama3ServerClient | None = None
@@ -754,7 +765,13 @@ def main() -> int:
         for label, cs_path in targets:
             cue_sheet = EpisodeCueSheet.load(cs_path)
             if args.skip_existing and label != "AUDITION_A":
-                existing = sorted(out_dir.glob(f"{cue_sheet.episode_id}_drama3_master_*.mp3"))
+                check_dirs = [out_dir]
+                if extra_existing_dir and extra_existing_dir.exists() and extra_existing_dir != out_dir:
+                    check_dirs.append(extra_existing_dir)
+                existing: list[Path] = []
+                for cdir in check_dirs:
+                    existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_*Drama3*.mp3")))
+                    existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_drama3_master_*.mp3")))
                 if existing:
                     print(f"⏭️  [{cue_sheet.episode_id}] 已存在成品 {existing[-1].name}，自动跳过。", flush=True)
                     continue
@@ -1009,7 +1026,7 @@ def main() -> int:
                     acestep_worker.start()
 
                 for a_idx, act in enumerate(novel_acts, 1):
-                    target_dur = min(max(float(act.bgm_duration_s or 65.0), 45.0), 90.0)
+                    target_dur = 75.0 if float(act.bgm_duration_s or 75.0) >= 60.0 else 48.0
                     bgm_prompt = enrich_acestep_bgm_prompt(act.bgm_prompt)
                     bgm_key = _sha24(
                         {"prompt": bgm_prompt, "vocal_language": "unknown", "dur": round(target_dur, 1)}
@@ -1070,7 +1087,7 @@ def main() -> int:
                 registry=registry,
                 workers=4,
                 clean_work_dir=True,
-                stem_prefix=f"{cue_sheet.episode_id}_drama3_master",
+                stem_prefix=canonical_drama3_stem(cue_sheet),
                 mp3_bitrate=args.mp3_bitrate,
             )
             lufs, tp_db = measure_ebur128(master_res["master_wav"])

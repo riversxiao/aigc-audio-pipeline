@@ -6,7 +6,7 @@
   "sfx_model_id": "eleven_text_to_sound_v3",
   "music_model_id": "music_v2_5",
   "asr_model_id": "scribe_v3",
-  "updated_at": "2026-11-13T07:47:41Z",
+  "updated_at": "2026-11-14T03:24:55Z",
   "drive_audio_root_id": "1wF3upZfT9zG5B06ZGNAkX9YynTJWERjs",
   "roles": {
     "narrator": {
@@ -935,37 +935,96 @@
       "display_name": "姜清凰",
       "aliases": [
         "玄凰女帝",
-        "棺中女人",
-        "棺中娘娘"
+        "棺中女帝",
+        "清凰",
+        "姜前辈"
       ],
-      "tier": "future_nested",
+      "tier": "core_supporting",
       "gender": "female",
       "age_group": "young",
-      "vocal_register": "极寒傲岸、威凌万古却压着三千年恨火与悲凉的帝王御姐音（配合 mental_realm 识海玄霜混响）",
-      "persona_summary": "【第二层身世核心】方寸墟界中心玄霜古棺内的太上仙朝女帝，第1章现棺影、第10章叩棺、第4卷末开棺发声",
-      "accent_requirement": "大陆普通话顶级古风女帝戏剧声线",
-      "status": "pending_audition",
-      "voice_id": "",
+      "vocal_register": "清冷孤傲、威仪万古却暗藏三千载盗火苍凉的玄凰女帝声线",
+      "persona_summary": "方寸墟界玄霜古棺中的太古盗火玄凰女帝，背负骂名三千年，后与陆烬刀剑同心破灭牧场",
+      "accent_requirement": "大陆普通话戏剧配音（严禁港台/美式/澳洲/新加坡飘口音）",
+      "status": "locked",
+      "voice_id": "zt8t4yacy3O9DPvgprGX",
       "public_owner_id": "",
-      "library_voice_name": "预留核心槽位（严禁提前给前期女配使用）",
-      "default_stability": 0.0,
+      "library_voice_name": "诸界锁仙_姜清凰_玄凰女帝 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
       "similarity_boost": 0.85,
       "signature_tags": [
         "[coldly]",
+        "[calmly]",
         "[dramatically]",
-        "[sighs]"
+        "[softly]"
       ],
-      "forbidden_habits": [
-        "此声线为全书灵魂女一专属保留槽，严禁任何前期配角占用"
-      ],
-      "first_appearance_chapter": 1,
+      "forbidden_habits": [],
+      "first_appearance_chapter": 73,
       "appearance_chapters": [
-        1,
-        7,
-        10
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120
       ],
-      "audition_line": "[coldly] 顾长渊……你剖我半颗帝心铸成界锁锚点，如今转世重来，连我是谁都不认得了么？",
-      "audition_history": []
+      "audition_line": "[coldly] 三千年骂名何足挂齿，本帝等这一剑，已等了整整三千载。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T19:20:00Z",
+          "voice_id": "zt8t4yacy3O9DPvgprGX",
+          "library_voice_name": "诸界锁仙_姜清凰_玄凰女帝 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "陆公子言重了。三年前陆伯父失陷天渊……",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/voice_design_candidates/design_suqinghan_cand1_zt8t4yac_v001.wav",
+          "drive_file_id": "",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin regal empress voice"
+        }
+      ]
     },
     "a_mang": {
       "role_id": "a_mang",
@@ -1505,6 +1564,168 @@
           "qa_passed": true,
           "decision": "approved",
           "notes": "Ear-verified studio-clean Mainland Mandarin voice"
+        }
+      ]
+    },
+    "tai_yi": {
+      "role_id": "tai_yi",
+      "display_name": "太一",
+      "aliases": [
+        "牧羊天帝",
+        "凌霄天帝",
+        "原初牧神"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "淡漠恢弘、高踞九天俯瞰万界如刍狗的神明男低音",
+      "persona_summary": "原初牧神天宫之主，执掌诸界基因死锁与方舟牧场秩序的终极对手",
+      "accent_requirement": "大陆普通话戏剧配音（严禁港台/美式/澳洲/新加坡飘口音）",
+      "status": "locked",
+      "voice_id": "27lNSssvbkeH69FeLK7r",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_太一_凌霄牧神天帝 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[calmly]",
+        "[coldly]",
+        "[dismissive]",
+        "[dramatically]"
+      ],
+      "forbidden_habits": [],
+      "first_appearance_chapter": 106,
+      "appearance_chapters": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117
+      ],
+      "audition_line": "[calmly] 诸界不过方舟苗圃，尔等挣断死锁，可敢直面界外大寂灭源海？",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T19:20:00Z",
+          "voice_id": "27lNSssvbkeH69FeLK7r",
+          "library_voice_name": "诸界锁仙_太一_凌霄牧神天帝 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "北渊城深秋的冷雨，已经连着下了七日……",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/voice_design_candidates/design_narrator_cand2_27lNSssv_v001.wav",
+          "drive_file_id": "",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin transcendent baritone"
+        }
+      ]
+    },
+    "fifth_soul_self": {
+      "role_id": "fifth_soul_self",
+      "display_name": "终局残魂",
+      "aliases": [
+        "第五魂",
+        "旧日陆烬",
+        "心脏第五魂"
+      ],
+      "tier": "future_nested",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "与陆烬同源却更显疲惫沧桑、冷寂决绝的失败终局自我声线（配合 mental_realm）",
+      "persona_summary": "潜藏于陆烬心脏最深处的第五道灵魂——来自上一纪元失败终局、逆流时光托付生机的自己",
+      "accent_requirement": "大陆普通话戏剧配音（严禁港台/美式/澳洲/新加坡飘口音）",
+      "status": "locked",
+      "voice_id": "qyh0QmExiN8kvq8U0LeJ",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_终局残魂_旧日自我 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[calmly]",
+        "[softly]",
+        "[hoarsely]",
+        "[whispers]"
+      ],
+      "forbidden_habits": [],
+      "first_appearance_chapter": 88,
+      "appearance_chapters": [
+        88,
+        89,
+        90,
+        106,
+        107
+      ],
+      "audition_line": "[softly] 我便是从那场必死终局里爬回来、替你挡下这一指的你自己。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T19:20:00Z",
+          "voice_id": "qyh0QmExiN8kvq8U0LeJ",
+          "library_voice_name": "诸界锁仙_终局残魂_旧日自我 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "为何不收？苏家欠我父亲一条命……",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/voice_design_candidates/design_lujin_cand1_qyh0QmEx_v001.wav",
+          "drive_file_id": "",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin twin voice of Lu Jin"
+        }
+      ]
+    },
+    "shou_mu_ren": {
+      "role_id": "shou_mu_ren",
+      "display_name": "守墓老人",
+      "aliases": [
+        "蒙眼守昼人",
+        "守昼老人",
+        "守墓奴"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "old",
+      "vocal_register": "苍茫古朴、粗粝悲悯、看透万古生死薪火相传的盲眼守昼/守墓老者声线",
+      "persona_summary": "永夜界盗火守昼老人与终局化作薪柴送陆烬半步真仙的守墓前辈",
+      "accent_requirement": "大陆普通话戏剧配音（严禁港台/美式/澳洲/新加坡飘口音）",
+      "status": "locked",
+      "voice_id": "VfkYbZq5MziAcbLwge59",
+      "public_owner_id": "",
+      "library_voice_name": "诸界锁仙_守墓老人_薪火前辈 (VoiceDesign eleven_ttv_v3)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[sighs]",
+        "[softly]",
+        "[calmly]",
+        "[dramatically]"
+      ],
+      "forbidden_habits": [],
+      "first_appearance_chapter": 47,
+      "appearance_chapters": [
+        47,
+        51,
+        52,
+        108
+      ],
+      "audition_line": "[softly] 老朽守了这缕火四千年，今日总算能含笑化作薪柴，送后生登天了。",
+      "audition_history": [
+        {
+          "recorded_at": "2026-11-13T19:20:00Z",
+          "voice_id": "VfkYbZq5MziAcbLwge59",
+          "library_voice_name": "诸界锁仙_守墓老人_薪火前辈 (VoiceDesign eleven_ttv_v3)",
+          "sample_text": "造孽啊，当年陆爷在城里何等威风……",
+          "stability": 0.5,
+          "similarity_boost": 0.85,
+          "local_file": "/shared/user/.gemini/config/zhujie_suoxian_audio/01_声线试听小样/voice_design_ch03_40_candidates/weathered_elder_npc/weathered_elder_npc_cand2_VfkYbZq5_v001.wav",
+          "drive_file_id": "",
+          "qa_passed": true,
+          "decision": "approved",
+          "notes": "Ear-verified studio-clean Mainland Mandarin ancient guardian voice"
         }
       ]
     }

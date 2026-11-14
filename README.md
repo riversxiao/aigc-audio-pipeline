@@ -1,13 +1,13 @@
-# aigc-audio-pipeline (v1.1.0)
+# aigc-audio-pipeline (v1.2.0)
 
-工业级中文广播剧 / 电影感多人精品有声剧全链路生产流水线（支持 **ElevenLabs v3 云端五合一** 与 **Colab 96GB G4 本地开源三件套 `Fish Audio Drama 3 + MOSS-SoundEffect v2.0 + ACE-Step 1.5 XL`** 双后端）：**原生国风捏声定角 → 100% 无删节多角色拆本编译（含修仙多音字纠偏） → 双后端对白/动效/配乐合成与 ASR 质检 → 自然语速三总线闪避母带合成 → 单集原子云端归档与断点续跑**。
+工业级中文广播剧 / 电影感多人精品有声剧全链路生产流水线（支持 **ElevenLabs v3 云端五合一** 与 **Colab 96GB G4 本地开源三件套 `Fish Audio Drama 3 + MOSS-SoundEffect v2.0 + ACE-Step 1.5 XL`** 双后端）：**原生国风捏声定角 → 100% 无删节多角色拆本编译（含修仙多音字纠偏与跨世界角色真名字幕） → 双后端对白/动效/配乐合成与简体中文 ASR 质检 → 自然语速三总线闪避母带合成 → 单集原子云端归档与无人值守自动关机**。
 
-> 大体积音频母带（`.wav` / `.mp3`）、打包资产包（`.zip`）与密钥不进 Git；台本、声线圣经、进度台账与完整流水线代码全量入库管理。
+> 大体积音频母带（`.wav` / `.mp3`）、打包资产包（`.zip`）与密钥不进 Git；全本 120 章台本、28 位国风声优圣经、进度台账与完整流水线代码全量入库管理。
 >
 > - 方法论手册：[`playbook/AUDIO_RADIO_DRAMA.md`](playbook/AUDIO_RADIO_DRAMA.md)
 > - 十三项核心优化点与实战复盘：[`docs/OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md)
 > - Colab 96GB 本地满血开源三件套推理套件：[`colab_96gb/README_Colab_96GB_Drama3.md`](colab_96gb/README_Colab_96GB_Drama3.md)
-> - 连载实战工程包（《诸界锁仙》第 01–40 章）：[`projects/zhujie_suoxian/`](projects/zhujie_suoxian/)
+> - 全本实战工程包（《诸界锁仙》第 01–120 章大结局全集）：[`projects/zhujie_suoxian/`](projects/zhujie_suoxian/)
 
 ---
 
@@ -15,15 +15,15 @@
 
 ```mermaid
 flowchart LR
-    Nov["小说章节 (.md)"] --> Comp["compiler.py\n100%无删节拆本编译器"]
-    Reg["voice_casting_registry.json\n24锁定国风声优 + 6声效母题"] --> Comp
-    Poly["polyphones.py\n多音字 & 古典大写数字纠偏"] --> Comp
-    Comp --> Cue["分集演出台本 (.json + .md)\nCJK覆盖率 >= 96.5%"]
+    Nov["小说章节 (.md, 全120章)"] --> Comp["compiler.py\n100%无删节拆本编译器"]
+    Reg["voice_casting_registry.json\n28锁定国风声优 + 6声效母题"] --> Comp
+    Poly["polyphones.py + world_ost_palette.py\n多音字纠偏 & 纯中国古典器乐母题"] --> Comp
+    Comp --> Cue["分集演出台本 (E001-E120 .json + .md)\nCJK覆盖率 >= 96.5%"]
     Cue --> Cloud["云端后端: elevenlabs_client.py\nttv_v3 / eleven_v3 / SFX v3 / Music v2.5 + Scribe v3"]
-    Cue --> Local["96GB GPU本地后端: drama3_adapter.py + colab_96gb/\nFish Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL + Whisper QA"]
+    Cue --> Local["96GB GPU本地后端: drama3_adapter.py + colab_96gb/\nFish Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL + 简中 Whisper QA"]
     Cloud --> Mix["mixer.py\naudioop C加速三总线母带 (-16 LUFS)"]
     Local --> Mix
-    Mix --> Queue["batch_queue.py / Drive同步\nEBU R128实测 + 原子归档 + 断点续跑"]
+    Mix --> Queue["batch_queue.py / Drive API原子同步\nEBU R128实测 + 断点续跑 + 自动关机止费"]
 ```
 
 ### 核心模块职责

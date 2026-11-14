@@ -361,19 +361,22 @@ def compile_episode_cue_sheet(
             raw_txt = item["text"]
             tagged = f"{tag_prefix} {raw_txt}".strip() if tag_prefix else raw_txt
             stab = float(spec.get("stability", prof.default_stability))
+            speaker_override = str(spec.get("speaker_name", "")).strip()
+            disp_label = speaker_override or prof.display_name
             cues.append(
                 TimelineCue(
                     cue_id=f"c{idx:03d}_{role_id}_p{item['p_idx']:03d}",
                     act_id=act_id,
                     kind="dialogue",
                     role_id=role_id,
+                    speaker_name=speaker_override,
                     text=tagged,
                     tts_text=compute_tts_text_override(tagged),
                     stability=stab,
                     similarity_boost=0.85,
                     acoustic_space=item["space"],
                     gap_after_s=float(spec.get("gap_after_s", 0.65 if is_act_end else 0.32)),
-                    director_note=spec.get("note", f"{prof.display_name}对白"),
+                    director_note=spec.get("note", f"{disp_label}对白"),
                 )
             )
 

@@ -269,6 +269,7 @@ class TimelineCue:
     kind: Literal["dialogue", "sfx"]
     # Dialogue fields
     role_id: str = ""
+    speaker_name: str = ""
     text: str = ""
     tts_text: str = ""
     stability: float = 0.5

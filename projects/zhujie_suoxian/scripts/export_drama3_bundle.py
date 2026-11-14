@@ -92,6 +92,25 @@ def discover_zhujie_24_anchor_specs(audio_workspace: Path, cue_sheets_dir: Path)
         "anchor_text": "好黑啊……为什么你不点灯……把你的眼珠子抠出来点着吧……留下来陪我们吧……",
     }
 
+    # 4. Dedicated VoiceDesign (`eleven_ttv_v3`) studio anchors for Chapters 41-120 Grand Finale core roles
+    init_vd_dir = audio_workspace / "01_声线试听小样" / "voice_design_candidates"
+    specs["jiang_qinghuang"] = {
+        "audio_path": str(init_vd_dir / "design_suqinghan_cand1_zt8t4yac_v001.wav"),
+        "anchor_text": "陆公子言重了。三年前陆伯父失陷天渊，苏家上下亦曾多方打探，奈何仙凡殊途，各有命数。如今清寒已入玄剑宗内门，大道在前，实在不宜再耽于俗世旧约。今日特来归还当年庚帖，也请陆公子交还那枚寒渊佩，自此男婚女嫁，两不相干。",
+    }
+    specs["tai_yi"] = {
+        "audio_path": str(init_vd_dir / "design_narrator_cand2_27lNSssv_v001.wav"),
+        "anchor_text": "北渊城深秋的冷雨，已经连着下了七日。残破的青瓦飞檐下，雨水顺着断裂的兽首滴落在天井青石板上。就在那枚灰白印记彻底崩碎的刹那，万古尘封的石门在陆烬识海中轰然洞开。九根断裂的青铜巨柱下，无数暗红锁链正死死缠绕着一口结满寒霜的古老白棺。",
+    }
+    specs["fifth_soul_self"] = {
+        "audio_path": str(init_vd_dir / "design_lujin_cand1_qyh0QmEx_v001.wav"),
+        "anchor_text": "为何不收？苏家欠我父亲一条命，这五十枚下品灵石与一瓶凝气丹，连当年救命利息的零头都不够，权当苏小姐今日登门赎身的路费。至于这枚寒渊佩，拿去便是。福伯，不必送客，去把大门关上，莫让外头的秋风吹灭了父亲灵前的长明灯。",
+    }
+    specs["shou_mu_ren"] = {
+        "audio_path": str(cand_dir / "weathered_elder_npc" / "weathered_elder_npc_cand2_VfkYbZq5_v001.wav"),
+        "anchor_text": "造孽啊，当年陆爷在城里何等威风，快拿回去罢，铜板下月再结也不迟。老汉我在这断头哨守了四十年界碑，三年前也是这么个鬼天，陆擎苍那汉子浑身是血走到老汉这石屋里歇脚，拿半袋白面换了一壶烧酒。后生，赶紧顺着前人脚印往下走，莫回头！",
+    }
+
     return specs
 
 

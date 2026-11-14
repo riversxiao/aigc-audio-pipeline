@@ -161,14 +161,24 @@ def drive_api_upsert_file(local_path: Path, parent_id: str, tok: str) -> None:
 
 
 def unpack_project_to_nvme() -> Path:
-    """Unpack the 24-anchor + 6-motif + 40-episode bundle onto local G4 NVMe SSD in <2s."""
+    """Unpack the 28-anchor + 6-motif + 120-episode bundle onto local G4 NVMe SSD in <2s."""
     t0 = time.time()
     local_studio = WORK_ROOT / "zhujie_studio"
-    if (local_studio / "voice_cast_drama3.json").exists() and len(list((local_studio / "cue_sheets").glob("E*.json"))) >= 40:
-        print(f"⚡ 本地 NVMe 《诸界锁仙》广播剧工程已就绪: {local_studio}", flush=True)
+    has_120 = len(list((local_studio / "cue_sheets").glob("E*.json"))) >= 120 if (local_studio / "cue_sheets").exists() else False
+    has_28 = False
+    if (local_studio / "voice_cast_drama3.json").is_file():
+        try:
+            has_28 = len(json.loads((local_studio / "voice_cast_drama3.json").read_text(encoding="utf-8")).get("characters", {})) >= 28
+        except Exception:
+            has_28 = False
+
+    if has_120 and has_28:
+        print(f"⚡ 本地 NVMe 《诸界锁仙》120集全本广播剧工程已就绪: {local_studio}", flush=True)
     else:
         local_studio.mkdir(parents=True, exist_ok=True)
         zip_dst = NVME_ROOT / "zhujie_suoxian_96gb_drama3_bundle.zip"
+        if zip_dst.exists() and not (has_120 and has_28):
+            zip_dst.unlink(missing_ok=True)
         if not zip_dst.exists():
             tok = get_drive_token()
             fuse_candidates = [
@@ -177,17 +187,17 @@ def unpack_project_to_nvme() -> Path:
             ]
             fuse_zip = next((p for p in fuse_candidates if p.exists()), None)
             if tok:
-                print("⬇️ 正在通过 Drive v3 高速通道拉取《诸界锁仙》164MB 工程包至本地 NVMe...", flush=True)
+                print("⬇️ 正在通过 Drive v3 高速通道拉取《诸界锁仙》120集全本工程包至本地 NVMe...", flush=True)
                 drive_api_download(DRIVE_BUNDLE_ZIP_ID, zip_dst, tok)
             elif fuse_zip is not None:
-                print(f"⬇️ 正在从挂载云盘复制《诸界锁仙》工程包至本地 NVMe: {fuse_zip} ...", flush=True)
+                print(f"⬇️ 正在从挂载云盘复制《诸界锁仙》120集全本工程包至本地 NVMe: {fuse_zip} ...", flush=True)
                 shutil.copy2(fuse_zip, zip_dst)
             else:
-                raise RuntimeError("未检测到 127.0.0.1:8012 Token 服务或挂载云盘工程包，请先执行 colab dfs mount！")
+                raise RuntimeError("未检测到 127.0.0.1:8012 Token 服务或挂载云盘工程包，请先挂载 Google Drive！")
 
         with zipfile.ZipFile(zip_dst, "r") as zf:
             zf.extractall(local_studio)
-        print(f"✅ 工程包本地 NVMe 极速解压完成 ({time.time() - t0:.2f}s) -> {local_studio}", flush=True)
+        print(f"✅ 120集全本工程包本地 NVMe 极速解压完成 ({time.time() - t0:.2f}s) -> {local_studio}", flush=True)
 
     # Overlay latest run_zhujie_96gb_studio.py / voice_cast_drama3.json from Drive or /content upload
     for rel in ("run_zhujie_96gb_studio.py", "voice_cast_drama3.json"):
@@ -397,15 +407,83 @@ def start_cloudflare_tunnel(port: int = 8000) -> Optional[subprocess.Popen]:
     return proc
 
 
+def seed_and_sync_reusable_stems(nvme_cache: Path, drive_cache: Path, direction: str) -> None:
+    """Sync lightweight reusable BGM/SFX stems (~30-80 WAVs) between Drive FUSE and local NVMe."""
+    if not DRIVE_STUDIO_DIR.exists():
+        return
+    for sub in ("acestep_bgm", "moss_sfx"):
+        src_d = (drive_cache / sub) if direction == "pull" else (nvme_cache / sub)
+        dst_d = (nvme_cache / sub) if direction == "pull" else (drive_cache / sub)
+        if not src_d.exists():
+            continue
+        dst_d.mkdir(parents=True, exist_ok=True)
+        for wf in src_d.glob("*.wav"):
+            if wf.name.endswith("_raw.wav"):
+                continue
+            target = dst_d / wf.name
+            if not target.exists():
+                try:
+                    shutil.copy2(wf, target)
+                except Exception:
+                    pass
+
+
+def populate_existing_markers_dir(markers_dir: Path) -> Path:
+    """Build fast local `.mp3` existence markers from Drive REST API v3 + FUSE outputs/ for `--skip-existing`."""
+    markers_dir.mkdir(parents=True, exist_ok=True)
+    if DRIVE_OUTPUTS_DIR.exists():
+        for mp3 in DRIVE_OUTPUTS_DIR.glob("E*.mp3"):
+            (markers_dir / mp3.name).touch()
+    tok = get_drive_token()
+    if tok:
+        try:
+            page_token = ""
+            while True:
+                params = {
+                    "q": f"trashed = false and '{DRIVE_OUTPUTS_FOLDER_ID}' in parents",
+                    "fields": "nextPageToken,files(name)",
+                    "pageSize": 500,
+                }
+                if page_token:
+                    params["pageToken"] = page_token
+                req = urllib.request.Request(
+                    "https://www.googleapis.com/drive/v3/files?" + urllib.parse.urlencode(params),
+                    headers={"Authorization": f"Bearer {tok}"},
+                )
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    payload = json.loads(resp.read().decode("utf-8"))
+                for item in payload.get("files", []):
+                    nm = item.get("name", "")
+                    if nm.endswith(".mp3") and nm.startswith("E"):
+                        (markers_dir / nm).touch()
+                page_token = payload.get("nextPageToken", "")
+                if not page_token:
+                    break
+        except Exception as exc:
+            print(f"ℹ️ Drive API 已完成集数预检跳过 ({exc})", flush=True)
+    return markers_dir
+
+
 def release_colab_runtime() -> None:
     """Destroy the Colab runtime immediately after archiving outputs so 0 idle CCU is burned."""
     print("🛑 [--auto-unassign] 所有成品已原子归档至 Google Drive，正在主动销毁 G4 运行时立停 CCU 计费...", flush=True)
+    for bp in (NVME_ROOT / "colab_agent_bridge.json", DRIVE_STUDIO_DIR / "colab_agent_bridge.json"):
+        try:
+            bp.unlink(missing_ok=True)
+        except Exception:
+            pass
+    # Signal `colab_agent_bridge.py` -> Notebook Cell 0 IPython kernel to invoke `google.colab.runtime.unassign()`!
+    try:
+        (NVME_ROOT / ".colab_auto_unassign").write_text("auto_unassign_after_completion\n", encoding="utf-8")
+        os.sync()
+    except Exception:
+        pass
     try:
         from google.colab import runtime  # type: ignore
 
         runtime.unassign()
     except Exception as exc:
-        print(f"ℹ️ 当前非交互式 Notebook 内核，跳过 runtime.unassign() ({exc})；若由 CLI 启动请执行 `colab stop`。", flush=True)
+        print(f"ℹ️ 已写入 .colab_auto_unassign 交由 Notebook 主内核自动销毁实例 ({exc})。", flush=True)
 
 
 def main() -> None:
@@ -413,7 +491,7 @@ def main() -> None:
     parser.add_argument(
         "--episodes",
         default="AUDITION,E001",
-        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）、E007-E040（全量续跑）或 SERVE（仅常驻HTTP隧道供远程Agent调用）",
+        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）、E007-E120（全本114集收官续跑）或 SERVE",
     )
     parser.add_argument(
         "--profile",
@@ -421,22 +499,24 @@ def main() -> None:
         default="fp8",
         help="fp8 = 满血 fishaudio/drama-3 (35B MoE FP8, 96G推荐); fast = fishaudio/drama-3-int4 (20.8GB)",
     )
-    parser.add_argument("--skip-existing", action="store_true", help="跳过本地已存在成品的集数")
+    parser.add_argument("--skip-existing", action="store_true", help="跳过本地或云盘 outputs/ 已存在成品的集数")
     parser.add_argument("--phoneme-pins", action="store_true", help="启用 Drama 3 原生 <|phoneme_start|> 拼音锚点")
     parser.add_argument(
         "--mirror-to-main-masters",
         action="store_true",
-        help="除保存至 05_Colab_96GB.../outputs/ 外，同步抄送一份 _drama3_master_v001 至 03_分集成片音频/",
+        help="除保存至 05_Colab_96GB.../outputs/ 外，同步抄送一份母带至 03_分集成片音频/",
     )
     parser.add_argument(
         "--public-tunnel",
         action="store_true",
-        help="对齐 ai-cinema-studio-kit：启动 trycloudflare HTTPS 隧道并将地址同步至 Drive drama3_colab_tunnel_url.txt，供云端 Agent 纯 HTTP 远程驱动",
+        help="对齐 ai-cinema-studio-kit：启动 trycloudflare HTTPS 隧道并将地址同步至 Drive drama3_colab_tunnel_url.txt",
     )
     parser.add_argument(
         "--auto-unassign",
+        "--auto-shutdown",
+        dest="auto_unassign",
         action="store_true",
-        help="对齐 ai-cinema-studio-kit 防烧钱守门员：成品落盘 Google Drive 后自动调用 runtime.unassign() 销毁实例立停 CCU 计费",
+        help="防烧钱守门员：全部成品落盘 Google Drive 后自动销毁 G4 实例立停 CCU 计费（支持无人值守过夜）",
     )
     parser.add_argument("--refresh-envs", action="store_true", help="强制重建虚拟环境")
     args = parser.parse_args()
@@ -509,8 +589,10 @@ def main() -> None:
 
     local_outputs = local_studio / "outputs"
     local_outputs.mkdir(parents=True, exist_ok=True)
-    # Persist stem cache on Drive if mounted so interrupted runs across Colab sessions resume instantly!
-    persistent_cache = (DRIVE_STUDIO_DIR / ".stem_cache") if DRIVE_STUDIO_DIR.exists() else (local_studio / "cache")
+    nvme_cache = WORK_ROOT / "stem_cache"
+    drive_cache = DRIVE_STUDIO_DIR / ".stem_cache"
+    seed_and_sync_reusable_stems(nvme_cache, drive_cache, direction="pull")
+    existing_markers = populate_existing_markers_dir(WORK_ROOT / "drive_existing_markers") if args.skip_existing else None
 
     cmd = [
         str(moss_venv / "bin/python"),
@@ -523,7 +605,7 @@ def main() -> None:
         "--output-dir",
         str(local_outputs),
         "--cache-dir",
-        str(persistent_cache),
+        str(nvme_cache),
         "--sgl-bin",
         str(drama_venv / "bin/sgl-omni"),
         "--moss-python",
@@ -531,6 +613,8 @@ def main() -> None:
         "--acestep-python",
         str(acestep_venv / "bin/python"),
     ]
+    if existing_markers is not None:
+        cmd.extend(["--existing-dir", str(existing_markers)])
     if use_int4:
         cmd.append("--force-int4")
     if args.skip_existing:
@@ -544,13 +628,17 @@ def main() -> None:
 
     try:
         while proc.poll() is None:
+            prev_n = len(synced_markers)
             sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
+            if len(synced_markers) > prev_n:
+                seed_and_sync_reusable_stems(nvme_cache, drive_cache, direction="push")
             time.sleep(4.0)
 
         if proc.returncode != 0:
             raise RuntimeError(f"❌ run_zhujie_96gb_studio.py 异常退出 (rc={proc.returncode})")
 
         sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
+        seed_and_sync_reusable_stems(nvme_cache, drive_cache, direction="push")
         os.sync()
         time.sleep(2.0)
     finally:

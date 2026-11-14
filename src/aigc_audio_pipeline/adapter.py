@@ -203,11 +203,12 @@ def export_cue_sheet_markdown(
                 + (f"  \n  *导演备注：{cue.director_note}*" if cue.director_note else "")
             )
         else:
-            role_label = cue.role_id
+            role_label = cue.speaker_name or cue.role_id
             if registry is not None:
                 prof = registry.resolve_role(cue.role_id)
                 if prof is not None:
-                    role_label = f"{prof.display_name} (`{cue.role_id}`)"
+                    disp = f"{cue.speaker_name} / {prof.display_name}" if cue.speaker_name and cue.speaker_name != prof.display_name else prof.display_name
+                    role_label = f"{disp} (`{cue.role_id}`)"
             space_badge = f" | 声场 `{cue.acoustic_space}`" if cue.acoustic_space != "dry" else ""
             out.append(
                 f"- 🎙️ **`[{cue.cue_id}]` {role_label}** "

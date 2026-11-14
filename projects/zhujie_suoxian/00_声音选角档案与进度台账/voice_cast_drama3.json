@@ -2,9 +2,9 @@
   "project_id": "zhujie_suoxian",
   "project_title": "《诸界锁仙》多人精品有声剧 / 广播剧工程",
   "engine": "fishaudio/drama-3 + OpenMOSS-Team/MOSS-SoundEffect-v2.0 + ACE-Step/acestep-v15-xl-turbo-diffusers",
-  "exported_at": "2026-11-13T09:12:26Z",
+  "exported_at": "2026-11-14T03:55:42Z",
   "anchor_sample_rate_hz": 44100,
-  "role_count": 24,
+  "role_count": 28,
   "characters": {
     "a_mang": {
       "role_id": "a_mang",
@@ -84,6 +84,19 @@
       "anchor_text": "周执事尽管放心，我家小姐今早已经搬进寒玉峰城外别院静修了，这株冰髓草是裴公子特意吩咐买来给小姐温养三品冰灵脉的，灵石自然直接走别院的账。",
       "default_stability": 0.5
     },
+    "fifth_soul_self": {
+      "role_id": "fifth_soul_self",
+      "display_name": "终局残魂",
+      "tier": "future_nested",
+      "gender": "male",
+      "age_group": "young",
+      "vocal_register": "与陆烬同源却更显疲惫沧桑、冷寂决绝的失败终局自我声线（配合 mental_realm）",
+      "source_voice_name": "诸界锁仙_终局残魂_旧日自我 (VoiceDesign eleven_ttv_v3)",
+      "anchor_wav": "voice_anchors/fifth_soul_self.wav",
+      "anchor_duration_s": 24.842,
+      "anchor_text": "为何不收？苏家欠我父亲一条命，这五十枚下品灵石与一瓶凝气丹，连当年救命利息的零头都不够，权当苏小姐今日登门赎身的路费。至于这枚寒渊佩，拿去便是。福伯，不必送客，去把大门关上，莫让外头的秋风吹灭了父亲灵前的长明灯。",
+      "default_stability": 0.5
+    },
     "fu_bo": {
       "role_id": "fu_bo",
       "display_name": "福伯",
@@ -109,6 +122,19 @@
       "anchor_duration_s": 30.929,
       "anchor_text": "不必麻烦了，这两瓶凝髓散，本座替鬼樊楼全收了，账房多支二十枚灵石给这位先生交个朋友。原来真正踏进死局的猎物，根本不是陆丹师，而是外头那四个不知死活的蠢货！城外四面暗哨一刻钟一报，陆丹师今夜想先宰哪只狗，我鬼樊楼便替你把哪条巷子的灯吹灭！",
       "default_stability": 0.0
+    },
+    "jiang_qinghuang": {
+      "role_id": "jiang_qinghuang",
+      "display_name": "姜清凰",
+      "tier": "core_supporting",
+      "gender": "female",
+      "age_group": "young",
+      "vocal_register": "清冷孤傲、威仪万古却暗藏三千载盗火苍凉的玄凰女帝声线",
+      "source_voice_name": "诸界锁仙_姜清凰_玄凰女帝 (VoiceDesign eleven_ttv_v3)",
+      "anchor_wav": "voice_anchors/jiang_qinghuang.wav",
+      "anchor_duration_s": 34.691,
+      "anchor_text": "陆公子言重了。三年前陆伯父失陷天渊，苏家上下亦曾多方打探，奈何仙凡殊途，各有命数。如今清寒已入玄剑宗内门，大道在前，实在不宜再耽于俗世旧约。今日特来归还当年庚帖，也请陆公子交还那枚寒渊佩，自此男婚女嫁，两不相干。",
+      "default_stability": 0.5
     },
     "li_cang": {
       "role_id": "li_cang",
@@ -253,6 +279,19 @@
       "anchor_text": "恩公大恩大德，俺石猛这辈子都记在心里！俺从小跟着爹在铁匠铺拉风箱抡大锤，别的巧心思没有，就是有一把子使不完的力气！白鹤药庄和福爷爷交给俺守着，俺一定日夜苦练这门锻骨劲，等恩公将来从北边平安归来！此事关系重大，切莫走漏半点风声，咱们按规矩行事便是。",
       "default_stability": 0.5
     },
+    "shou_mu_ren": {
+      "role_id": "shou_mu_ren",
+      "display_name": "守墓老人",
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "old",
+      "vocal_register": "苍茫古朴、粗粝悲悯、看透万古生死薪火相传的盲眼守昼/守墓老者声线",
+      "source_voice_name": "诸界锁仙_守墓老人_薪火前辈 (VoiceDesign eleven_ttv_v3)",
+      "anchor_wav": "voice_anchors/shou_mu_ren.wav",
+      "anchor_duration_s": 37.146,
+      "anchor_text": "造孽啊，当年陆爷在城里何等威风，快拿回去罢，铜板下月再结也不迟。老汉我在这断头哨守了四十年界碑，三年前也是这么个鬼天，陆擎苍那汉子浑身是血走到老汉这石屋里歇脚，拿半袋白面换了一壶烧酒。后生，赶紧顺着前人脚印往下走，莫回头！",
+      "default_stability": 0.5
+    },
     "snobbish_steward_npc": {
       "role_id": "snobbish_steward_npc",
       "display_name": "世家管事",
@@ -290,6 +329,19 @@
       "anchor_wav": "voice_anchors/su_qinghan.wav",
       "anchor_duration_s": 18.16,
       "anchor_text": "当年恩情，清寒铭记于心，日后若陆公子在北渊城遇到凡俗难处，苏家自会照拂一二。 但仙路有别，强绑在一处，对陆公子并非福分。",
+      "default_stability": 0.5
+    },
+    "tai_yi": {
+      "role_id": "tai_yi",
+      "display_name": "太一",
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "vocal_register": "淡漠恢弘、高踞九天俯瞰万界如刍狗的神明男低音",
+      "source_voice_name": "诸界锁仙_太一_凌霄牧神天帝 (VoiceDesign eleven_ttv_v3)",
+      "anchor_wav": "voice_anchors/tai_yi.wav",
+      "anchor_duration_s": 36.049,
+      "anchor_text": "北渊城深秋的冷雨，已经连着下了七日。残破的青瓦飞檐下，雨水顺着断裂的兽首滴落在天井青石板上。就在那枚灰白印记彻底崩碎的刹那，万古尘封的石门在陆烬识海中轰然洞开。九根断裂的青铜巨柱下，无数暗红锁链正死死缠绕着一口结满寒霜的古老白棺。",
       "default_stability": 0.5
     },
     "weathered_elder_npc": {

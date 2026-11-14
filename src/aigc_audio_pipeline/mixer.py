@@ -36,6 +36,7 @@ class ResolvedTimelineItem:
     duration_s: float
     gap_after_s: float
     stem_file: str
+    speaker_name: str = ""
     spoken_text: str = ""
     tagged_text: str = ""
     voice_id: str = ""
@@ -492,6 +493,7 @@ def master_episode_three_bus(
                 duration_s=round(dur_s, 4),
                 gap_after_s=cue.gap_after_s,
                 stem_file=str(raw_path),
+                speaker_name=getattr(cue, "speaker_name", ""),
                 spoken_text=clean_spoken,
                 tagged_text=cue.text,
                 voice_id=str(meta.get("voice_id", "")),
@@ -623,6 +625,8 @@ def master_episode_three_bus(
             continue
         if item.role_id == "narrator":
             speaker_prefix = ""
+        elif item.speaker_name:
+            speaker_prefix = f"【{item.speaker_name}】"
         else:
             prof = registry.resolve_role(item.role_id) if registry is not None else None
             speaker_label = prof.display_name if prof is not None else item.role_id
