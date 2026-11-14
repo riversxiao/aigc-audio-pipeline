@@ -64,8 +64,9 @@ _CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 # Persistent isolated worker scripts (MOSS v2.0 uses transformers 4.57 / diffusers 0.37;
 # ACE-Step 1.5 XL uses diffusers >= 0.41 AceStepPipeline)
 _MOSS_WORKER_CODE = r"""
-import json, os, sys
+import gc, json, os, sys
 os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import numpy as np
 import soundfile as sf
 import torch
@@ -76,6 +77,7 @@ dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
 print(f"[MOSS-SoundEffect v2.0] Loading {model_id} ({dtype}, 48kHz)...", flush=True)
 pipe = MossSoundEffectPipeline.from_pretrained(model_id, torch_dtype=dtype, device="cuda")
 sr = int(getattr(pipe, "sample_rate", 48000))
+torch.cuda.empty_cache()
 print("__RPC__:" + json.dumps({"status": "ready", "sample_rate": sr}), flush=True)
 
 for line in sys.stdin:
@@ -97,6 +99,9 @@ for line in sys.stdin:
                 cfg_scale=cfg,
             )
         wav = audio.detach().cpu()
+        del audio
+        gc.collect()
+        torch.cuda.empty_cache()
         if wav.ndim == 3:
             wav = wav[0]
         elif wav.ndim == 1:
@@ -110,12 +115,15 @@ for line in sys.stdin:
         sf.write(out_p, wav_np, sr, subtype="PCM_16")
         print("__RPC__:" + json.dumps({"status": "ok", "out_path": out_p}), flush=True)
     except Exception as exc:
+        gc.collect()
+        torch.cuda.empty_cache()
         print("__RPC__:" + json.dumps({"status": "error", "error": str(exc)}), flush=True)
 """
 
 _ACESTEP_WORKER_CODE = r"""
-import json, os, sys
+import gc, json, os, sys
 os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import numpy as np
 import soundfile as sf
 import torch
@@ -123,11 +131,15 @@ from diffusers import AceStepPipeline
 
 model_id = sys.argv[1]
 dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
-print(f"[ACE-Step 1.5 XL] Loading {model_id} ({dtype}, 48kHz Stereo, VAE tiling)...", flush=True)
+print(f"[ACE-Step 1.5 XL] Loading {model_id} ({dtype}, 48kHz Stereo, VAE tiling+slicing)...", flush=True)
 pipe = AceStepPipeline.from_pretrained(model_id, torch_dtype=dtype).to("cuda")
-if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_tiling"):
-    pipe.vae.enable_tiling()
+if hasattr(pipe, "vae"):
+    if hasattr(pipe.vae, "enable_tiling"):
+        pipe.vae.enable_tiling()
+    if hasattr(pipe.vae, "enable_slicing"):
+        pipe.vae.enable_slicing()
 sr = int(getattr(pipe, "sample_rate", 48000))
+torch.cuda.empty_cache()
 print("__RPC__:" + json.dumps({"status": "ready", "sample_rate": sr}), flush=True)
 
 for line in sys.stdin:
@@ -148,6 +160,9 @@ for line in sys.stdin:
                 guidance_scale=float(req.get("guidance_scale", 1.0)),
             )
         audio = out.audios[0].T.detach().cpu().float().numpy()
+        del out
+        gc.collect()
+        torch.cuda.empty_cache()
         peak = float(np.max(np.abs(audio))) if audio.size else 0.0
         if peak > 1e-4:
             audio = audio / peak * 0.88
@@ -156,6 +171,8 @@ for line in sys.stdin:
         sf.write(out_p, audio, sr, subtype="PCM_16")
         print("__RPC__:" + json.dumps({"status": "ok", "out_path": out_p}), flush=True)
     except Exception as exc:
+        gc.collect()
+        torch.cuda.empty_cache()
         print("__RPC__:" + json.dumps({"status": "error", "error": str(exc)}), flush=True)
 """
 
@@ -245,6 +262,7 @@ class SubprocessJsonWorker:
         print(f"🚀 [{self.label}] 正在加载模型权重至显存: {self.model_id} ...", flush=True)
         env = os.environ.copy()
         env["TORCHDYNAMO_DISABLE"] = "1"
+        env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
         env["PYTHONUNBUFFERED"] = "1"
         self.proc = subprocess.Popen(
             [self.python_bin, "-u", "-c", self.inline_code, self.model_id],
@@ -280,7 +298,11 @@ class SubprocessJsonWorker:
                 self.proc.stdin.flush()
                 self.proc.wait(timeout=10)
         except Exception:
-            self.proc.kill()
+            try:
+                self.proc.kill()
+                self.proc.wait(timeout=5)
+            except Exception:
+                pass
         finally:
             self.proc = None
 
@@ -310,14 +332,14 @@ class Drama3ServerClient:
 
     def _budget_flags(self) -> list[str]:
         if self.co_resident_96g and not self.model_repo.endswith("-int4"):
-            # ~59.6GB for 35B MoE FP8 Drama 3 -> leaves ~36.4GB free for MOSS v2.0 + ACE-Step 1.5 XL!
+            # ~56GB for 35B MoE FP8 Drama 3 (0.46 tts + full 0.08 vocoder + 2GiB prep) -> ~39GB free for MOSS v2.0 + ACE-Step 1.5 XL!
             return [
                 "--tts_engine.gpu_memory_fraction",
-                "0.50",
+                "0.46",
                 "--vocoder.gpu_memory_fraction",
                 "0.08",
                 "--preprocessing.total_reserve_bytes",
-                "4GiB",
+                "2GiB",
             ]
         if self.co_resident_96g:
             return [
@@ -973,14 +995,23 @@ def main() -> int:
                     elif not sfx_wav.is_file():
                         assert moss_worker is not None
                         raw_moss = cache_dir / "moss_sfx" / f"{sfx_key}_raw.wav"
-                        moss_worker.request(
-                            {
-                                "prompt": prompt,
-                                "seconds": cue.duration_seconds,
-                                "out_path": str(raw_moss),
-                                "seed": 42 + idx,
-                            }
-                        )
+                        moss_req = {
+                            "prompt": prompt,
+                            "seconds": cue.duration_seconds,
+                            "out_path": str(raw_moss),
+                            "seed": 42 + idx,
+                        }
+                        try:
+                            moss_worker.request(moss_req)
+                        except RuntimeError as exc:
+                            if "out of memory" in str(exc).lower():
+                                print("⚠️ [MOSS-SFX] 显存峰值触顶，临时释放 ACE-Step 显存并自动重试...", flush=True)
+                                if acestep_worker is not None:
+                                    acestep_worker.close()
+                                moss_worker.close()
+                                moss_worker.request(moss_req)
+                            else:
+                                raise
                         subprocess.run(
                             [
                                 "ffmpeg",
@@ -1039,16 +1070,25 @@ def main() -> int:
                         assert acestep_worker is not None
                         raw_bgm = cache_dir / "acestep_bgm" / f"{bgm_key}_raw.wav"
                         print(f"   🎵 [ACE-Step 1.5 XL] 生成分幕配乐 {act.act_id} ({target_dur:.0f}s): {act.title}", flush=True)
-                        acestep_worker.request(
-                            {
-                                "prompt": bgm_prompt,
-                                "lyrics": "[Instrumental]",
-                                "vocal_language": "unknown",
-                                "duration_s": target_dur,
-                                "out_path": str(raw_bgm),
-                                "seed": 100 + cue_sheet.chapter_number * 10 + a_idx,
-                            }
-                        )
+                        bgm_req = {
+                            "prompt": bgm_prompt,
+                            "lyrics": "[Instrumental]",
+                            "vocal_language": "unknown",
+                            "duration_s": target_dur,
+                            "out_path": str(raw_bgm),
+                            "seed": 100 + cue_sheet.chapter_number * 10 + a_idx,
+                        }
+                        try:
+                            acestep_worker.request(bgm_req)
+                        except RuntimeError as exc:
+                            if "out of memory" in str(exc).lower():
+                                print("⚠️ [ACE-Step] 显存峰值触顶，临时释放 MOSS-SFX 显存并自动重试...", flush=True)
+                                if moss_worker is not None:
+                                    moss_worker.close()
+                                acestep_worker.close()
+                                acestep_worker.request(bgm_req)
+                            else:
+                                raise
                         subprocess.run(
                             [
                                 "ffmpeg",

@@ -63,6 +63,7 @@ DRIVE_WORKSTATION = DRIVE_ROOT / "AI_Workstation"
 DRIVE_REPO_CACHE = DRIVE_WORKSTATION / "AudioStudio_G4_Cache"
 DRIVE_PROJECT_ROOT = DRIVE_ROOT / "《诸界锁仙》长篇修仙小说工程"
 DRIVE_AUDIO_ROOT = DRIVE_PROJECT_ROOT / "04_有声剧与广播剧音频"
+DRIVE_MAIN_MASTERS_DIR = DRIVE_AUDIO_ROOT / "03_分集成片音频"
 DRIVE_STUDIO_DIR = DRIVE_AUDIO_ROOT / "05_Colab_96GB_FishDrama3_满血本地推理管线"
 DRIVE_OUTPUTS_DIR = DRIVE_STUDIO_DIR / "outputs"
 
@@ -342,12 +343,17 @@ def sync_completed_outputs(
         DRIVE_MAIN_MASTERS_DIR.mkdir(parents=True, exist_ok=True)
 
     def _fuse_sync_one(fpath: Path, stem: str) -> None:
+        src_sz = fpath.stat().st_size
         if DRIVE_OUTPUTS_DIR.exists():
-            shutil.copy2(fpath, DRIVE_OUTPUTS_DIR / fpath.name)
-            print(f"☁️ [FUSE 同步] {fpath.name} -> {DRIVE_OUTPUTS_DIR}", flush=True)
+            dst_out = DRIVE_OUTPUTS_DIR / fpath.name
+            if not dst_out.exists() or dst_out.stat().st_size != src_sz:
+                shutil.copy2(fpath, dst_out)
+                print(f"☁️ [FUSE 同步] {fpath.name} -> {DRIVE_OUTPUTS_DIR}", flush=True)
         if mirror_to_main_masters and stem.startswith("E") and DRIVE_MAIN_MASTERS_DIR.exists():
-            shutil.copy2(fpath, DRIVE_MAIN_MASTERS_DIR / fpath.name)
-            print(f"☁️ [FUSE 同步主库] {fpath.name} -> {DRIVE_MAIN_MASTERS_DIR}", flush=True)
+            dst_main = DRIVE_MAIN_MASTERS_DIR / fpath.name
+            if not dst_main.exists() or dst_main.stat().st_size != src_sz:
+                shutil.copy2(fpath, dst_main)
+                print(f"☁️ [FUSE 同步主库] {fpath.name} -> {DRIVE_MAIN_MASTERS_DIR}", flush=True)
 
     for done_file in sorted(local_outputs.glob("*.done")):
         if done_file.name in synced_markers:
@@ -437,38 +443,46 @@ def seed_and_sync_reusable_stems(nvme_cache: Path, drive_cache: Path, direction:
 
 
 def populate_existing_markers_dir(markers_dir: Path) -> Path:
-    """Build fast local `.mp3` existence markers from Drive REST API v3 + FUSE outputs/ for `--skip-existing`."""
+    """Build fast local `.mp3` existence markers from Drive REST API v3 + FUSE outputs/ & 03_分集成片音频/ for `--skip-existing`."""
     markers_dir.mkdir(parents=True, exist_ok=True)
-    if DRIVE_OUTPUTS_DIR.exists():
-        for mp3 in DRIVE_OUTPUTS_DIR.glob("E*.mp3"):
-            (markers_dir / mp3.name).touch()
+    for d, require_drama3 in ((DRIVE_OUTPUTS_DIR, False), (DRIVE_MAIN_MASTERS_DIR, True)):
+        if d.exists():
+            try:
+                for nm in os.listdir(d):
+                    if nm.startswith("E") and nm.endswith(".mp3"):
+                        if not require_drama3 or ("Drama3" in nm or "drama3" in nm):
+                            (markers_dir / nm).touch()
+            except Exception:
+                pass
     tok = get_drive_token()
     if tok:
-        try:
-            page_token = ""
-            while True:
-                params = {
-                    "q": f"trashed = false and '{DRIVE_OUTPUTS_FOLDER_ID}' in parents",
-                    "fields": "nextPageToken,files(name)",
-                    "pageSize": 500,
-                }
-                if page_token:
-                    params["pageToken"] = page_token
-                req = urllib.request.Request(
-                    "https://www.googleapis.com/drive/v3/files?" + urllib.parse.urlencode(params),
-                    headers={"Authorization": f"Bearer {tok}"},
-                )
-                with urllib.request.urlopen(req, timeout=20) as resp:
-                    payload = json.loads(resp.read().decode("utf-8"))
-                for item in payload.get("files", []):
-                    nm = item.get("name", "")
-                    if nm.endswith(".mp3") and nm.startswith("E"):
-                        (markers_dir / nm).touch()
-                page_token = payload.get("nextPageToken", "")
-                if not page_token:
-                    break
-        except Exception as exc:
-            print(f"ℹ️ Drive API 已完成集数预检跳过 ({exc})", flush=True)
+        for folder_id, require_drama3 in ((DRIVE_OUTPUTS_FOLDER_ID, False), (DRIVE_MAIN_MASTERS_FOLDER_ID, True)):
+            try:
+                page_token = ""
+                while True:
+                    params = {
+                        "q": f"trashed = false and '{folder_id}' in parents",
+                        "fields": "nextPageToken,files(name)",
+                        "pageSize": 500,
+                    }
+                    if page_token:
+                        params["pageToken"] = page_token
+                    req = urllib.request.Request(
+                        "https://www.googleapis.com/drive/v3/files?" + urllib.parse.urlencode(params),
+                        headers={"Authorization": f"Bearer {tok}"},
+                    )
+                    with urllib.request.urlopen(req, timeout=20) as resp:
+                        payload = json.loads(resp.read().decode("utf-8"))
+                    for item in payload.get("files", []):
+                        nm = item.get("name", "")
+                        if nm.endswith(".mp3") and nm.startswith("E"):
+                            if not require_drama3 or ("Drama3" in nm or "drama3" in nm):
+                                (markers_dir / nm).touch()
+                    page_token = payload.get("nextPageToken", "")
+                    if not page_token:
+                        break
+            except Exception as exc:
+                print(f"ℹ️ Drive API 已完成集数预检跳过 ({exc})", flush=True)
     return markers_dir
 
 
@@ -499,7 +513,7 @@ def main() -> None:
     parser.add_argument(
         "--episodes",
         default="AUDITION,E001",
-        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）、E007-E120（全本114集收官续跑）或 SERVE",
+        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）、E002-E120（全本收官续跑）或 SERVE",
     )
     parser.add_argument(
         "--profile",
@@ -630,23 +644,41 @@ def main() -> None:
     if args.phoneme_pins:
         cmd.append("--phoneme-pins")
 
-    print(f"=== [开始合成] 任务: {args.episodes} | Drama 3 引擎: {drama_repo} ===", flush=True)
-    proc = subprocess.Popen(cmd, cwd=str(local_studio), env=os.environ.copy())
     synced_markers: set[str] = set()
+    # Sync any already-finished `.done` episodes on NVMe before starting!
+    sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
 
+    max_attempts = 3
     try:
-        while proc.poll() is None:
-            prev_n = len(synced_markers)
+        for attempt in range(1, max_attempts + 1):
+            if existing_markers is not None:
+                populate_existing_markers_dir(existing_markers)
+            print(
+                f"=== [开始合成 · 第 {attempt}/{max_attempts} 轮] 任务: {args.episodes} | Drama 3 引擎: {drama_repo} ===",
+                flush=True,
+            )
+            proc = subprocess.Popen(cmd, cwd=str(local_studio), env=os.environ.copy())
+            while proc.poll() is None:
+                prev_n = len(synced_markers)
+                sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
+                if len(synced_markers) > prev_n:
+                    seed_and_sync_reusable_stems(nvme_cache, drive_cache, direction="push")
+                time.sleep(4.0)
+
             sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
-            if len(synced_markers) > prev_n:
-                seed_and_sync_reusable_stems(nvme_cache, drive_cache, direction="push")
-            time.sleep(4.0)
+            seed_and_sync_reusable_stems(nvme_cache, drive_cache, direction="push")
 
-        if proc.returncode != 0:
-            raise RuntimeError(f"❌ run_zhujie_96gb_studio.py 异常退出 (rc={proc.returncode})")
+            if proc.returncode == 0:
+                break
+            if attempt < max_attempts:
+                print(
+                    f"⚠️ [自动守护] run_zhujie_96gb_studio.py 退出 (rc={proc.returncode})，已完成分集已原子落盘，5s 后自动断点续跑...",
+                    flush=True,
+                )
+                time.sleep(5.0)
+            else:
+                raise RuntimeError(f"❌ run_zhujie_96gb_studio.py 连续 {max_attempts} 次异常退出 (rc={proc.returncode})")
 
-        sync_completed_outputs(local_outputs, synced_markers, mirror_to_main_masters=args.mirror_to_main_masters)
-        seed_and_sync_reusable_stems(nvme_cache, drive_cache, direction="push")
         os.sync()
         time.sleep(2.0)
     finally:
