@@ -195,13 +195,24 @@ def translate_cue_to_drama3_input(
 
         # Inject subtle stability/space acting cues on the opening clause when appropriate
         if seg_idx == 0:
+            profile_blob = f"{profile.vocal_register} {profile.persona_summary}" if profile is not None else ""
+            is_scifi = any(kw in profile_blob for kw in ("科幻", "逆模因", "基金会", "终端", "SCP"))
             if cue.stability == 1.0 and not style_briefs:
-                style_briefs.append("solemn, ancient monotone resonance")
-                xml_span = xml_span or "slow"
+                style_briefs.append(
+                    "clinical, detached classified terminal readout"
+                    if is_scifi
+                    else "solemn, ancient monotone resonance"
+                )
+                if not is_scifi:
+                    xml_span = xml_span or "slow"
             elif cue.acoustic_space == "memory_echo" and not style_briefs:
                 style_briefs.append("distant, solemn memory voice")
             elif not style_briefs and role_tier == "narrator":
-                style_briefs.append("steady, cinematic Xianxia narration")
+                style_briefs.append(
+                    "cold, taut cinematic sci-fi thriller narration"
+                    if is_scifi
+                    else "steady, cinematic Xianxia narration"
+                )
 
         prefix_items: list[str] = []
         if style_briefs:

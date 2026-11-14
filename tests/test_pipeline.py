@@ -640,9 +640,106 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertNotIn("no drums", bgm_war.lower())
         self.assertIn("no singing", bgm_war.lower())
 
+        bgm_scifi = mod.enrich_acestep_bgm_prompt(
+            "Cold subterranean bunker tension underscore with ticking clockwork pulse",
+            style="scifi_dark",
+        )
+        self.assertIn("sci-fi", bgm_scifi.lower())
+        self.assertNotIn("xianxia", bgm_scifi.lower())
+        self.assertIn("no singing", bgm_scifi.lower())
+
+    def test_scifi_scp_polyphones_and_drama3_genre_prompts(self) -> None:
+        from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
+        from aigc_audio_pipeline.polyphones import compute_tts_text_override
+
+        raw_line = "[coldly] O5-8，我们逆模因部收容的SCP-055与SCP-3125都属于Keter级异常，一旦引爆氢弹就全完了。"
+        tts_line = compute_tts_text_override(raw_line)
+        self.assertIn("欧五八", tts_line)
+        self.assertIn("逆摩因部", tts_line)
+        self.assertIn("SCP零五五", tts_line)
+        self.assertIn("SCP三一二五", tts_line)
+        self.assertIn("凯特尔级", tts_line)
+        self.assertIn("氢但", tts_line)
+
+        # Dual-reference ASR QA must pass whether Whisper transcribes canonical SCP-055 or spoken 零五五
+        qa_ok = evaluate_dialogue_qa(
+            tagged_prompt=tts_line,
+            canonical_prompt=raw_line,
+            asr_text="欧五八，我们逆模因部收容的SCP零五五与SCP三一二五都属于凯特尔级异常，一旦引爆氢弹就全完了。",
+            duration_s=6.5,
+            peak_dbfs=-9.2,
+        )
+        self.assertTrue(qa_ok.passed, qa_ok.reasons)
+
+        scifi_narrator = VoiceProfile(
+            role_id="narrator",
+            display_name="旁白",
+            tier="narrator",
+            vocal_register="冷峻科幻悬疑男中音",
+            persona_summary="《逆模因部》全剧主视角",
+        )
+        nar_cue = TimelineCue(cue_id="c_nar", act_id="act1", kind="dialogue", role_id="narrator", text="走廊尽头的气闸悄然旋转。", stability=0.5)
+        d3_nar = translate_cue_to_drama3_input(nar_cue, scifi_narrator, attempt=1)
+        self.assertIn("cold, taut cinematic sci-fi thriller narration", d3_nar)
+
+        terminal_prof = VoiceProfile(
+            role_id="db_terminal",
+            display_name="基金会终端",
+            tier="recurring",
+            vocal_register="SCP基金会加密档案终端播报音",
+            default_stability=1.0,
+        )
+        term_cue = TimelineCue(cue_id="c_term", act_id="act1", kind="dialogue", role_id="db_terminal", text="项目编号：SCP-055。项目等级：Keter。", stability=1.0)
+        d3_term = translate_cue_to_drama3_input(term_cue, terminal_prof, attempt=1)
+        self.assertIn("clinical, detached classified terminal readout", d3_term)
+        self.assertIn("SCP零五五", d3_term)
+
+    def test_drama3_long_cue_splitter_and_breath_concat(self) -> None:
+        import importlib.util
+        from aigc_audio_pipeline.models import extract_tags_and_spoken_text
+        from aigc_audio_pipeline.qa import evaluate_dialogue_qa
+
+        studio_py = Path(__file__).resolve().parents[1] / "colab_96gb" / "run_zhujie_96gb_studio.py"
+        spec = importlib.util.spec_from_file_location("run_zhujie_96gb_studio", studio_py)
+        assert spec and spec.loader
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        short_cue = TimelineCue(cue_id="c_s", act_id="a1", kind="dialogue", role_id="narrator", text="[coldly] 简短的一句话。")
+        self.assertEqual(len(mod.split_long_cue_for_drama3(short_cue)), 1)
+
+        long_body = (
+            "一旦那一幕发生，一旦你与它形成了视线对视，它就会在瞬间顺着你的认知通路反向入侵。"
+            "所有知道你名字的亲友、所有与你共事过的研究员，都会在同一秒钟被它从现实表层彻底抹除。"
+            "你以为自己锁上了一扇防爆门，其实你只是把自己关进了一座隔绝于全人类的记忆孤岛里！"
+        )
+        long_cue = TimelineCue(
+            cue_id="c_long",
+            act_id="a1",
+            kind="dialogue",
+            role_id="marion_wheeler",
+            text=f"[sighs] [coldly] {long_body}",
+        )
+        parts = mod.split_long_cue_for_drama3(long_cue, max_cjk=70, trigger_cjk=80)
+        self.assertGreaterEqual(len(parts), 2)
+        self.assertIn("[sighs]", parts[0].text)
+        self.assertNotIn("[sighs]", parts[1].text)
+        self.assertIn("[coldly]", parts[1].text)
+        reconstructed = "".join(extract_tags_and_spoken_text(p.text)[1] for p in parts)
+        self.assertEqual(reconstructed, long_body)
+
+        qa_homophone = evaluate_dialogue_qa(
+            tagged_prompt="[coldly] 玛丽安说，我们根本没有逆模因部。",
+            asr_text="玛丽恩说，我们根本没有逆魔阴步。",
+            duration_s=3.5,
+            peak_dbfs=-6.0,
+        )
+        self.assertTrue(qa_homophone.passed, qa_homophone.reasons)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

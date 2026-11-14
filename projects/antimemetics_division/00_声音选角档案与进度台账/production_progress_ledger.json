@@ -1,0 +1,94 @@
+{
+  "project_id": "antimemetics_division",
+  "project_title": "《逆模因部》硬核科幻悬疑多人有声剧（SCP CC-BY-SA-3.0）",
+  "license": "CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)",
+  "source_hub_url": "https://scp-wiki.wikidot.com/antimemetics-division-hub",
+  "updated_at": "2026-11-14T04:16:32Z",
+  "drive_folders": {
+    "audio_root": "1RK1Ymuz-T2v1gmN4KBkZT9Sz0kyLFjYu",
+    "00_casting_and_ledgers": "1otDWb5DjIhhxxsgNUf5XDxeqZM2Wu9Ed",
+    "01_voice_auditions": "1WyD4_eI3GB_kjhZSnOn_vJa69_n-jUTF",
+    "02_episode_scripts": "1Ta3U8q1TMtKaqYgu015wFESrjTiXlVnT",
+    "03_mastered_episodes": "14K7S0frg2TrykLJwlN1yJ-t034jj4A7f",
+    "04_reusable_motifs_and_stems": "1LpHJcJIfgkk3y2pvr3d27CcEf-fa3Eg6",
+    "05_colab_96gb_studio": "1UkGlPavixxO-VzG90pFzNZGawn33wdne",
+    "source_chapters": "1-zhPQ9QSq5Wzt3JhlRhwHMIWnrx6_oqz",
+    "05_colab_outputs": "1K6c7P-llxTxoPy1TB-8DQ4dYu11k84t7"
+  },
+  "summary": {
+    "total_planned_episodes": 6,
+    "scripts_ready": 6,
+    "episodes_mastered": 0,
+    "voices_locked": 13
+  },
+  "episodes": [
+    {
+      "chapter_number": 1,
+      "episode_id": "E001",
+      "title": "第1章 SCP-055：未知自封机密",
+      "scp_wiki_slug": "scp-055",
+      "scp_wiki_url": "https://scp-wiki.wikidot.com/scp-055",
+      "status": "script_validated",
+      "cue_sheet_file": "02_分集广播剧台本/E001_第01章_SCP-055未知自封机密_完整有声剧台本.json"
+    },
+    {
+      "chapter_number": 2,
+      "episode_id": "E002",
+      "title": "第2章 我们得谈谈五十五号",
+      "scp_wiki_slug": "we-need-to-talk-about-fifty-five",
+      "scp_wiki_url": "https://scp-wiki.wikidot.com/we-need-to-talk-about-fifty-five",
+      "status": "script_validated",
+      "cue_sheet_file": "02_分集广播剧台本/E002_第02章_我们得谈谈五十五号_完整有声剧台本.json"
+    },
+    {
+      "chapter_number": 3,
+      "episode_id": "E003",
+      "title": "第3章 逆模因学导论",
+      "scp_wiki_slug": "introductory-antimemetics",
+      "scp_wiki_url": "https://scp-wiki.wikidot.com/introductory-antimemetics",
+      "status": "script_validated",
+      "cue_sheet_file": "02_分集广播剧台本/E003_第03章_逆模因学导论_完整有声剧台本.json"
+    },
+    {
+      "chapter_number": 4,
+      "episode_id": "E004",
+      "title": "第4章 难以忘怀，你本如此",
+      "scp_wiki_slug": "unforgettable-that-s-what-you-are",
+      "scp_wiki_url": "https://scp-wiki.wikidot.com/unforgettable-that-s-what-you-are",
+      "status": "script_validated",
+      "cue_sheet_file": "02_分集广播剧台本/E004_第04章_难以忘怀你本如此_完整有声剧台本.json"
+    },
+    {
+      "chapter_number": 5,
+      "episode_id": "E005",
+      "title": "第5章 无色绿意案",
+      "scp_wiki_slug": "case-colourless-green",
+      "scp_wiki_url": "https://scp-wiki.wikidot.com/case-colourless-green",
+      "status": "script_validated",
+      "cue_sheet_file": "02_分集广播剧台本/E005_第05章_无色绿意案_完整有声剧台本.json"
+    },
+    {
+      "chapter_number": 6,
+      "episode_id": "E006",
+      "title": "第6章 你最后一次首日上班",
+      "scp_wiki_slug": "your-last-first-day",
+      "scp_wiki_url": "https://scp-wiki.wikidot.com/your-last-first-day",
+      "status": "script_validated",
+      "cue_sheet_file": "02_分集广播剧台本/E006_第06章_你最后一次首日上班_完整有声剧台本.json"
+    }
+  ],
+  "drive_files": {
+    "CC_BY_SA_3.0_ATTRIBUTION.md": "1cyKfHfskcI5H35-Xx_M_xeFUzXs-yE6K",
+    "README.md": "14jktWO4JzIRnhkBJ8SLEWHeFce5xIL5h",
+    "bundle_zip_id": "1CJOjGy1DMFJKS5otisXbEiRx4GVaBimZ",
+    "Antimemetics_96GB_Drama3_Studio.ipynb": "1c6JVsrXXYUDvH_mm8PmHogLYXybfsYK0",
+    "launch_g4_antimemetics_drama3.py": "1hBb3s0Lo4xlvQ6BYcvRHmFcy2R4-LHD5",
+    "run_zhujie_96gb_studio.py": "1MShG03Im4JMtsegTsEf5p52fCBzvVNLr",
+    "colab_agent_bridge.py": "1m3OfX6rmaUk1l3wOqCmdZJZItxActU3g",
+    "voice_cast_drama3.json": "1QZoZQr0SnjTnwD23dotEIjLGdMqXA2J4",
+    "00_逆模因部_配音选角圣经与声线档案_md": "1PuimuUEblDqIyQz3Wznrte_K_FEdyhYS",
+    "production_progress_ledger_json": "1T1NbngW6NvmjSG-ZdeLHuBW-TH7iCAsy",
+    "voice_cast_drama3_json": "1-CCjCazJvfjKsDDOypfVrQ3EkIESLfA9",
+    "voice_casting_registry_json": "1P-cV0m-OUaDWfUu1KohBhA2Lce3iohwC"
+  }
+}

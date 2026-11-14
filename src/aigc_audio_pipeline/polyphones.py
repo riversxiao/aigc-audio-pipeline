@@ -119,6 +119,51 @@ XIANXIA_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
     ("玖名", "九名"),
 )
 
+# Sci-Fi & SCP Foundation Mandarin phonetic overrides (prevents '模因' -> mú yīn,
+# hyphenated code minus-sign glitches, and English accent drift on Keter/Euclid/O5).
+SCIFI_SCP_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    # mó yīn vs mú yīn disambiguation (exact 2nd tone homophone 摩)
+    ("超模因", "超摩因"),
+    ("逆模因", "逆摩因"),
+    ("模因", "摩因"),
+    # SCP & O5 hyphenated designations -> crisp Mainland Mandarin readouts
+    ("SCP-055", "SCP零五五"),
+    ("SCP-001", "SCP零零一"),
+    ("SCP-013", "SCP零一三"),
+    ("SCP-033", "SCP零三三"),
+    ("SCP-666", "SCP六六六"),
+    ("SCP-1425", "SCP一四二五"),
+    ("SCP-2256", "SCP二二五六"),
+    ("SCP-3125", "SCP三一二五"),
+    ("SCP-4739", "SCP四七三九"),
+    ("SCP-4987", "SCP四九八七"),
+    ("SCP-7381", "SCP七三八一"),
+    ("O5-8", "欧五八"),
+    ("O5议会", "欧五议会"),
+    ("O5们", "欧五们"),
+    ("一名O5", "一名欧五"),
+    ("这位O5", "这位欧五"),
+    ("那个O5", "那个欧五"),
+    ("成为O5", "成为欧五"),
+    ("O5", "欧五"),
+    # Object classes -> clean Mandarin transliteration in TTS while keeping canonical text in SRT
+    ("Keter级", "凯特尔级"),
+    ("Keter", "凯特尔"),
+    ("Euclid级", "欧几里得级"),
+    ("Euclid", "欧几里得"),
+    ("Safe级", "安全级"),
+    # Modern sci-fi & ordnance polyphones (dàn vs tán, chóng vs zhòng)
+    ("核弹头", "核但头"),
+    ("氢弹", "氢但"),
+    ("核弹", "核但"),
+    ("炸弹", "炸但"),
+    ("子弹", "子但"),
+    ("弹匣", "但匣"),
+    ("弹头", "但头"),
+    ("重影", "崇影"),
+    ("重叠", "崇叠"),
+)
+
 # Leading tag + 祠堂 aspiration slip fix observed in eleven_v3 ('[dramatically] 祠堂' -> cū táng)
 _LEADING_TAG_CITANG = re.compile(r"^(\s*(?:\[[^\[\]]+\]\s*)+)祠堂")
 
@@ -131,7 +176,13 @@ def apply_xianxia_polyphone_overrides(text: str) -> str:
     for canonical, phonetic in XIANXIA_POLYPHONE_MAP:
         if canonical in out:
             out = out.replace(canonical, phonetic)
+    for canonical, phonetic in SCIFI_SCP_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
     return out
+
+
+apply_polyphone_overrides = apply_xianxia_polyphone_overrides
 
 
 def compute_tts_text_override(canonical_tagged_text: str) -> str:

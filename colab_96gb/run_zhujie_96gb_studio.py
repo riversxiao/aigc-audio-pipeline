@@ -245,6 +245,7 @@ class SubprocessJsonWorker:
         print(f"🚀 [{self.label}] 正在加载模型权重至显存: {self.model_id} ...", flush=True)
         env = os.environ.copy()
         env["TORCHDYNAMO_DISABLE"] = "1"
+        env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
         env["PYTHONUNBUFFERED"] = "1"
         self.proc = subprocess.Popen(
             [self.python_bin, "-u", "-c", self.inline_code, self.model_id],
@@ -310,10 +311,10 @@ class Drama3ServerClient:
 
     def _budget_flags(self) -> list[str]:
         if self.co_resident_96g and not self.model_repo.endswith("-int4"):
-            # ~59.6GB for 35B MoE FP8 Drama 3 -> leaves ~36.4GB free for MOSS v2.0 + ACE-Step 1.5 XL!
+            # ~54.5GB for 35B MoE FP8 Drama 3 -> leaves >40GB free for MOSS v2.0 + ACE-Step 1.5 XL 90s+ stereo BGM!
             return [
                 "--tts_engine.gpu_memory_fraction",
-                "0.50",
+                "0.45",
                 "--vocoder.gpu_memory_fraction",
                 "0.08",
                 "--preprocessing.total_reserve_bytes",
@@ -564,7 +565,9 @@ class LocalWhisperQA:
                 language="zh",
                 beam_size=2,
                 vad_filter=True,
-                initial_prompt="以下是普通话的句子，请使用简体中文输出。",
+                condition_on_previous_text=False,
+                hotwords="逆模因部 玛丽安 惠勒 克莱 格雷 保罗 金 亚当 休斯 巴特 凯特尔 记忆删除 站点",
+                initial_prompt="以下是简体中文普通话有声剧对白，包含逆模因部、玛丽安、惠勒、格雷、亚当、休斯等词汇。",
             )
             return "".join(seg.text for seg in segments).strip()
         except Exception as exc:
@@ -620,7 +623,7 @@ def check_speaking_rate_ok(cue: TimelineCue, duration_s: float) -> tuple[bool, s
     """Catch runaway autoregressive babbling or clipped syllables via CJK speaking rate."""
     _, spoken = extract_tags_and_spoken_text(cue.text)
     cjk_n = len(_CJK_RE.findall(spoken))
-    if cjk_n < 4:
+    if cjk_n <= 6:
         return (duration_s >= 0.30 and duration_s <= 8.0), f"short_line_dur={duration_s:.2f}s"
     sec_per_char = duration_s / cjk_n
     if sec_per_char < 0.085:
@@ -628,6 +631,121 @@ def check_speaking_rate_ok(cue: TimelineCue, duration_s: float) -> tuple[bool, s
     if sec_per_char > 0.72:
         return False, f"语速异常过慢/疑似尾音拖沓 ({sec_per_char:.3f}s/字, dur={duration_s:.2f}s, chars={cjk_n})"
     return True, f"{sec_per_char:.3f}s/字"
+
+
+_SENT_SPLIT_RE = re.compile(r"(?<=[。！？；!?…])(?:[”’」』）】]*)")
+_CLAUSE_SPLIT_RE = re.compile(r"(?<=[，、：:—])(?:[”’」』）】]*)")
+
+
+def split_long_cue_for_drama3(
+    cue: TimelineCue,
+    *,
+    max_cjk: int = 108,
+    trigger_cjk: int = 125,
+) -> list[TimelineCue]:
+    """Split long dialogue/narration cues (>125 CJK chars) on sentence/clause boundaries.
+
+    Short cues (<=125 CJK chars) return `[cue]` unchanged so existing stem cache keys are 100% preserved.
+    """
+    tags, spoken = extract_tags_and_spoken_text(cue.text)
+    if len(_CJK_RE.findall(spoken)) <= trigger_cjk:
+        return [cue]
+
+    raw_sentences = [s.strip() for s in _SENT_SPLIT_RE.split(spoken) if s.strip()]
+    atomic_units: list[str] = []
+    for sent in raw_sentences:
+        if len(_CJK_RE.findall(sent)) <= max_cjk:
+            atomic_units.append(sent)
+        else:
+            clauses = [c.strip() for c in _CLAUSE_SPLIT_RE.split(sent) if c.strip()]
+            for cl in clauses:
+                if len(_CJK_RE.findall(cl)) <= max_cjk:
+                    atomic_units.append(cl)
+                else:
+                    # Hard slice fallback if an unpunctuated clause ever exceeds max_cjk
+                    step = max_cjk
+                    for pos in range(0, len(cl), step):
+                        if cl[pos : pos + step].strip():
+                            atomic_units.append(cl[pos : pos + step].strip())
+
+    packed: list[str] = []
+    cur = ""
+    for unit in atomic_units:
+        candidate = f"{cur}{unit}" if cur else unit
+        if cur and len(_CJK_RE.findall(candidate)) > max_cjk:
+            packed.append(cur)
+            cur = unit
+        else:
+            cur = candidate
+    if cur:
+        if packed and len(_CJK_RE.findall(cur)) < 14 and len(_CJK_RE.findall(packed[-1] + cur)) <= trigger_cjk:
+            packed[-1] = packed[-1] + cur
+        else:
+            packed.append(cur)
+
+    if len(packed) <= 1:
+        return [cue]
+
+    # Point-event tags like [sighs]/[gasps] apply only to the opening sub-cue; tonal tags carry across
+    point_only = {"sighs", "exhales", "gasps", "laughs", "laughing", "pause", "short pause"}
+    tonal_tags = [t for t in tags if t.lower().strip() not in point_only]
+
+    sub_cues: list[TimelineCue] = []
+    for idx, chunk_txt in enumerate(packed):
+        use_tags = tags if idx == 0 else tonal_tags
+        prefix = " ".join(f"[{t}]" for t in use_tags)
+        tagged_chunk = f"{prefix} {chunk_txt}".strip() if prefix else chunk_txt
+        sub_cues.append(
+            TimelineCue(
+                cue_id=f"{cue.cue_id}_pt{idx + 1:02d}",
+                act_id=cue.act_id,
+                kind="dialogue",
+                role_id=cue.role_id,
+                text=tagged_chunk,
+                tts_text="",
+                stability=cue.stability,
+                acoustic_space=cue.acoustic_space,
+            )
+        )
+    return sub_cues
+
+
+def concat_wavs_with_breath(part_wavs: list[Path], out_wav: Path, *, breath_s: float = 0.14) -> Path:
+    """Concatenate multiple sub-utterance WAVs into a single seamless WAV with natural breath spacing."""
+    out_wav.parent.mkdir(parents=True, exist_ok=True)
+    if len(part_wavs) == 1:
+        shutil.copy2(part_wavs[0], out_wav)
+        return out_wav
+
+    inputs: list[str] = []
+    filter_parts: list[str] = []
+    concat_refs: list[str] = []
+    for i, pw in enumerate(part_wavs):
+        inputs.extend(["-i", str(pw)])
+        pad = f",apad=pad_dur={breath_s:.3f}" if i < len(part_wavs) - 1 else ""
+        filter_parts.append(f"[{i}:a]aformat=sample_rates=44100:channel_layouts=mono{pad}[s{i}]")
+        concat_refs.append(f"[s{i}]")
+
+    filter_complex = ";".join(filter_parts) + f";{''.join(concat_refs)}concat=n={len(part_wavs)}:v=0:a=1[out]"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            *inputs,
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "[out]",
+            "-c:a",
+            "pcm_s16le",
+            str(out_wav),
+        ],
+        check=True,
+    )
+    return out_wav
 
 
 _HUMAN_VOCAL_CLAUSE_RE = re.compile(
@@ -647,15 +765,21 @@ def sanitize_moss_foley_prompt(prompt: str) -> str:
     return cleaned
 
 
-def enrich_acestep_bgm_prompt(prompt: str) -> str:
-    """Enforce pure ancient Chinese instrumental chamber scoring without modern pop/trap beats or vocals."""
+def enrich_acestep_bgm_prompt(prompt: str, style: str = "guofeng") -> str:
+    """Enforce purely instrumental scoring tailored to project genre (`guofeng`, `scifi_dark`, or `raw`)."""
     base = (prompt or "").strip().rstrip(".")
     lower = base.lower()
     extras: list[str] = []
-    if "traditional chinese" not in lower and "ancient chinese" not in lower:
-        extras.append("traditional Chinese xianxia instrumental score")
-    if not _PERCUSSION_ALLOW_RE.search(base) and "no drums" not in lower:
-        extras.append("no drums, no modern beat, no pop rhythm")
+    if style == "scifi_dark":
+        if not any(k in lower for k in ("sci-fi", "synth", "ambient", "minimalist", "drone", "electronic")):
+            extras.append("dark minimalist sci-fi thriller instrumental underscore, cold analog synthesizer drone")
+        if not _PERCUSSION_ALLOW_RE.search(base) and "no pop" not in lower:
+            extras.append("no pop rhythm, no vocals")
+    elif style == "guofeng":
+        if "traditional chinese" not in lower and "ancient chinese" not in lower:
+            extras.append("traditional Chinese xianxia instrumental score")
+        if not _PERCUSSION_ALLOW_RE.search(base) and "no drums" not in lower:
+            extras.append("no drums, no modern beat, no pop rhythm")
     if "no singing" not in lower:
         extras.append("purely instrumental, no vocals, no singing")
     return ", ".join([base, *extras]) if extras else base
@@ -663,7 +787,7 @@ def enrich_acestep_bgm_prompt(prompt: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="《诸界锁仙》 96GB GPU (Fish Audio Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL) 全自动合成引擎"
+        description="96GB GPU (Fish Audio Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL) 全自动影视级有声剧合成引擎"
     )
     parser.add_argument(
         "--studio-dir",
@@ -673,7 +797,7 @@ def main() -> int:
     parser.add_argument(
         "--episodes",
         default="E001",
-        help="要渲染的集数：AUDITION（6句极速试听）、E001（首集A/B对比）、或 E007-E040（全量续跑）",
+        help="要渲染的集数：AUDITION（6句极速试听）、E001（首集A/B对比）、或 E001-E006（全量续跑）",
     )
     parser.add_argument("--output-dir", default="", help="成品输出目录（默认: <studio-dir>/outputs）")
     parser.add_argument("--cache-dir", default="", help="分轨干音与配乐断点续传缓存目录（默认: <studio-dir>/cache）")
@@ -684,13 +808,19 @@ def main() -> int:
     parser.add_argument("--force-int4", action="store_true", help="强制使用 fishaudio/drama-3-int4 (20.8GB)")
     parser.add_argument("--disable-ras", action="store_true", help="禁用 SGLang-Omni reference_sampling ras 标志")
     parser.add_argument("--phoneme-pins", action="store_true", help="额外注入 <|phoneme_start|> 拼音锚点")
+    parser.add_argument(
+        "--bgm-style",
+        choices=["guofeng", "scifi_dark", "raw"],
+        default="guofeng",
+        help="ACE-Step 分幕配乐风格守卫（默认 guofeng 古风仙侠；科幻悬疑项目传 scifi_dark）",
+    )
     parser.add_argument("--skip-asr-qa", action="store_true", help="跳过本地 faster-whisper 语音回听质检")
     parser.add_argument("--skip-existing", action="store_true", help="若目标集数已存在成品 MP3 则自动跳过")
     parser.add_argument("--mp3-bitrate", default="320k", help="成品 MP3 码率（默认 320k）")
     parser.add_argument(
         "--offline-dry-run",
         action="store_true",
-        help="CPU 离线全链路干跑自检（无需 GPU，验证 24 角色锚点、台本转译、母题复用与三母线 -16 LUFS 混音）",
+        help="CPU 离线全链路干跑自检（无需 GPU，验证角色锚点、台本转译、母题复用与三母线 -16 LUFS 混音）",
     )
     args = parser.parse_args()
 
@@ -705,7 +835,7 @@ def main() -> int:
     voice_cast = json.loads((root / "voice_cast_drama3.json").read_text(encoding="utf-8"))
     characters: dict[str, dict[str, Any]] = voice_cast["characters"]
 
-    # Pre-verify all 24 vocal anchor WAVs exist on disk before touching GPU
+    # Pre-verify all vocal anchor WAVs exist on disk before touching GPU
     for role_id, cinfo in characters.items():
         ap = root / cinfo["anchor_wav"]
         if not ap.is_file():
@@ -719,13 +849,13 @@ def main() -> int:
     acestep_repo = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 
     print("=" * 78, flush=True)
-    print(f"🎬 《诸界锁仙》 Fish Audio Drama 3 影视级有声剧合成台 | 待处理任务: {[t[0] for t in targets]}", flush=True)
+    print(f"🎬 {registry.project_title} | Fish Audio Drama 3 有声剧合成台 | 任务: {[t[0] for t in targets]}", flush=True)
     print(
         f"🖥️  设备: {gpu_name} ({vram_gb:.1f} GB, sm_{cc[0]}{cc[1]}) | "
         f"模式: {'离线干跑自检' if args.offline_dry_run else ('96GB 三模型同卡满血常驻' if co_resident_96g else '显存分阶段接力')}",
         flush=True,
     )
-    print(f"🎙️  已加载 24 位国风角色声线锚点 | 跨集母题库: {len(registry.sonic_motifs)} 枚", flush=True)
+    print(f"🎙️  已加载 {len(characters)} 位角色声线锚点 | 跨集母题库: {len(registry.sonic_motifs)} 枚 | 配乐风格: {args.bgm_style}", flush=True)
     print("=" * 78, flush=True)
 
     drama_client: Drama3ServerClient | None = None
@@ -745,13 +875,11 @@ def main() -> int:
         moss_worker = SubprocessJsonWorker("MOSS-SFX v2.0", args.moss_python, _MOSS_WORKER_CODE, moss_repo)
         acestep_worker = SubprocessJsonWorker("ACE-Step 1.5 XL", args.acestep_python, _ACESTEP_WORKER_CODE, acestep_repo)
 
-        if co_resident_96g:
-            drama_client.start()
-
     rendered_summaries: list[dict[str, Any]] = []
 
     try:
-        for label, cs_path in targets:
+        for target_idx, (label, cs_path) in enumerate(targets):
+            is_last_target = target_idx == len(targets) - 1
             cue_sheet = EpisodeCueSheet.load(cs_path)
             if args.skip_existing and label != "AUDITION_A":
                 existing = sorted(out_dir.glob(f"{cue_sheet.episode_id}_drama3_master_*.mp3"))
@@ -775,10 +903,6 @@ def main() -> int:
             # ------------------------------------------------------------------
             # Stage 1: Dialogue Synthesis via Fish Audio Drama 3 (+ QA Retry)
             # ------------------------------------------------------------------
-            if not args.offline_dry_run and not co_resident_96g:
-                assert drama_client is not None
-                drama_client.start()
-
             for idx, cue in enumerate(dialogue_cues, 1):
                 if cue.role_id not in characters:
                     raise KeyError(f"[{cue.cue_id}] 角色 {cue.role_id!r} 未在 voice_cast_drama3.json 中注册！")
@@ -787,22 +911,37 @@ def main() -> int:
                 anchor_wav = root / cinfo["anchor_wav"]
                 anchor_text = cinfo["anchor_text"]
 
+                sub_cues = split_long_cue_for_drama3(cue)
                 prompt_a1 = translate_cue_to_drama3_input(
                     cue, prof, attempt=1, use_phoneme_pins=args.phoneme_pins
                 )
-                cache_key = _sha24(
-                    {
-                        "engine": drama_repo,
-                        "role_id": cue.role_id,
-                        "anchor_sha": anchor_wav.stat().st_size,
-                        "prompt": prompt_a1,
-                    }
-                )
+                if len(sub_cues) == 1:
+                    cache_key = _sha24(
+                        {
+                            "engine": drama_repo,
+                            "role_id": cue.role_id,
+                            "anchor_sha": anchor_wav.stat().st_size,
+                            "prompt": prompt_a1,
+                        }
+                    )
+                else:
+                    sub_prompts_a1 = [
+                        translate_cue_to_drama3_input(sc, prof, attempt=1, use_phoneme_pins=args.phoneme_pins)
+                        for sc in sub_cues
+                    ]
+                    cache_key = _sha24(
+                        {
+                            "engine": drama_repo,
+                            "role_id": cue.role_id,
+                            "anchor_sha": anchor_wav.stat().st_size,
+                            "chunked_prompts_v2": sub_prompts_a1,
+                        }
+                    )
                 cached_wav = cache_dir / "drama3_tts" / f"{cache_key}.wav"
 
                 if args.offline_dry_run:
                     _, spoken = extract_tags_and_spoken_text(cue.text)
-                    est_dur = max(0.8, min(14.0, len(_CJK_RE.findall(spoken)) * 0.21))
+                    est_dur = max(0.8, min(18.0, len(_CJK_RE.findall(spoken)) * 0.21))
                     freq = 185.0 if cue.role_id == "narrator" else (240.0 if cinfo.get("gender") == "male" else 330.0)
                     _write_synthetic_tone_wav(cached_wav, duration_s=est_dur, freq_hz=freq, amp=0.22)
                     cue_audio_map[cue.cue_id] = cached_wav
@@ -824,67 +963,102 @@ def main() -> int:
                     continue
 
                 assert drama_client is not None
-                best_wav: Path | None = None
-                best_score = -1.0
-                final_qa_passed = False
-                used_prompt = prompt_a1
+                drama_client.start()
 
-                for attempt in (1, 2, 3):
-                    cur_prompt = translate_cue_to_drama3_input(
-                        cue, prof, attempt=attempt, use_phoneme_pins=(args.phoneme_pins and attempt == 1)
-                    )
-                    try_wav = cache_dir / "drama3_tts" / f"{cache_key}_try{attempt}.wav"
-                    drama_client.synthesize(
-                        drama3_input=cur_prompt,
-                        anchor_wav=anchor_wav,
-                        anchor_text=anchor_text,
-                        out_wav=try_wav,
-                    )
-                    dur_s, peak_db = inspect_audio_peak_dbfs(try_wav)
-                    rate_ok, rate_msg = check_speaking_rate_ok(cue, dur_s)
-                    asr_txt = whisper_qa.transcribe(try_wav)
-
-                    if asr_txt is not None:
-                        qa_res = evaluate_dialogue_qa(
-                            tagged_prompt=cue.tts_text or cue.text,
-                            asr_text=asr_txt,
-                            duration_s=dur_s,
-                            peak_dbfs=peak_db,
-                            attempt=attempt,
-                            min_char_recall=0.70,
-                            canonical_prompt=cue.text,
+                def _synth_unit(unit_cue: TimelineCue, unit_key: str, unit_out: Path) -> tuple[str, bool]:
+                    if unit_out.is_file() and unit_out.stat().st_size > 1024:
+                        p1 = translate_cue_to_drama3_input(
+                            unit_cue, prof, attempt=1, use_phoneme_pins=args.phoneme_pins
                         )
-                        passed = qa_res.passed and rate_ok
-                        score = qa_res.char_recall - (0.25 if not rate_ok else 0.0) - (0.4 * len(qa_res.leaked_tags))
-                        reason_str = "; ".join(qa_res.reasons + ([] if rate_ok else [rate_msg]))
-                    else:
-                        passed = (dur_s >= 0.30) and (peak_db >= -44.0) and rate_ok
-                        score = 1.0 if passed else 0.2
-                        reason_str = "" if passed else f"dur={dur_s:.2f}s, peak={peak_db:.1f}dB, {rate_msg}"
+                        return p1, True
+                    best_w: Path | None = None
+                    best_sc = -1.0
+                    ok_flag = False
+                    u_prompt = ""
+                    from aigc_audio_pipeline.polyphones import apply_xianxia_polyphone_overrides as _poly
 
-                    if score > best_score:
-                        best_score = score
-                        best_wav = try_wav
-                        used_prompt = cur_prompt
-                        final_qa_passed = passed
+                    for attempt in (1, 2, 3):
+                        cur_p = translate_cue_to_drama3_input(
+                            unit_cue, prof, attempt=attempt, use_phoneme_pins=(args.phoneme_pins and attempt == 1)
+                        )
+                        try_w = cache_dir / "drama3_tts" / f"{unit_key}_try{attempt}.wav"
+                        drama_client.synthesize(
+                            drama3_input=cur_p,
+                            anchor_wav=anchor_wav,
+                            anchor_text=anchor_text,
+                            out_wav=try_w,
+                        )
+                        dur_s, peak_db = inspect_audio_peak_dbfs(try_w)
+                        rate_ok, rate_msg = check_speaking_rate_ok(unit_cue, dur_s)
+                        asr_txt = whisper_qa.transcribe(try_w)
 
-                    if passed:
-                        break
-                    print(
-                        f"   ⚠️ [{cue.cue_id}] 第 {attempt} 次质检未过 ({reason_str})，自动降级提示词重抽...",
-                        flush=True,
-                    )
+                        if asr_txt is not None:
+                            qa_res = evaluate_dialogue_qa(
+                                tagged_prompt=_poly(unit_cue.tts_text or unit_cue.text),
+                                asr_text=asr_txt,
+                                duration_s=dur_s,
+                                peak_dbfs=peak_db,
+                                attempt=attempt,
+                                min_char_recall=0.70,
+                                canonical_prompt=unit_cue.text,
+                            )
+                            passed = qa_res.passed and rate_ok
+                            score = qa_res.char_recall - (0.25 if not rate_ok else 0.0) - (0.4 * len(qa_res.leaked_tags))
+                            reason_str = "; ".join(qa_res.reasons + ([] if rate_ok else [rate_msg]))
+                        else:
+                            passed = (dur_s >= 0.30) and (peak_db >= -44.0) and rate_ok
+                            score = 1.0 if passed else 0.2
+                            reason_str = "" if passed else f"dur={dur_s:.2f}s, peak={peak_db:.1f}dB, {rate_msg}"
 
-                assert best_wav is not None
-                shutil.copy2(best_wav, cached_wav)
-                for a_idx in (1, 2, 3):
-                    (cache_dir / "drama3_tts" / f"{cache_key}_try{a_idx}.wav").unlink(missing_ok=True)
+                        if score > best_sc:
+                            best_sc = score
+                            best_w = try_w
+                            u_prompt = cur_p
+                            ok_flag = passed
+
+                        if passed:
+                            break
+                        print(
+                            f"   ⚠️ [{unit_cue.cue_id}] 第 {attempt} 次质检未过 ({reason_str})，自动降级提示词重抽...",
+                            flush=True,
+                        )
+
+                    assert best_w is not None
+                    shutil.copy2(best_w, unit_out)
+                    for a_idx in (1, 2, 3):
+                        (cache_dir / "drama3_tts" / f"{unit_key}_try{a_idx}.wav").unlink(missing_ok=True)
+                    return u_prompt, ok_flag
+
+                if len(sub_cues) == 1:
+                    used_prompt, final_qa_passed = _synth_unit(cue, cache_key, cached_wav)
+                else:
+                    part_wavs: list[Path] = []
+                    part_prompts: list[str] = []
+                    final_qa_passed = True
+                    for p_idx, sc in enumerate(sub_cues):
+                        sc_p1 = translate_cue_to_drama3_input(sc, prof, attempt=1, use_phoneme_pins=args.phoneme_pins)
+                        sc_key = _sha24(
+                            {
+                                "engine": drama_repo,
+                                "role_id": sc.role_id,
+                                "anchor_sha": anchor_wav.stat().st_size,
+                                "prompt": sc_p1,
+                            }
+                        )
+                        sc_wav = cache_dir / "drama3_tts" / f"{sc_key}.wav"
+                        up, ok_p = _synth_unit(sc, sc_key, sc_wav)
+                        part_wavs.append(sc_wav)
+                        part_prompts.append(up)
+                        final_qa_passed = final_qa_passed and ok_p
+                    concat_wavs_with_breath(part_wavs, cached_wav, breath_s=0.14)
+                    used_prompt = " || ".join(part_prompts)
 
                 cue_audio_map[cue.cue_id] = cached_wav
                 cue_meta_map[cue.cue_id] = {
                     "voice_id": f"drama3:{cue.role_id}",
                     "drama3_prompt": used_prompt,
                     "qa_passed": final_qa_passed,
+                    "sub_chunks": len(sub_cues),
                 }
                 if idx % 10 == 0 or idx == len(dialogue_cues):
                     print(
@@ -892,7 +1066,7 @@ def main() -> int:
                         flush=True,
                     )
 
-            if not args.offline_dry_run and not co_resident_96g and drama_client is not None:
+            if not args.offline_dry_run and (not co_resident_96g or is_last_target) and drama_client is not None:
                 drama_client.close()
 
             # Fast path for dialogue-only Audition Pack (`--episodes AUDITION`)
@@ -986,7 +1160,7 @@ def main() -> int:
                         raw_moss.unlink(missing_ok=True)
                     cue_audio_map[cue.cue_id] = sfx_wav
 
-                if not args.offline_dry_run and not co_resident_96g and moss_worker is not None:
+                if not args.offline_dry_run and moss_worker is not None:
                     moss_worker.close()
 
             # ------------------------------------------------------------------
@@ -1010,7 +1184,7 @@ def main() -> int:
 
                 for a_idx, act in enumerate(novel_acts, 1):
                     target_dur = min(max(float(act.bgm_duration_s or 65.0), 45.0), 90.0)
-                    bgm_prompt = enrich_acestep_bgm_prompt(act.bgm_prompt)
+                    bgm_prompt = enrich_acestep_bgm_prompt(act.bgm_prompt, style=args.bgm_style)
                     bgm_key = _sha24(
                         {"prompt": bgm_prompt, "vocal_language": "unknown", "dur": round(target_dur, 1)}
                     )
@@ -1054,7 +1228,7 @@ def main() -> int:
                         raw_bgm.unlink(missing_ok=True)
                     act_bgm_map[act.act_id] = bgm_wav
 
-                if not args.offline_dry_run and not co_resident_96g and acestep_worker is not None:
+                if not args.offline_dry_run and acestep_worker is not None:
                     acestep_worker.close()
 
             # ------------------------------------------------------------------
