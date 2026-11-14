@@ -168,7 +168,16 @@ def evaluate_dialogue_qa(
             if not got_cjk:
                 return False
             tw = ref_cjk[-min(3, len(ref_cjk)) :]
-            return any(ch in got_cjk[-min(6, max(1, len(got_cjk))) :] for ch in tw)
+            got_tail = got_cjk[-min(6, max(1, len(got_cjk))) :]
+            if any(ch in got_tail for ch in tw):
+                return True
+            # Tolerate acoustic ASR homophones at sentence end (e.g. '异变骤生' -> '一遍咒声')
+            # when the spoken syllable count reaches the end of the line and overall recall is high.
+            if len(ref_cjk) >= 10 and recall >= 0.78:
+                max_drop = max(1, int(len(ref_cjk) * 0.05))
+                if len(got_cjk) >= len(ref_cjk) - max_drop:
+                    return True
+            return False
 
         tail_ok = _check_tail(exp_cjk) or _check_tail(canon_cjk)
         if len(exp_cjk) >= 4 and recall < min_char_recall:
