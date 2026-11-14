@@ -21,11 +21,11 @@
   "summary": {
     "total_novel_chapters_synced": 120,
     "scripts_ready": 120,
-    "episodes_mastered": 48,
+    "episodes_mastered": 50,
     "voices_locked": 28,
     "sonic_motifs_archived": 6,
-    "checkpoint_status": "g4_drama3_running_48_of_120",
-    "drama3_episodes_mastered": 48
+    "checkpoint_status": "g4_drama3_running_50_of_120",
+    "drama3_episodes_mastered": 50
   },
   "episodes": [
     {
@@ -1020,28 +1020,40 @@
       "chapter_number": 49,
       "chapter_file_name": "第49章_金丹威压临城，古井下的遮天黑幕.md",
       "drive_chapter_file_id": "1hJ04V2vb0Ld8Ag0A5SLEeg37AXa2W0wr",
-      "status": "script_ready_for_g4_drama3",
+      "status": "mastered_and_archived_drama3",
       "cue_sheet_file": "02_分集广播剧台本/E049_第49章_金丹威压临城古井下的遮天黑幕_完整有声剧台本.json",
       "audition_pack_file": "",
-      "latest_master_wav_drive_id": "",
-      "latest_master_mp3_drive_id": "",
+      "latest_master_wav_drive_id": "15FT-FZsIwQtIqZfud5i3CZPdC7fYohTB",
+      "latest_master_mp3_drive_id": "1a0KuH3KXlpSE9TgJOYh6okwGTGqSA9sx",
       "script_json_drive_id": "1lTmZ5nBWLT3423YytuAE4v98MEy-XTSv",
       "script_md_drive_id": "1iwlXS7mb7tJR9AcblMYXZ6UNYIAh6o5j",
-      "notes": "已完成4幕多角色无删节广播剧台本编译（共50轨，28角色同源国风声优锁定）。"
+      "notes": "已完成 Fish Audio Drama 3 (35B FP8) + MOSS v2.0 + ACE-Step 1.5 XL 同源古风母带归档 (E049_第49章_金丹威压临城_古井下的遮天黑幕_Drama3同源古风母带_v001.mp3)。",
+      "drama3_master_mp3_drive_id": "1a0KuH3KXlpSE9TgJOYh6okwGTGqSA9sx",
+      "drama3_master_wav_drive_id": "15FT-FZsIwQtIqZfud5i3CZPdC7fYohTB",
+      "drama3_subtitles_srt_drive_id": "1BRgHe6PoPm_9Oj8Qkjykotmw2c4l7aUS",
+      "drama3_manifest_json_drive_id": "124RKfqtgaQ-ltsqwKzVEE8r0V5j-EoHH",
+      "latest_subtitles_srt_drive_id": "1BRgHe6PoPm_9Oj8Qkjykotmw2c4l7aUS",
+      "latest_manifest_json_drive_id": "124RKfqtgaQ-ltsqwKzVEE8r0V5j-EoHH"
     },
     {
       "episode_id": "E050",
       "chapter_number": 50,
       "chapter_file_name": "第50章_紫府逆伐金丹，焚锁火烧穿骨灯塔！.md",
       "drive_chapter_file_id": "14os-erJl3DBYHqvz7SeDtC0oBF7UlH7N",
-      "status": "script_ready_for_g4_drama3",
+      "status": "mastered_and_archived_drama3",
       "cue_sheet_file": "02_分集广播剧台本/E050_第50章_紫府逆伐金丹焚锁火烧穿骨灯塔_完整有声剧台本.json",
       "audition_pack_file": "",
-      "latest_master_wav_drive_id": "",
-      "latest_master_mp3_drive_id": "",
+      "latest_master_wav_drive_id": "1HB5hkHKt7LbrbFsegmfRfqwn7564myat",
+      "latest_master_mp3_drive_id": "12OGDukuO3ns58lzHDHWqoNMtUCYx1irn",
       "script_json_drive_id": "1PchDaZ-Ne9wXISwvIpY3lSZZOZydiFfa",
       "script_md_drive_id": "1VNb7c-kk0SHUzeZRXO6XOAUzsQGy0Btp",
-      "notes": "已完成4幕多角色无删节广播剧台本编译（共45轨，28角色同源国风声优锁定）。"
+      "notes": "已完成 Fish Audio Drama 3 (35B FP8) + MOSS v2.0 + ACE-Step 1.5 XL 同源古风母带归档 (E050_第50章_紫府逆伐金丹_焚锁火烧穿骨灯塔_Drama3同源古风母带_v001.mp3)。",
+      "drama3_master_mp3_drive_id": "12OGDukuO3ns58lzHDHWqoNMtUCYx1irn",
+      "drama3_master_wav_drive_id": "1HB5hkHKt7LbrbFsegmfRfqwn7564myat",
+      "drama3_subtitles_srt_drive_id": "105LXsABmOl7BHhVvyJZGHJvK1KjxFcep",
+      "drama3_manifest_json_drive_id": "1r_-dGun9Qb31mtfwW0K_Tso8XXXvJQz5",
+      "latest_subtitles_srt_drive_id": "105LXsABmOl7BHhVvyJZGHJvK1KjxFcep",
+      "latest_manifest_json_drive_id": "1r_-dGun9Qb31mtfwW0K_Tso8XXXvJQz5"
     },
     {
       "episode_id": "E051",
