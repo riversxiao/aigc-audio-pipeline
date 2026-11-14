@@ -28,17 +28,17 @@
 
 ## 三、两种极速启动方式（任选其一）
 
-### 方式 A：【最省心推荐】Colab Notebook 点一下 `Cell 0`，交由云端 Agent 纯 HTTPS 全自动跑完 `E007-E120` 并自动关机！
+### 方式 A：【最省心推荐】Colab Notebook 点一下 `Cell 0`，交由云端 Agent 纯 HTTPS 全自动跑完 `E002-E120` 并自动关机！
 
 直接在 Google Drive 打开 `05_Colab_96GB_FishDrama3_满血本地推理管线/Zhujie_Suoxian_96GB_Drama3_Studio.ipynb`：
 1. 右上角连接 **G4 (96GB)** 运行时；
 2. 点击 **Cell 0（`▶ 点击此处一键移交云端 Antigravity Agent 全自动接管`）**，授权挂载 Google Drive；
-3. 对云端 Agent 说一句 **`开了`** —— Agent 会自动启动 **`E007-E120`（共 114 集直达第 120 章大结局）**，每完成一集秒级原子同步至 Google Drive（`outputs/` 与 `03_分集成片音频/`），并在 `E120` 归档完毕后**自动触发 `runtime.unassign()` 销毁 G4 实例立停 CCU 计费**（支持无人值守过夜）！
+3. 对云端 Agent 说一句 **`开了`** —— Agent 会自动启动 **`E002-E120`（共 119 集，与已生成的 `E001` 凑齐 `E001`–`E120` 全本 120 集统一的 `Drama3同源古风母带`）**，每完成一集秒级原子同步至 Google Drive（`outputs/` 与 `03_分集成片音频/`），并在 `E120` 归档完毕后**自动触发 `runtime.unassign()` 销毁 G4 实例立停 CCU 计费**（支持无人值守过夜）！
 
 ### 方式 B：命令行一键无头启动
 
 ```bash
 colab new -s audio96 --gpu G4
 colab drivemount -s audio96
-echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E007-E120 --skip-existing --mirror-to-main-masters --auto-unassign" | colab exec -s audio96
+echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E002-E120 --skip-existing --mirror-to-main-masters --auto-unassign" | colab exec -s audio96
 ```
