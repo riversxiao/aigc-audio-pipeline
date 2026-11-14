@@ -338,6 +338,16 @@ def sync_completed_outputs(
     tok = get_drive_token()
     if DRIVE_STUDIO_DIR.exists():
         DRIVE_OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    if mirror_to_main_masters and DRIVE_AUDIO_ROOT.exists():
+        DRIVE_MAIN_MASTERS_DIR.mkdir(parents=True, exist_ok=True)
+
+    def _fuse_sync_one(fpath: Path, stem: str) -> None:
+        if DRIVE_OUTPUTS_DIR.exists():
+            shutil.copy2(fpath, DRIVE_OUTPUTS_DIR / fpath.name)
+            print(f"☁️ [FUSE 同步] {fpath.name} -> {DRIVE_OUTPUTS_DIR}", flush=True)
+        if mirror_to_main_masters and stem.startswith("E") and DRIVE_MAIN_MASTERS_DIR.exists():
+            shutil.copy2(fpath, DRIVE_MAIN_MASTERS_DIR / fpath.name)
+            print(f"☁️ [FUSE 同步主库] {fpath.name} -> {DRIVE_MAIN_MASTERS_DIR}", flush=True)
 
     for done_file in sorted(local_outputs.glob("*.done")):
         if done_file.name in synced_markers:
@@ -356,11 +366,9 @@ def sync_completed_outputs(
                         drive_api_upsert_file(fpath, DRIVE_MAIN_MASTERS_FOLDER_ID, tok)
                 except Exception as exc:
                     print(f"⚠️ Drive API 上传回退至 FUSE ({fpath.name}): {exc}", flush=True)
-                    if DRIVE_OUTPUTS_DIR.exists():
-                        shutil.copy2(fpath, DRIVE_OUTPUTS_DIR / fpath.name)
-            elif DRIVE_OUTPUTS_DIR.exists():
-                shutil.copy2(fpath, DRIVE_OUTPUTS_DIR / fpath.name)
-                print(f"☁️ [FUSE 同步] {fpath.name} -> {DRIVE_OUTPUTS_DIR}", flush=True)
+                    _fuse_sync_one(fpath, stem)
+            else:
+                _fuse_sync_one(fpath, stem)
 
         synced_markers.add(done_file.name)
 
