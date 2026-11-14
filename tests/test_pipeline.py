@@ -74,6 +74,15 @@ class AudioPipelineTests(unittest.TestCase):
         )
         self.assertFalse(truncated.passed)
 
+        # Acoustic ASR homophone at sentence end ('异变骤生' -> '一遍咒声') passes when full syllable count matches
+        homophone_tail = evaluate_dialogue_qa(
+            tagged_prompt="当陆烬右脚踏在第九十九丈的冻土边缘，试探着伸出右手食指触碰面前翻涌的灰雾时，异变骤生。",
+            asr_text="当路径右脚踏在第九十九丈的冻土边缘，试探着伸出右手食指触碰面前翻涌的灰雾时，一遍咒声。",
+            duration_s=9.2,
+            peak_dbfs=-11.0,
+        )
+        self.assertTrue(homophone_tail.passed)
+
     def test_bgm_ducking_curve_preserves_speech_ratio(self) -> None:
         # 4 seconds of constant amplitude 10000 stereo 48kHz samples
         bgm = array("h", [10000]) * (4 * 48000 * 2)
