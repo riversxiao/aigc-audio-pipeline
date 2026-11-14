@@ -103,17 +103,17 @@ def finalize_all(g4_out_dir: Path) -> dict[str, Any]:
     aud_dur = ffprobe_duration(aud_mp3)
     aud_lufs, aud_tp = measure_loudness(aud_mp3)
     aud_stem = "AUDITION_A_逆模因部核心声优六句试听合集_v001"
-    shutil.copy2(aud_mp3, aud_ws / f"{aud_stem}.mp3")
-    shutil.copy2(aud_wav, aud_ws / f"{aud_stem}.wav")
+    shutil.copyfile(aud_mp3, aud_ws / f"{aud_stem}.mp3")
+    shutil.copyfile(aud_wav, aud_ws / f"{aud_stem}.wav")
     if aud_json.is_file():
-        shutil.copy2(aud_json, aud_ws / f"{aud_stem}.json")
+        shutil.copyfile(aud_json, aud_ws / f"{aud_stem}.json")
 
     # 2. Stage 5 reusable sci-fi motifs
     motifs_src = g4_out_dir / "motifs"
     staged_motifs: list[str] = []
     if motifs_src.is_dir():
         for mw in sorted(motifs_src.glob("*.wav")):
-            shutil.copy2(mw, motif_ws / mw.name)
+            shutil.copyfile(mw, motif_ws / mw.name)
             staged_motifs.append(mw.name)
 
     # 3. Verify & stage all 6 episodes (E001-E006)
@@ -136,10 +136,10 @@ def finalize_all(g4_out_dir: Path) -> dict[str, Any]:
             raise RuntimeError(f"{eid} loudness out of broadcast range: {lufs:.2f} LUFS")
         srt_count = verify_srt_clean(srt_p)
 
-        shutil.copy2(mp3_p, ep_ws / f"{cn_stem}.mp3")
-        shutil.copy2(wav_p, ep_ws / f"{cn_stem}.wav")
-        shutil.copy2(srt_p, ep_ws / f"{cn_stem}.srt")
-        shutil.copy2(js_p, ep_ws / f"{cn_stem}.json")
+        shutil.copyfile(mp3_p, ep_ws / f"{cn_stem}.mp3")
+        shutil.copyfile(wav_p, ep_ws / f"{cn_stem}.wav")
+        shutil.copyfile(srt_p, ep_ws / f"{cn_stem}.srt")
+        shutil.copyfile(js_p, ep_ws / f"{cn_stem}.json")
 
         qa_report[eid] = {
             "canonical_stem": cn_stem,

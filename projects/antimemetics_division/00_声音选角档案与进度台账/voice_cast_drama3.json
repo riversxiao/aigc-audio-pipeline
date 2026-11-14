@@ -2,7 +2,7 @@
   "project_id": "antimemetics_division",
   "project_title": "《逆模因部》硬核科幻悬疑多人有声剧（SCP CC-BY-SA-3.0）",
   "engine": "fishaudio/drama-3 + OpenMOSS-Team/MOSS-SoundEffect-v2.0 + ACE-Step/acestep-v15-xl-turbo-diffusers",
-  "exported_at": "2026-11-14T07:26:01Z",
+  "exported_at": "2026-11-14T08:32:39Z",
   "anchor_sample_rate_hz": 44100,
   "role_count": 13,
   "characters": {

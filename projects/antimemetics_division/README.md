@@ -7,17 +7,20 @@
 - **原著来源**：100% 源自 [SCP Wiki Antimemetics Division Hub](https://scp-wiki.wikidot.com/antimemetics-division-hub) 原版网页连载 V1（原作者 `qntm` 及 `CptBellman`），**绝未使用** 2025 年企鹅兰登（Penguin / Del Rey）重写商业出版物内容。
 - **开源许可**：衍生中文精译底本、分集广播剧台本及有声剧音频遵循 **[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)** 协议共享（详见 [`CC_BY_SA_3.0_ATTRIBUTION.md`](./CC_BY_SA_3.0_ATTRIBUTION.md)）。
 
-## 2. 第一季完整章节与分集台本（未删减 >= 96.5% 覆盖率）
+## 2. 第一季完整章节与分集有声剧成片（未删减 >= 96.5% 覆盖率，总时长 198.56 分钟）
 
-| 集数 | 中文精译章节 (`source_chapters/`) | 原作词条 | 对白轨数 | 音效轨数 | 分幕配乐 |
-| :---: | :--- | :--- | :---: | :---: | :---: |
-| **AUDITION** | 核心声优六句试听合集 | — | 6 | 0 | — |
-| **E001** | `第01章_SCP-055_未知自封机密.md` | `scp-055` | 42 | 5 | 3 幕 |
-| **E002** | `第02章_我们得谈谈五十五号.md` | `we-need-to-talk-about-fifty-five` | 135 | 6 | 4 幕 |
-| **E003** | `第03章_逆模因学导论.md` | `introductory-antimemetics` | 110 | 7 | 4 幕 |
-| **E004** | `第04章_难以忘怀，你本如此.md` | `unforgettable-that-s-what-you-are` | 124 | 8 | 4 幕 |
-| **E005** | `第05章_无色绿意案.md` | `case-colourless-green` | 74 | 8 | 3 幕 |
-| **E006** | `第06章_你最后一次首日上班.md` | `your-last-first-day` | 62 | 7 | 3 幕 |
+- **Google Drive 云端工程总目录**：[`《逆模因部》有声剧工程（SCP CC-BY-SA-3.0）`](https://drive.google.com/drive/folders/1RK1Ymuz-T2v1gmN4KBkZT9Sz0kyLFjYu)
+- **分集成片音频直达目录（MP3 / 24-bit WAV / 纯净中文字幕 SRT / 时间轴 JSON）**：[`03_分集成片音频`](https://drive.google.com/drive/folders/14K7S0frg2TrykLJwlN1yJ-t034jj4A7f)
+
+| 集数 | 中文精译章节 (`source_chapters/`) | 原作词条 | 对白轨数 | 音效/配乐 | 成片时长 | 综合响度 |
+| :---: | :--- | :--- | :---: | :---: | :---: | :---: |
+| **AUDITION** | 核心声优六句试听合集 | — | 6 | — | 1.30 min | `-15.75 LUFS` |
+| **E001** | `第01章_SCP-055_未知自封机密.md` | `scp-055` | 42 | 5 轨 / 3 幕 | 11.65 min | `-16.00 LUFS` |
+| **E002** | `第02章_我们得谈谈五十五号.md` | `we-need-to-talk-about-fifty-five` | 135 | 6 轨 / 4 幕 | 29.79 min | `-16.11 LUFS` |
+| **E003** | `第03章_逆模因学导论.md` | `introductory-antimemetics` | 110 | 7 轨 / 4 幕 | 37.13 min | `-16.06 LUFS` |
+| **E004** | `第04章_难以忘怀，你本如此.md` | `unforgettable-that-s-what-you-are` | 124 | 8 轨 / 4 幕 | 49.24 min | `-15.90 LUFS` |
+| **E005** | `第05章_无色绿意案.md` | `case-colourless-green` | 74 | 8 轨 / 3 幕 | 37.02 min | `-16.00 LUFS` |
+| **E006** | `第06章_你最后一次首日上班.md` | `your-last-first-day` | 62 | 7 轨 / 3 幕 | 33.73 min | `-16.02 LUFS` |
 
 ## 3. 全剧 13 角色大陆戏剧配音阵容 & 5 大跨集科幻声效母题
 

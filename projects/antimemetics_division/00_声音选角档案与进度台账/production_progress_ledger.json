@@ -3,7 +3,7 @@
   "project_title": "《逆模因部》硬核科幻悬疑多人有声剧（SCP CC-BY-SA-3.0）",
   "license": "CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)",
   "source_hub_url": "https://scp-wiki.wikidot.com/antimemetics-division-hub",
-  "updated_at": "2026-11-14T04:16:32Z",
+  "updated_at": "2026-11-14T09:01:22Z",
   "drive_folders": {
     "audio_root": "1RK1Ymuz-T2v1gmN4KBkZT9Sz0kyLFjYu",
     "00_casting_and_ledgers": "1otDWb5DjIhhxxsgNUf5XDxeqZM2Wu9Ed",
@@ -18,8 +18,16 @@
   "summary": {
     "total_planned_episodes": 6,
     "scripts_ready": 6,
-    "episodes_mastered": 0,
-    "voices_locked": 13
+    "episodes_mastered": 6,
+    "voices_locked": 13,
+    "reusable_motifs_synthesized": 5,
+    "total_runtime_minutes": 198.56,
+    "synthesis_stack": "Fish Audio Drama 3 (35B MoE FP8) + MOSS-SoundEffect v2.0 + ACE-Step 1.5 XL (scifi_dark) + faster-whisper QA",
+    "audition_reel": {
+      "duration_seconds": 77.81,
+      "integrated_lufs": -15.75,
+      "true_peak_dbtp": -1.77
+    }
   },
   "episodes": [
     {
@@ -28,8 +36,20 @@
       "title": "第1章 SCP-055：未知自封机密",
       "scp_wiki_slug": "scp-055",
       "scp_wiki_url": "https://scp-wiki.wikidot.com/scp-055",
-      "status": "script_validated",
-      "cue_sheet_file": "02_分集广播剧台本/E001_第01章_SCP-055未知自封机密_完整有声剧台本.json"
+      "status": "mastered_and_archived",
+      "cue_sheet_file": "02_分集广播剧台本/E001_第01章_SCP-055未知自封机密_完整有声剧台本.json",
+      "latest_manifest_json_drive_id": "1j6HwLDTRBOxUHs1aTznXK2j2vTh2N71x",
+      "latest_master_mp3_drive_id": "1jUuxe0BSRR1LzZ1j0AtYWMSUtddSrEOK",
+      "latest_subtitles_srt_drive_id": "1NufKfxgE6A0aMVwXIb8WquBa-qNjSo3g",
+      "latest_master_wav_drive_id": "1M4XqFkTlxZeD74oMJ4ioCT2aSsmsyIjx",
+      "canonical_stem": "E001_第01章_SCP-055未知自封机密_电影感多人有声剧_v001",
+      "duration_seconds": 698.93,
+      "duration_minutes": 11.65,
+      "integrated_lufs": -16.0,
+      "true_peak_dbtp": -0.98,
+      "srt_subtitles": 42,
+      "mp3_size_mb": 26.66,
+      "wav_size_mb": 127.97
     },
     {
       "chapter_number": 2,
@@ -37,8 +57,20 @@
       "title": "第2章 我们得谈谈五十五号",
       "scp_wiki_slug": "we-need-to-talk-about-fifty-five",
       "scp_wiki_url": "https://scp-wiki.wikidot.com/we-need-to-talk-about-fifty-five",
-      "status": "script_validated",
-      "cue_sheet_file": "02_分集广播剧台本/E002_第02章_我们得谈谈五十五号_完整有声剧台本.json"
+      "status": "mastered_and_archived",
+      "cue_sheet_file": "02_分集广播剧台本/E002_第02章_我们得谈谈五十五号_完整有声剧台本.json",
+      "latest_manifest_json_drive_id": "1C7HZILi5hrTsYAmZyQ6Uf2WIf3lbt0Tg",
+      "latest_master_mp3_drive_id": "1c0t4dY7YdHZYS8GM5GNxSiObfBY_Ahwt",
+      "latest_subtitles_srt_drive_id": "1C9yYJq4Wrf4IwYgrGFp6m7Pup68VYK_M",
+      "latest_master_wav_drive_id": "18H31zJR8ndro4AcbfPwnvVVRHIjzzSyH",
+      "canonical_stem": "E002_第02章_我们得谈谈五十五号_电影感多人有声剧_v001",
+      "duration_seconds": 1787.57,
+      "duration_minutes": 29.79,
+      "integrated_lufs": -16.11,
+      "true_peak_dbtp": -0.96,
+      "srt_subtitles": 135,
+      "mp3_size_mb": 68.19,
+      "wav_size_mb": 327.31
     },
     {
       "chapter_number": 3,
@@ -46,8 +78,20 @@
       "title": "第3章 逆模因学导论",
       "scp_wiki_slug": "introductory-antimemetics",
       "scp_wiki_url": "https://scp-wiki.wikidot.com/introductory-antimemetics",
-      "status": "script_validated",
-      "cue_sheet_file": "02_分集广播剧台本/E003_第03章_逆模因学导论_完整有声剧台本.json"
+      "status": "mastered_and_archived",
+      "cue_sheet_file": "02_分集广播剧台本/E003_第03章_逆模因学导论_完整有声剧台本.json",
+      "latest_manifest_json_drive_id": "1u9BaVPqfvajoMQtiNVCTSQEkkPBbT_XN",
+      "latest_master_mp3_drive_id": "15SCMx1EzHmQ8DSp_2PMy1gg0cvA2peUl",
+      "latest_subtitles_srt_drive_id": "1L79bWCUlafWqEG8cjyMPIdK9CdmrYSpt",
+      "latest_master_wav_drive_id": "19F9gAjlqe7BfbwFJGXba6VQrjpzEgwj-",
+      "canonical_stem": "E003_第03章_逆模因学导论_电影感多人有声剧_v001",
+      "duration_seconds": 2227.97,
+      "duration_minutes": 37.13,
+      "integrated_lufs": -16.06,
+      "true_peak_dbtp": -0.96,
+      "srt_subtitles": 110,
+      "mp3_size_mb": 84.99,
+      "wav_size_mb": 407.95
     },
     {
       "chapter_number": 4,
@@ -55,8 +99,20 @@
       "title": "第4章 难以忘怀，你本如此",
       "scp_wiki_slug": "unforgettable-that-s-what-you-are",
       "scp_wiki_url": "https://scp-wiki.wikidot.com/unforgettable-that-s-what-you-are",
-      "status": "script_validated",
-      "cue_sheet_file": "02_分集广播剧台本/E004_第04章_难以忘怀你本如此_完整有声剧台本.json"
+      "status": "mastered_and_archived",
+      "cue_sheet_file": "02_分集广播剧台本/E004_第04章_难以忘怀你本如此_完整有声剧台本.json",
+      "canonical_stem": "E004_第04章_难以忘怀你本如此_电影感多人有声剧_v001",
+      "duration_seconds": 2954.38,
+      "duration_minutes": 49.24,
+      "integrated_lufs": -15.9,
+      "true_peak_dbtp": -0.38,
+      "srt_subtitles": 124,
+      "mp3_size_mb": 112.7,
+      "wav_size_mb": 540.95,
+      "latest_manifest_json_drive_id": "1lYeOdcTI0KeqjTlUDrzoqX9tnBFfQfEv",
+      "latest_master_mp3_drive_id": "1yB-RPVpF5hinp7CIIDsBTFfgTQ0XkKlM",
+      "latest_subtitles_srt_drive_id": "1ypMCDbSO0jBWz15ecZipa9yUCeXWOGjd",
+      "latest_master_wav_drive_id": "1wml1zspS5dZ3KoUX29VfloObauiIrJX0"
     },
     {
       "chapter_number": 5,
@@ -64,8 +120,20 @@
       "title": "第5章 无色绿意案",
       "scp_wiki_slug": "case-colourless-green",
       "scp_wiki_url": "https://scp-wiki.wikidot.com/case-colourless-green",
-      "status": "script_validated",
-      "cue_sheet_file": "02_分集广播剧台本/E005_第05章_无色绿意案_完整有声剧台本.json"
+      "status": "mastered_and_archived",
+      "cue_sheet_file": "02_分集广播剧台本/E005_第05章_无色绿意案_完整有声剧台本.json",
+      "canonical_stem": "E005_第05章_无色绿意案_电影感多人有声剧_v001",
+      "duration_seconds": 2221.34,
+      "duration_minutes": 37.02,
+      "integrated_lufs": -16.0,
+      "true_peak_dbtp": -0.98,
+      "srt_subtitles": 74,
+      "mp3_size_mb": 84.74,
+      "wav_size_mb": 406.73,
+      "latest_manifest_json_drive_id": "1JzSaLbi567sCUI0LbcI81YAwMIihL5TN",
+      "latest_master_mp3_drive_id": "1sFVX_EEwJOsxZt1_4m1GL-2NDiPA2Mg-",
+      "latest_subtitles_srt_drive_id": "1Ae1wFUNFrX9Lrw3eBxO4uPuQtAnfwHzN",
+      "latest_master_wav_drive_id": "1bAZQnhjvv5DwSBdQGYKuJt1-dr9a2n5D"
     },
     {
       "chapter_number": 6,
@@ -73,8 +141,20 @@
       "title": "第6章 你最后一次首日上班",
       "scp_wiki_slug": "your-last-first-day",
       "scp_wiki_url": "https://scp-wiki.wikidot.com/your-last-first-day",
-      "status": "script_validated",
-      "cue_sheet_file": "02_分集广播剧台本/E006_第06章_你最后一次首日上班_完整有声剧台本.json"
+      "status": "mastered_and_archived",
+      "cue_sheet_file": "02_分集广播剧台本/E006_第06章_你最后一次首日上班_完整有声剧台本.json",
+      "canonical_stem": "E006_第06章_你最后一次首日上班_电影感多人有声剧_v001",
+      "duration_seconds": 2023.78,
+      "duration_minutes": 33.73,
+      "integrated_lufs": -16.02,
+      "true_peak_dbtp": -0.98,
+      "srt_subtitles": 62,
+      "mp3_size_mb": 77.2,
+      "wav_size_mb": 370.56,
+      "latest_manifest_json_drive_id": "1OAOYXHkYTKofYAHxMWhPFb9-fwyXh6TY",
+      "latest_master_mp3_drive_id": "1Sj3OxiBgpaS5QaVFrO0fHBps0tXGn6wf",
+      "latest_subtitles_srt_drive_id": "1652Q0CezOo4cJAA7YAFK7cs1OzoAchSn",
+      "latest_master_wav_drive_id": "1jvPUwWRMkt8-L6DuGTVFuRtTfCKwNuG4"
     }
   ],
   "drive_files": {

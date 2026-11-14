@@ -28,7 +28,9 @@ def _extract_id(out_text: str) -> str:
     raise RuntimeError(f"Could not parse Drive ID from: {out_text!r}")
 
 
-def find_item_in_parent(name: str, parent_id: str | None = None, mime_type: str | None = None) -> str:
+def find_item_entry_in_parent(
+    name: str, parent_id: str | None = None, mime_type: str | None = None
+) -> dict[str, Any] | None:
     cmd = ["gdrive", "readonly", "search", "--name-exact", name, "--json"]
     if parent_id:
         cmd.extend(["--parent-id", parent_id])
@@ -38,8 +40,13 @@ def find_item_in_parent(name: str, parent_id: str | None = None, mime_type: str 
     for it in items:
         if mime_type and it.get("mimeType") != mime_type:
             continue
-        return str(it["id"])
-    return ""
+        return it
+    return None
+
+
+def find_item_in_parent(name: str, parent_id: str | None = None, mime_type: str | None = None) -> str:
+    it = find_item_entry_in_parent(name, parent_id=parent_id, mime_type=mime_type)
+    return str(it["id"]) if it else ""
 
 
 def ensure_folder(name: str, parent_id: str | None = None) -> str:
@@ -54,10 +61,14 @@ def ensure_folder(name: str, parent_id: str | None = None) -> str:
 
 
 def upsert_file(local_path: Path, parent_id: str) -> str:
-    existing = find_item_in_parent(local_path.name, parent_id=parent_id)
-    if existing:
-        subprocess.run(["gdrive", "mutate", "update", existing, str(local_path)], check=True)
-        return existing
+    entry = find_item_entry_in_parent(local_path.name, parent_id=parent_id)
+    if entry:
+        fid = str(entry["id"])
+        remote_sz = int(entry.get("size") or -1)
+        if local_path.suffix.lower() in (".mp3", ".wav", ".zip") and remote_sz == local_path.stat().st_size:
+            return fid
+        subprocess.run(["gdrive", "mutate", "update", fid, str(local_path)], check=True)
+        return fid
     out = subprocess.check_output(
         ["gdrive", "mutate", "upload", str(local_path), "--parent", parent_id, "--json"],
         text=True,
