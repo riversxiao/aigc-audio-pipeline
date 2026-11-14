@@ -105,5 +105,12 @@ flowchart LR
   1. **`sm_120` 与简体中文 ASR 零误判**：预装 `ninja-build` + `ninja` 并注入 `sgl-omni` `PATH`；`LocalWhisperQA` 改走 `ffmpeg 16kHz f32le` 管道直喂并注入 `initial_prompt="以下是普通话的句子，请使用简体中文输出。"`，消除 PyAV 元数据报错与繁简误判重抽（单集提速约 2.4 倍）。
   2. **纯正中国古典器乐与纯净拟音守门员**：构建 `WORLD_OST` 23 首跨世界纯英文古风器乐母题，强制 `vocal_language="unknown"`、`lyrics="[Instrumental]"` 并量化配乐时长档位实现跨 120 集 SHA-256 100% 缓存命中（节省约 85% 配乐算力）；`sanitize_moss_foley_prompt()` 自动剥离咳嗽/呻吟等人声描述词，确保拟音轨 100% 纯物理声效。
   3. **`TimelineCue.speaker_name` 动态角色真名字幕**：扩展 28 位锁定大陆普通话棚录声优（新增姜清凰、太一、终局残魂、守墓老人），并支持群像声优按章注入 `speaker_name`（如 `【铁山】`、`【玄冥尊】`），音色统一而 `.srt` 字幕精准对位。
-  4. **本地 NVMe 干音缓存 + 无人值守 `.colab_auto_unassign` 自动关机**：将万级 TTS 干音读写全量放在本地高速 NVMe，仅在单集 `.done` 时通过 Drive REST API v3 原子上传四件套并增量回写复用的 BGM 母带；全本 `E120` 归档完毕后自动写入 `.colab_auto_unassign` 唤醒 Notebook 主内核调用 `google.colab.runtime.unassign()` 立停 CCU 计费。
+  4. **本地 NVMe 干音缓存 + 无人值守 `.colab_auto_unassign` 自动关机**：将万级 TTS 干音读写全量放在本地高速 NVMe，仅在单集 `.done` 时通过 Drive REST API v3 / FUSE 双目录原子归档四件套（`outputs/` 与 `03_分集成片音频/`）并增量回写复用的 BGM 母带；全本 `E120` 归档完毕后自动写入 `.colab_auto_unassign` 唤醒 Notebook 主内核调用 `google.colab.runtime.unassign()` 立停 CCU 计费。
+
+### 15. 96GB 三模同卡常驻显存碎片治理、同音词尾质检容错与本机自愈续跑
+- **痛点**：在 `E002-E120` 连续百集实测中，`MOSS-SoundEffect v2.0` 生成拟音后 PyTorch CUDA Caching Allocator 未主动归还 ~12.5 GiB 缓存激活块（占至 18.28 GiB），导致首次为 `E004` 调用 `ACE-Step 1.5 XL` 解码 75 秒长分幕配乐时距 95 GiB 显存上限仅差 `240 MiB` 触发 OOM；此外纯声学 `faster-whisper` 偶发将生僻成语词尾（如“异变骤生”）转写为同音词（“一遍咒声”）造成无谓重抽。
+- **优化方案**（[`colab_96gb/run_zhujie_96gb_studio.py`](../colab_96gb/run_zhujie_96gb_studio.py) + [`colab_96gb/launch_g4_zhujie_drama3.py`](../colab_96gb/launch_g4_zhujie_drama3.py) + [`qa.py`](../src/aigc_audio_pipeline/qa.py)）：
+  1. **显存水位治理（释放 >30 GiB 空闲显存余量）**：为 `MOSS v2.0` 与 `ACE-Step 1.5 XL` 常驻工作进程开启 `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`、VAE `enable_tiling() + enable_slicing()`，并在每次推理后立即 `del` 中间张量 + `gc.collect()` + `torch.cuda.empty_cache()`；同时将单流 `Drama 3` 35B FP8 配比精调至 `0.46 / 0.08 / 4GiB`（保留完整 `7.60 GiB` 非流式声码器解码池与 `4 GiB` DAC 参考音频编码池），实测常驻空余显存跃升至 **>31 GiB**。
+  2. **极端峰值对偶让位与本机 3 轮自愈守护**：若未来超长分幕仍触及显存边界，自动临时卸载对偶常驻进程（MOSS ↔ ACE-Step）并原位重试；`launch_g4_zhujie_drama3.py` 内置本机 3 轮断点自愈循环与按文件大小幂等双目录同步，不依赖外部客户端在线即可自主恢复。
+  3. **声学同音句尾防误杀**：在 `qa.py` `_check_tail()` 中支持在整体字面召回率 `>= 0.78` 且总音节数未缺失（`len(actual) >= len(expected) - 1`）时放行纯声学同音转写，彻底消除句尾生僻词假阳性重抽。
 

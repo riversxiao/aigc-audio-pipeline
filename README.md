@@ -117,12 +117,11 @@ PYTHONPATH=src python3 -m aigc_audio_pipeline preview-drama3 \
 colab new -s audio96 --gpu G4
 colab drivemount -s audio96
 
-# 2. 先跑试听小样 + 第 01 章做 A/B 听感对比（默认默认跑 AUDITION,E001，输出 *_drama3_master_v001.* 绝不覆盖云端成片）
+# 2. 先跑试听小样 + 第 01 章做 A/B 听感对比（默认跑 AUDITION,E001，输出 *_Drama3同源古风母带_v001.* 绝不覆盖旧版成片）
 colab exec -s audio96 -f colab_96gb/launch_g4_zhujie_drama3.py
 
-# 3. 验收满意后，零 API 成本一键批量跑完剩余第 07–40 章（跑完记得 colab stop -s audio96 释放实例）
-echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E007-E040 --skip-existing" | colab exec -s audio96
-colab stop -s audio96
+# 3. 验收满意后，零 API 成本一键批量跑完 E002-E120 全本收官（双目录同步 + 跑完自动 runtime.unassign() 销毁实例零空转）
+echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E002-E120 --skip-existing --mirror-to-main-masters --auto-unassign" | colab exec -s audio96
 ```
 
 完整部署与 Notebook 交互指南见：[`colab_96gb/README_Colab_96GB_Drama3.md`](colab_96gb/README_Colab_96GB_Drama3.md)。
