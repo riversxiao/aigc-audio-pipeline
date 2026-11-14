@@ -332,14 +332,14 @@ class Drama3ServerClient:
 
     def _budget_flags(self) -> list[str]:
         if self.co_resident_96g and not self.model_repo.endswith("-int4"):
-            # ~56GB for 35B MoE FP8 Drama 3 (0.46 tts + full 0.08 vocoder + 2GiB prep) -> ~39GB free for MOSS v2.0 + ACE-Step 1.5 XL!
+            # ~58GB for 35B MoE FP8 Drama 3 (0.46 tts + 0.08 vocoder + 4GiB prep) -> >31GB free for MOSS v2.0 + ACE-Step 1.5 XL!
             return [
                 "--tts_engine.gpu_memory_fraction",
                 "0.46",
                 "--vocoder.gpu_memory_fraction",
                 "0.08",
                 "--preprocessing.total_reserve_bytes",
-                "2GiB",
+                "4GiB",
             ]
         if self.co_resident_96g:
             return [

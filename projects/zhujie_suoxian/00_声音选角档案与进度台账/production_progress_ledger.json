@@ -24,8 +24,8 @@
     "episodes_mastered": 6,
     "voices_locked": 28,
     "sonic_motifs_archived": 6,
-    "checkpoint_status": "g4_drama3_running_3_of_120",
-    "drama3_episodes_mastered": 3
+    "checkpoint_status": "g4_drama3_running_4_of_120",
+    "drama3_episodes_mastered": 4
   },
   "episodes": [
     {
@@ -105,21 +105,25 @@
       "chapter_number": 4,
       "chapter_file_name": "第04章_请君入灵堂，一指毙暗桩.md",
       "drive_chapter_file_id": "1ultvpz8K9zawmqNcNJpffGVmUDOAvzh9",
-      "status": "mastered_and_archived",
+      "status": "mastered_and_archived_drama3",
       "cue_sheet_file": "02_分集广播剧台本/E004_第04章_请君入灵堂一指毙暗桩_完整有声剧台本.json",
       "audition_pack_file": "",
-      "latest_master_wav_drive_id": "1GDEWdcjrRhkczhsRljUbZebLWk7v7xtN",
-      "latest_master_mp3_drive_id": "1Oxx6XpF2Ojst29JkehVyIaT8yVYLM3sD",
-      "notes": "已完成4幕44轨三总线精修母带（v001），时长16分15秒，响度-16.4 LUFS（TP -0.7 dBFS），Scribe v3质检失败数=2。",
+      "latest_master_wav_drive_id": "1deWjLzL-csfwHglrc-EnEMLWIfACxq-i",
+      "latest_master_mp3_drive_id": "1x4o4UBqfKSLKeVM4ZqmAYGbvVYtBrcAs",
+      "notes": "已完成 Fish Audio Drama 3 (35B FP8) + MOSS v2.0 + ACE-Step 1.5 XL 同源古风母带归档 (E004_第04章_请君入灵堂_一指毙暗桩_Drama3同源古风母带_v001.mp3)。",
       "script_json_drive_id": "1I3jVa2HdJDPGPgUN6d6pwPTvBATkgtnl",
       "script_md_drive_id": "10kvwD7cQn1sKISlLR0UZ8GjaESvs6Xvu",
       "duration_seconds": 975.55,
       "integrated_lufs": -16.4,
       "true_peak_dbfs": -0.7,
       "qa_failure_count": 2,
-      "latest_subtitles_srt_drive_id": "1O41Z4txVLobv3AHwKyE2sQkwIghOL_Gk",
-      "latest_manifest_json_drive_id": "1ezwM8ZuysdFMYaNLYDfwDPSLBs6h6iUV",
-      "local_master_mp3": "/shared/user/.gemini/config/zhujie_suoxian_audio/03_分集成片音频/E004_第04章_请君入灵堂一指毙暗桩_电影感多人有声剧_v001.mp3"
+      "latest_subtitles_srt_drive_id": "1YemHyRsjQCEfgqnKXEjxYcBtpu-CLr2X",
+      "latest_manifest_json_drive_id": "1MFisfInKpMBQ8KGhfefNVlmRgHTOBXVh",
+      "local_master_mp3": "/shared/user/.gemini/config/zhujie_suoxian_audio/03_分集成片音频/E004_第04章_请君入灵堂一指毙暗桩_电影感多人有声剧_v001.mp3",
+      "drama3_master_mp3_drive_id": "1x4o4UBqfKSLKeVM4ZqmAYGbvVYtBrcAs",
+      "drama3_master_wav_drive_id": "1deWjLzL-csfwHglrc-EnEMLWIfACxq-i",
+      "drama3_subtitles_srt_drive_id": "1YemHyRsjQCEfgqnKXEjxYcBtpu-CLr2X",
+      "drama3_manifest_json_drive_id": "1MFisfInKpMBQ8KGhfefNVlmRgHTOBXVh"
     },
     {
       "episode_id": "E005",
