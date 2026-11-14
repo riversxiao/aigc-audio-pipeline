@@ -377,6 +377,25 @@ def sync_completed_outputs(
                 _fuse_sync_one(fpath, stem)
 
         synced_markers.add(done_file.name)
+        # Reclaim ~180MB local NVMe master .wav once archived to Drive (keep .mp3 + .done for --skip-existing)
+        local_wav = local_outputs / f"{stem}.wav"
+        local_mp3 = local_outputs / f"{stem}.mp3"
+        if stem.startswith("E") and local_wav.is_file() and local_mp3.is_file():
+            try:
+                local_wav.unlink()
+            except Exception:
+                pass
+
+    # Reclaim temporary per-line TTS stems older than 45 min from NVMe cache
+    tts_cache_dir = WORK_ROOT / "stem_cache" / "drama3_tts"
+    if tts_cache_dir.exists():
+        cutoff = time.time() - 2700
+        for wf in tts_cache_dir.glob("*.wav"):
+            try:
+                if wf.stat().st_mtime < cutoff:
+                    wf.unlink()
+            except Exception:
+                pass
 
 
 def start_cloudflare_tunnel(port: int = 8000) -> Optional[subprocess.Popen]:
