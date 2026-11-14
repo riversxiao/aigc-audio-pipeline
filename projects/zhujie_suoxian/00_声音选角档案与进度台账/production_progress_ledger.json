@@ -24,8 +24,8 @@
     "episodes_mastered": 6,
     "voices_locked": 28,
     "sonic_motifs_archived": 6,
-    "checkpoint_status": "g4_drama3_running_2_of_120",
-    "drama3_episodes_mastered": 2
+    "checkpoint_status": "g4_drama3_running_3_of_120",
+    "drama3_episodes_mastered": 3
   },
   "episodes": [
     {
@@ -80,21 +80,25 @@
       "chapter_number": 3,
       "chapter_file_name": "第03章_三步试墟界，残碑上的古引气篇.md",
       "drive_chapter_file_id": "1UshHVMwVdxc4tD6mQXPOmRDFFS9YcbxJ",
-      "status": "mastered_and_archived",
+      "status": "mastered_and_archived_drama3",
       "cue_sheet_file": "02_分集广播剧台本/E003_第03章_三步试墟界残碑上的古引气篇_完整有声剧台本.json",
       "audition_pack_file": "",
-      "latest_master_wav_drive_id": "1NQGB_PLg4lQ1C725xr_K2TmkEovZdNOr",
-      "latest_master_mp3_drive_id": "15z_req_1Iq0LBVfVuPf1Upzkxo55unHB",
-      "notes": "已完成4幕45轨三总线精修母带（v001），时长17分52秒，响度-16.4 LUFS（TP -0.6 dBFS），Scribe v3质检失败数=0。",
+      "latest_master_wav_drive_id": "1GoZq546GjlgettyPMrOpNbYrw2LM4SX6",
+      "latest_master_mp3_drive_id": "14NSaALh49xYPd-wqSr1Jqd-ZN5bFYi1a",
+      "notes": "已完成 Fish Audio Drama 3 (35B FP8) + MOSS v2.0 + ACE-Step 1.5 XL 同源古风母带归档 (E003_第03章_三步试墟界_残碑上的古引气篇_Drama3同源古风母带_v001.mp3)。",
       "script_json_drive_id": "1eKM4MEwmz2be8hPGadhVbsQ2GMuTkVM7",
       "script_md_drive_id": "1m91qhx3OKYqe-uKMywRSkvOsy1Up6bkC",
       "duration_seconds": 1072.632,
       "integrated_lufs": -16.4,
       "true_peak_dbfs": -0.6,
       "qa_failure_count": 0,
-      "latest_subtitles_srt_drive_id": "19vh2wrutUGm3LEtQGR8Z9s63NJbOhn5-",
-      "latest_manifest_json_drive_id": "1QGxaDLKzMB_WxXpsqX3hzPsuo019gDTg",
-      "local_master_mp3": "/shared/user/.gemini/config/zhujie_suoxian_audio/03_分集成片音频/E003_第03章_三步试墟界残碑上的古引气篇_电影感多人有声剧_v001.mp3"
+      "latest_subtitles_srt_drive_id": "17m18oGMYD-XSKXguX3lr3Irgf5C6lYM8",
+      "latest_manifest_json_drive_id": "1CdM_thl8xRnRYEsX-U487Fx7qpynxHHw",
+      "local_master_mp3": "/shared/user/.gemini/config/zhujie_suoxian_audio/03_分集成片音频/E003_第03章_三步试墟界残碑上的古引气篇_电影感多人有声剧_v001.mp3",
+      "drama3_master_mp3_drive_id": "14NSaALh49xYPd-wqSr1Jqd-ZN5bFYi1a",
+      "drama3_master_wav_drive_id": "1GoZq546GjlgettyPMrOpNbYrw2LM4SX6",
+      "drama3_subtitles_srt_drive_id": "17m18oGMYD-XSKXguX3lr3Irgf5C6lYM8",
+      "drama3_manifest_json_drive_id": "1CdM_thl8xRnRYEsX-U487Fx7qpynxHHw"
     },
     {
       "episode_id": "E004",
