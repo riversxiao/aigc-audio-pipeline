@@ -649,10 +649,156 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertNotIn("no drums", bgm_war.lower())
         self.assertIn("no singing", bgm_war.lower())
 
+    def test_drama3_sentence_chunking_and_surgical_v002_recovery(self) -> None:
+        from aigc_audio_pipeline.drama3_adapter import concat_pcm_wavs, split_cue_into_subcues_for_drama3
+        from aigc_audio_pipeline.mixer import (
+            _read_stereo_s16,
+            condition_dialogue_clip,
+            master_episode_three_bus,
+            recover_intact_dialogue_from_master,
+        )
+        from aigc_audio_pipeline.models import extract_tags_and_spoken_text
+
+        # 1. Verify natural sentence chunking on a 220+ CJK-char narrator cue (like E009 c006_nar_p006)
+        long_text = (
+            "[tense] 血月悬于北渊城残破的飞檐之上，暗红色的月华犹如粘稠血浆般浸透青石院落。"
+            "陆烬反手握紧掌中那柄豁口斑驳的玄铁断刀，丹田废墟深处第一阶基因锁轰然震鸣，周身气血瞬间暴涨三倍不止！"
+            "祠堂阴影里，厉苍枯瘦的五指如铁钩般撕裂寒雾，九月廿三遗留的杀机彻底爆发，爪尖距离陆烬咽喉已不足三寸！"
+            "千钧一发之际，识海古棺轻轻一震，将那股侵蚀神魂的威压硬生生迟滞了三成！"
+        )
+        long_cue = TimelineCue(
+            cue_id="c006_nar_p006",
+            act_id="act1",
+            kind="dialogue",
+            role_id="narrator",
+            text=long_text,
+            stability=0.5,
+            gap_after_s=0.45,
+        )
+        subcues = split_cue_into_subcues_for_drama3(long_cue, max_cjk_chars=105)
+        self.assertGreaterEqual(len(subcues), 2)
+        for idx, sc in enumerate(subcues):
+            _, sc_spoken = extract_tags_and_spoken_text(sc.text)
+            self.assertLessEqual(len([ch for ch in sc_spoken if "\u4e00" <= ch <= "\u9fff"]), 115)
+            self.assertTrue(sc.text.startswith("[tense]"))
+            if idx < len(subcues) - 1:
+                self.assertAlmostEqual(sc.gap_after_s, 0.16, places=2)
+            else:
+                self.assertAlmostEqual(sc.gap_after_s, 0.45, places=2)
+        # Polyphone overrides ('祠堂' -> '磁堂', '廿三' -> '念三') preserved on subcues
+        joined_tts = "".join(sc.tts_text or sc.text for sc in subcues)
+        self.assertIn("磁堂", joined_tts)
+        self.assertIn("念三", joined_tts)
+
+        # 2. Verify bit-exact recovery of intact dialogue from v001 master + surgical v002 remaster
+        tmp = Path("/tmp/test_aigc_surgical_recovery")
+        if tmp.exists():
+            subprocess.run(["rm", "-rf", str(tmp)], check=True)
+        tmp.mkdir(parents=True)
+
+        def _make_wav(path: Path, freq: float, dur: float, vol_db: float = -12.0) -> Path:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    f"sine=frequency={freq}:duration={dur}:sample_rate=48000",
+                    "-af",
+                    f"pan=stereo|c0=c0|c1=c0,volume={vol_db}dB",
+                    "-c:a",
+                    "pcm_s16le",
+                    str(path),
+                ],
+                check=True,
+            )
+            return path
+
+        d1_wav = _make_wav(tmp / "d1.wav", 220.0, 1.8)
+        d2_trunc_wav = _make_wav(tmp / "d2_trunc.wav", 185.0, 2.0)
+        d2_part1 = _make_wav(tmp / "d2_p1.wav", 185.0, 1.7)
+        d2_part2 = _make_wav(tmp / "d2_p2.wav", 195.0, 1.9)
+        d2_repaired_wav = concat_pcm_wavs([d2_part1, d2_part2], tmp / "d2_repaired.wav", pause_ms=160.0)
+        d3_wav = _make_wav(tmp / "d3.wav", 310.0, 1.6)
+        sfx_wav = _make_wav(tmp / "sfx1.wav", 130.0, 1.2, vol_db=-16.0)
+        bgm1_wav = _make_wav(tmp / "bgm1.wav", 98.0, 8.0, vol_db=-14.0)
+        bgm2_wav = _make_wav(tmp / "bgm2.wav", 110.0, 8.0, vol_db=-14.0)
+
+        reg = VoiceCastingRegistry(
+            project_id="zhujie",
+            project_title="诸界锁仙",
+            roles={
+                "narrator": VoiceProfile(role_id="narrator", display_name="旁白", voice_id="v_nar", status="locked"),
+                "lu_jin": VoiceProfile(role_id="lu_jin", display_name="陆烬", voice_id="v_lu", status="locked"),
+            },
+        )
+        sheet = EpisodeCueSheet(
+            episode_id="E009",
+            chapter_number=9,
+            title="第9章 血月之下",
+            acts=[
+                ActMusicSpec(act_id="act1", title="第一幕", bgm_prompt="dark guqin", bgm_duration_s=8.0),
+                ActMusicSpec(act_id="act2", title="第二幕", bgm_prompt="tense pipa", bgm_duration_s=8.0),
+            ],
+            cues=[
+                TimelineCue(cue_id="c1_keep", act_id="act1", kind="dialogue", role_id="lu_jin", text="先看清他的破绽！", gap_after_s=0.35),
+                TimelineCue(cue_id="s1_fx", act_id="act1", kind="sfx", sfx_prompt="blade clash", duration_seconds=1.2, placement="overlay_next", gap_after_s=0.25),
+                TimelineCue(cue_id="c2_trunc", act_id="act1", kind="dialogue", role_id="narrator", text=long_text, gap_after_s=0.40),
+                TimelineCue(cue_id="c3_keep", act_id="act2", kind="dialogue", role_id="lu_jin", text="就是现在，断刀斩！", gap_after_s=0.35),
+            ],
+        )
+
+        out_dir = tmp / "masters"
+        v1 = master_episode_three_bus(
+            cue_sheet=sheet,
+            cue_audio_map={"c1_keep": d1_wav, "s1_fx": sfx_wav, "c2_trunc": d2_trunc_wav, "c3_keep": d3_wav},
+            act_bgm_map={"act1": bgm1_wav, "act2": bgm2_wav},
+            output_dir=out_dir,
+            registry=reg,
+            stem_prefix="E009_Drama3",
+        )
+        self.assertTrue(str(v1["master_wav"]).endswith("_v001.wav"))
+
+        # Ground-truth conditioned samples for c1_keep & c3_keep
+        gt_c1 = _read_stereo_s16(condition_dialogue_clip(d1_wav, tmp / "gt_c1.wav"))
+        gt_c3 = _read_stereo_s16(condition_dialogue_clip(d3_wav, tmp / "gt_c3.wav"))
+
+        rec_samples, rec_meta = recover_intact_dialogue_from_master(
+            cue_sheet=sheet,
+            v001_wav_path=v1["master_wav"],
+            v001_manifest_path=v1["manifest_json"],
+            sfx_audio_map={"s1_fx": sfx_wav},
+            act_bgm_map={"act1": bgm1_wav, "act2": bgm2_wav},
+            keep_cue_ids={"c1_keep", "c3_keep"},
+        )
+        self.assertEqual(set(rec_samples.keys()), {"c1_keep", "c3_keep"})
+        self.assertTrue(rec_meta["c1_keep"]["recovered_from_v001"])
+
+        # Verify near-zero (< 2 LSB out of 32767) sample reconstruction across BOTH acts!
+        for gt, rec in ((gt_c1, rec_samples["c1_keep"]), (gt_c3, rec_samples["c3_keep"])):
+            n = min(len(gt), len(rec))
+            self.assertGreater(n, 48000)
+            max_err = max(abs(gt[i] - rec[i]) for i in range(n))
+            self.assertLessEqual(max_err, 2)
+
+        # Remaster v002 substituting ONLY c2_trunc -> d2_repaired_wav
+        v2 = master_episode_three_bus(
+            cue_sheet=sheet,
+            cue_audio_map={"s1_fx": sfx_wav, "c2_trunc": d2_repaired_wav},
+            act_bgm_map={"act1": bgm1_wav, "act2": bgm2_wav},
+            output_dir=out_dir,
+            preconditioned_samples=rec_samples,
+            cue_meta_map=rec_meta,
+            registry=reg,
+            stem_prefix="E009_Drama3",
+        )
+        self.assertTrue(str(v2["master_wav"]).endswith("_v002.wav"))
+        self.assertGreater(v2["total_duration_s"], v1["total_duration_s"] + 1.4)
+
 
 if __name__ == "__main__":
     unittest.main()
-
-
-
-

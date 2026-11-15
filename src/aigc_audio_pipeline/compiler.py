@@ -92,7 +92,7 @@ def compile_episode_cue_sheet(
     sfx_blueprint: list[dict[str, Any]],
     acoustic_ranges: list[tuple[int, int, str]] | None = None,
     skip_onomatopoeia_paras: set[int] | None = None,
-    max_narration_group_chars: int = 260,
+    max_narration_group_chars: int = 130,
     min_cjk_coverage_ratio: float = 0.965,
 ) -> EpisodeCueSheet:
     """Compile and strictly validate a 100% unabridged multi-cast `EpisodeCueSheet`."""

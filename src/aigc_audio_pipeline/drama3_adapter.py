@@ -291,6 +291,116 @@ def trim_edge_silence_wav(
     return (trim_end - trim_start) / sr
 
 
+_CJK_COUNT_RE = re.compile(r"[\u4e00-\u9fff]")
+_MAJOR_SENT_SPLIT_RE = re.compile(r"(?<=[。！？；…])\s*")
+_MINOR_CLAUSE_SPLIT_RE = re.compile(r"(?<=[，、：])\s*")
+
+
+def split_cue_into_subcues_for_drama3(cue: TimelineCue, max_cjk_chars: int = 105) -> list[TimelineCue]:
+    """Split long dialogue/narrator cues at natural sentence boundaries so Drama 3 never hits its token cap.
+
+    Fish Audio Drama 3 operates at ~21.53 codec frames/s (`1536` tokens = `71.33s`, vocoder max ~`139s`).
+    Splitting cues > `max_cjk_chars` (~35-38s at 2.8 chars/s) into sentence-aligned sub-cues guarantees
+    >3x token headroom, crisper prosody, and 100% tail-completeness.
+    """
+    tags, spoken = extract_tags_and_spoken_text(cue.text)
+    if len(_CJK_COUNT_RE.findall(spoken)) <= max_cjk_chars:
+        return [cue]
+
+    # Inherit leading style tag(s) (excluding one-shot point laughs/sighs) across sub-cues for consistent tone
+    inherited_tags = [
+        f"[{t}]"
+        for t in tags[:2]
+        if t.lower().strip() not in DRAMA3_POINT_EVENTS and t.lower().strip() not in ("laughs", "laughing")
+    ]
+    prefix = " ".join(inherited_tags)
+
+    # Strip inline tags from body before sentence chunking, preserving inline tags if attached to sentences
+    clean_body = _TAG_TOKEN_RE.sub("", cue.text).strip()
+    raw_sents = [s.strip() for s in _MAJOR_SENT_SPLIT_RE.split(clean_body) if s.strip()]
+
+    # Sub-split any single ultra-long sentence on commas/colons
+    atomic_units: list[str] = []
+    for sent in raw_sents:
+        if len(_CJK_COUNT_RE.findall(sent)) <= max_cjk_chars:
+            atomic_units.append(sent)
+        else:
+            clauses = [c.strip() for c in _MINOR_CLAUSE_SPLIT_RE.split(sent) if c.strip()]
+            atomic_units.extend(clauses if len(clauses) > 1 else [sent])
+
+    chunks: list[str] = []
+    cur = ""
+    for unit in atomic_units:
+        candidate = (cur + unit) if cur else unit
+        if cur and len(_CJK_COUNT_RE.findall(candidate)) > max_cjk_chars:
+            chunks.append(cur)
+            cur = unit
+        else:
+            cur = candidate
+    if cur:
+        if chunks and len(_CJK_COUNT_RE.findall(cur)) < 14 and len(_CJK_COUNT_RE.findall(chunks[-1] + cur)) <= max_cjk_chars + 20:
+            chunks[-1] = chunks[-1] + cur
+        else:
+            chunks.append(cur)
+
+    if len(chunks) <= 1:
+        return [cue]
+
+    subcues: list[TimelineCue] = []
+    for idx, chunk_txt in enumerate(chunks, 1):
+        tagged_txt = f"{prefix} {chunk_txt}".strip() if prefix else chunk_txt
+        phonetic_txt = apply_xianxia_polyphone_overrides(tagged_txt)
+        subcues.append(
+            TimelineCue(
+                cue_id=f"{cue.cue_id}_pt{idx}",
+                act_id=cue.act_id,
+                kind="dialogue",
+                role_id=cue.role_id,
+                speaker_name=cue.speaker_name,
+                text=tagged_txt,
+                tts_text=phonetic_txt if phonetic_txt != tagged_txt else None,
+                stability=cue.stability,
+                acoustic_space=cue.acoustic_space,
+                gap_after_s=cue.gap_after_s if idx == len(chunks) else 0.16,
+            )
+        )
+    return subcues
+
+
+def concat_pcm_wavs(wav_paths: list[Path], out_wav: Path, *, pause_ms: float = 160.0) -> Path:
+    """Concatenate multiple PCM16 WAV segments (same format, e.g. 48kHz stereo) with natural breath pauses."""
+    if not wav_paths:
+        raise ValueError("concat_pcm_wavs requires at least 1 wav_path")
+    if len(wav_paths) == 1:
+        out_wav.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(wav_paths[0], out_wav)
+        return out_wav
+
+    combined = array("h")
+    channels = 2
+    sr = 48000
+    for idx, wp in enumerate(wav_paths):
+        with wave.open(str(wp), "rb") as wf:
+            if idx == 0:
+                channels = wf.getnchannels()
+                sr = wf.getframerate()
+            raw = wf.readframes(wf.getnframes())
+        seg = array("h")
+        seg.frombytes(raw)
+        if idx > 0 and pause_ms > 0:
+            pad_frames = int(round((pause_ms / 1000.0) * sr))
+            combined.extend([0] * (pad_frames * channels))
+        combined.extend(seg)
+
+    out_wav.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(out_wav), "wb") as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(2)
+        wf.setframerate(sr)
+        wf.writeframes(combined.tobytes())
+    return out_wav
+
+
 def convert_to_drama3_anchor_wav(src_audio: Path, dst_wav: Path) -> float:
     """Convert a character reference take into clean 44.1kHz mono PCM16 WAV leveled to -16 LUFS."""
     dst_wav.parent.mkdir(parents=True, exist_ok=True)

@@ -43,13 +43,21 @@ for candidate_src in (STUDIO_DIR / "src", STUDIO_DIR.parent / "src"):
     if (candidate_src / "aigc_audio_pipeline").is_dir() and str(candidate_src) not in sys.path:
         sys.path.insert(0, str(candidate_src))
 
+from array import array
+
 from aigc_audio_pipeline.batch_queue import measure_ebur128
 from aigc_audio_pipeline.drama3_adapter import (
+    concat_pcm_wavs,
+    split_cue_into_subcues_for_drama3,
     translate_cue_to_drama3_input,
     trim_edge_silence_wav,
 )
 from aigc_audio_pipeline.elevenlabs_client import probe_duration_seconds
-from aigc_audio_pipeline.mixer import master_episode_three_bus, render_audition_reel
+from aigc_audio_pipeline.mixer import (
+    master_episode_three_bus,
+    recover_intact_dialogue_from_master,
+    render_audition_reel,
+)
 from aigc_audio_pipeline.models import (
     EpisodeCueSheet,
     TimelineCue,
@@ -445,6 +453,7 @@ class Drama3ServerClient:
         anchor_wav: Path,
         anchor_text: str,
         out_wav: Path,
+        max_new_tokens: int = 2560,
         timeout_s: int = 300,
     ) -> Path:
         import urllib.error
@@ -467,7 +476,7 @@ class Drama3ServerClient:
                 ],
                 "temperature": 1.0,
                 "top_p": 0.9,
-                "max_new_tokens": 1536,
+                "max_new_tokens": max_new_tokens,
             },
             ensure_ascii=False,
         ).encode("utf-8")
@@ -586,7 +595,7 @@ class LocalWhisperQA:
                 language="zh",
                 beam_size=2,
                 vad_filter=True,
-                initial_prompt="以下是普通话的句子，请使用简体中文输出。",
+                initial_prompt="以下是普通话修仙有声剧句子，请使用简体中文输出：陆烬、沈烛音、裴玄度、苏清寒、福伯、厉苍、韩厉、姜清凰、太一。",
             )
             return "".join(seg.text for seg in segments).strip()
         except Exception as exc:
@@ -692,6 +701,295 @@ def canonical_drama3_stem(cue_sheet: EpisodeCueSheet) -> str:
     return f"{cue_sheet.episode_id}_{clean_title}_Drama3同源古风母带"
 
 
+_DRIVE_REPAIR_FOLDERS = (
+    "1-5OT1dX9iFyCjkfXMnciNAeSybdhX74k",  # outputs/
+    "1NYCi-TP2VwR2bAmPwekeG-V5-YvLnNBG",  # 03_分集成片音频/
+)
+
+
+def _get_colab_drive_token() -> str | None:
+    import urllib.request
+
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8012/computeMetadata/v1/instance/service-accounts/default/token",
+            headers={"Metadata-Flavor": "Google"},
+        )
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            return json.loads(resp.read().decode("utf-8")).get("access_token")
+    except Exception:
+        return None
+
+
+def _drive_find_v001_ids(episode_id: str, tok: str) -> tuple[str | None, str | None]:
+    """Query Drive REST API v3 for `{episode_id}_*v001.json` and `{episode_id}_*v001.wav` file IDs."""
+    import urllib.parse
+    import urllib.request
+
+    for folder_id in _DRIVE_REPAIR_FOLDERS:
+        try:
+            q = f"trashed = false and '{folder_id}' in parents and name contains '{episode_id}_'"
+            url = "https://www.googleapis.com/drive/v3/files?" + urllib.parse.urlencode(
+                {"q": q, "fields": "files(id,name)", "pageSize": 50}
+            )
+            req = urllib.request.Request(url, headers={"Authorization": f"Bearer {tok}"})
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                files = json.loads(resp.read().decode("utf-8")).get("files", [])
+            json_id = next(
+                (
+                    f["id"]
+                    for f in files
+                    if f["name"].endswith("_v001.json") and ("Drama3" in f["name"] or "drama3" in f["name"])
+                ),
+                None,
+            )
+            wav_id = next(
+                (
+                    f["id"]
+                    for f in files
+                    if f["name"].endswith("_v001.wav") and ("Drama3" in f["name"] or "drama3" in f["name"])
+                ),
+                None,
+            )
+            if json_id and wav_id:
+                return json_id, wav_id
+        except Exception:
+            continue
+    return None, None
+
+
+def _drive_download_to_path(file_id: str, dst: Path, tok: str) -> Path:
+    import urllib.request
+
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    req = urllib.request.Request(
+        f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media",
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    with urllib.request.urlopen(req, timeout=240) as resp, open(dst, "wb") as fout:
+        shutil.copyfileobj(resp, fout, length=4 * 1024 * 1024)
+    return dst
+
+
+def _find_local_v001_pair(episode_id: str, search_dirs: list[Path]) -> tuple[Path | None, Path | None]:
+    for sdir in search_dirs:
+        if not sdir.is_dir():
+            continue
+        json_cands = sorted(
+            [
+                *sdir.glob(f"{episode_id}_*Drama3*_v001.json"),
+                *sdir.glob(f"{episode_id}_drama3_master_v001.json"),
+            ]
+        )
+        for jp in json_cands:
+            wp = jp.with_suffix(".wav")
+            if wp.is_file() and wp.stat().st_size > 4096:
+                return jp, wp
+    return None, None
+
+
+def find_truncated_cue_ids_in_manifest(manifest_data: dict[str, Any]) -> set[str]:
+    """Identify long dialogue cues truncated near Drama 3's old 1536-token (`71.33s`) ceiling."""
+    bad_ids: set[str] = set()
+    for it in manifest_data.get("timeline", []):
+        if it.get("kind") != "dialogue":
+            continue
+        dur_s = float(it.get("duration_s", 0.0))
+        cjk_n = len(_CJK_RE.findall(str(it.get("spoken_text", ""))))
+        qa_ok = bool(it.get("qa_passed", True))
+        if dur_s >= 68.0 or (dur_s >= 50.0 and not qa_ok) or cjk_n >= 200:
+            bad_ids.add(str(it["cue_id"]))
+    return bad_ids
+
+
+def _synthesize_subcue_with_qa(
+    subcue: TimelineCue,
+    *,
+    drama_repo: str,
+    cinfo: dict[str, Any],
+    prof: Any,
+    anchor_wav: Path,
+    anchor_text: str,
+    cache_dir: Path,
+    phoneme_pins: bool,
+    offline_dry_run: bool,
+    drama_client: Drama3ServerClient | None,
+    whisper_qa: LocalWhisperQA,
+) -> tuple[Path, str, bool]:
+    prompt_a1 = translate_cue_to_drama3_input(subcue, prof, attempt=1, use_phoneme_pins=phoneme_pins)
+    cache_key = _sha24(
+        {
+            "engine": drama_repo,
+            "role_id": subcue.role_id,
+            "anchor_sha": anchor_wav.stat().st_size,
+            "prompt": prompt_a1,
+            "max_tok": 2560,
+        }
+    )
+    cached_wav = cache_dir / "drama3_tts" / f"{cache_key}.wav"
+
+    if offline_dry_run:
+        _, spoken = extract_tags_and_spoken_text(subcue.text)
+        est_dur = max(0.8, min(14.0, len(_CJK_RE.findall(spoken)) * 0.21))
+        freq = 185.0 if subcue.role_id == "narrator" else (240.0 if cinfo.get("gender") == "male" else 330.0)
+        _write_synthetic_tone_wav(cached_wav, duration_s=est_dur, freq_hz=freq, amp=0.22)
+        return cached_wav, prompt_a1, True
+
+    if cached_wav.is_file() and cached_wav.stat().st_size > 1024:
+        dur_cached = probe_duration_seconds(cached_wav)
+        if dur_cached < 68.0:
+            return cached_wav, prompt_a1, True
+
+    assert drama_client is not None
+    best_wav: Path | None = None
+    best_score = -1.0
+    final_qa_passed = False
+    used_prompt = prompt_a1
+
+    for attempt in (1, 2, 3):
+        cur_prompt = translate_cue_to_drama3_input(
+            subcue, prof, attempt=attempt, use_phoneme_pins=(phoneme_pins and attempt == 1)
+        )
+        try_wav = cache_dir / "drama3_tts" / f"{cache_key}_try{attempt}.wav"
+        drama_client.synthesize(
+            drama3_input=cur_prompt,
+            anchor_wav=anchor_wav,
+            anchor_text=anchor_text,
+            out_wav=try_wav,
+            max_new_tokens=2560,
+        )
+        dur_s, peak_db = inspect_audio_peak_dbfs(try_wav)
+        rate_ok, rate_msg = check_speaking_rate_ok(subcue, dur_s)
+        ceiling_ok = dur_s < 108.0
+        if not ceiling_ok:
+            rate_ok = False
+            rate_msg = f"接近 token 上限 ({dur_s:.2f}s)"
+        asr_txt = whisper_qa.transcribe(try_wav)
+
+        if asr_txt is not None:
+            qa_res = evaluate_dialogue_qa(
+                tagged_prompt=subcue.tts_text or subcue.text,
+                asr_text=asr_txt,
+                duration_s=dur_s,
+                peak_dbfs=peak_db,
+                attempt=attempt,
+                min_char_recall=0.70,
+                canonical_prompt=subcue.text,
+            )
+            passed = qa_res.passed and rate_ok
+            score = qa_res.char_recall - (0.25 if not rate_ok else 0.0) - (0.4 * len(qa_res.leaked_tags))
+            reason_str = "; ".join(qa_res.reasons + ([] if rate_ok else [rate_msg]))
+        else:
+            passed = (dur_s >= 0.30) and (peak_db >= -44.0) and rate_ok
+            score = 1.0 if passed else 0.2
+            reason_str = "" if passed else f"dur={dur_s:.2f}s, peak={peak_db:.1f}dB, {rate_msg}"
+
+        if score > best_score:
+            best_score = score
+            best_wav = try_wav
+            used_prompt = cur_prompt
+            final_qa_passed = passed
+
+        if passed:
+            break
+        print(
+            f"   ⚠️ [{subcue.cue_id}] 第 {attempt} 次质检未过 ({reason_str})，自动降级提示词重抽...",
+            flush=True,
+        )
+
+    assert best_wav is not None
+    shutil.copy2(best_wav, cached_wav)
+    for a_idx in (1, 2, 3):
+        (cache_dir / "drama3_tts" / f"{cache_key}_try{a_idx}.wav").unlink(missing_ok=True)
+    return cached_wav, used_prompt, final_qa_passed
+
+
+def synthesize_cue_chunked(
+    cue: TimelineCue,
+    *,
+    drama_repo: str,
+    cinfo: dict[str, Any],
+    prof: Any,
+    anchor_wav: Path,
+    anchor_text: str,
+    cache_dir: Path,
+    phoneme_pins: bool,
+    offline_dry_run: bool,
+    drama_client: Drama3ServerClient | None,
+    whisper_qa: LocalWhisperQA,
+    max_subcue_cjk_chars: int = 105,
+) -> tuple[Path, dict[str, Any]]:
+    """Synthesize a dialogue/narrator cue, auto-chunking >`max_subcue_cjk_chars` at sentence boundaries."""
+    subcues = split_cue_into_subcues_for_drama3(cue, max_cjk_chars=max_subcue_cjk_chars)
+    if len(subcues) == 1:
+        wav_p, used_prompt, qa_ok = _synthesize_subcue_with_qa(
+            subcues[0],
+            drama_repo=drama_repo,
+            cinfo=cinfo,
+            prof=prof,
+            anchor_wav=anchor_wav,
+            anchor_text=anchor_text,
+            cache_dir=cache_dir,
+            phoneme_pins=phoneme_pins,
+            offline_dry_run=offline_dry_run,
+            drama_client=drama_client,
+            whisper_qa=whisper_qa,
+        )
+        return wav_p, {
+            "voice_id": f"drama3:{cue.role_id}",
+            "drama3_prompt": used_prompt,
+            "qa_passed": qa_ok,
+            "subcue_count": 1,
+        }
+
+    combo_key = _sha24(
+        {
+            "engine": drama_repo,
+            "role_id": cue.role_id,
+            "anchor_sha": anchor_wav.stat().st_size,
+            "subcues_v2": [sc.text for sc in subcues],
+        }
+    )
+    combo_wav = cache_dir / "drama3_tts" / f"{combo_key}_joined.wav"
+    if not offline_dry_run and combo_wav.is_file() and combo_wav.stat().st_size > 1024:
+        return combo_wav, {
+            "voice_id": f"drama3:{cue.role_id}",
+            "drama3_prompt": " || ".join(sc.text for sc in subcues),
+            "qa_passed": True,
+            "subcue_count": len(subcues),
+            "cached": True,
+        }
+
+    part_wavs: list[Path] = []
+    used_prompts: list[str] = []
+    all_qa_ok = True
+    for sc in subcues:
+        pw, up, qok = _synthesize_subcue_with_qa(
+            sc,
+            drama_repo=drama_repo,
+            cinfo=cinfo,
+            prof=prof,
+            anchor_wav=anchor_wav,
+            anchor_text=anchor_text,
+            cache_dir=cache_dir,
+            phoneme_pins=phoneme_pins,
+            offline_dry_run=offline_dry_run,
+            drama_client=drama_client,
+            whisper_qa=whisper_qa,
+        )
+        part_wavs.append(pw)
+        used_prompts.append(up)
+        all_qa_ok = all_qa_ok and qok
+
+    concat_pcm_wavs(part_wavs, combo_wav, pause_ms=160.0)
+    return combo_wav, {
+        "voice_id": f"drama3:{cue.role_id}",
+        "drama3_prompt": " || ".join(used_prompts),
+        "qa_passed": all_qa_ok,
+        "subcue_count": len(subcues),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="《诸界锁仙》 96GB GPU (Fish Audio Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL) 全自动合成引擎"
@@ -704,7 +1002,7 @@ def main() -> int:
     parser.add_argument(
         "--episodes",
         default="E001",
-        help="要渲染的集数：AUDITION（6句极速试听）、E001（首集A/B对比）、或 E007-E120（全本收官续跑）",
+        help="要渲染的集数：AUDITION（6句极速试听）、E001（首集A/B对比）、或 E001-E120（全本收官续跑）",
     )
     parser.add_argument("--output-dir", default="", help="成品输出目录（默认: <studio-dir>/outputs）")
     parser.add_argument("--existing-dir", default="", help="额外检查已完成成片的目录（如挂载的 Google Drive outputs/）")
@@ -718,6 +1016,21 @@ def main() -> int:
     parser.add_argument("--phoneme-pins", action="store_true", help="额外注入 <|phoneme_start|> 拼音锚点")
     parser.add_argument("--skip-asr-qa", action="store_true", help="跳过本地 faster-whisper 语音回听质检")
     parser.add_argument("--skip-existing", action="store_true", help="若目标集数已存在成品 MP3 则自动跳过")
+    parser.add_argument(
+        "--repair-truncated",
+        action="store_true",
+        help="手术级无损修复 v001 中触及 71.33s 上限的超长旁白：从 v001.wav 逐帧反演剥离 BGM/SFX 保留 94% 完好对白，仅分句重录超长轨并重新三母线混音输出 v002",
+    )
+    parser.add_argument(
+        "--repair-source-dir",
+        default="",
+        help="用于读取 v001.{json,wav} 的本地/挂载目录（支持冒号分隔多个目录；Colab 下亦支持 Drive REST API v3 高速直拉）",
+    )
+    parser.add_argument(
+        "--replace-v001",
+        action="store_true",
+        help="搭配 --repair-truncated 使用：直接输出同名 _v001 覆盖修复，不另建 _v002 副本",
+    )
     parser.add_argument("--mp3-bitrate", default="320k", help="成品 MP3 码率（默认 320k）")
     parser.add_argument(
         "--offline-dry-run",
@@ -729,6 +1042,9 @@ def main() -> int:
     root = Path(args.studio_dir).resolve()
     out_dir = Path(args.output_dir).resolve() if args.output_dir else (root / "outputs")
     extra_existing_dir = Path(args.existing_dir).resolve() if args.existing_dir else None
+    repair_source_dirs = [Path(p).resolve() for p in args.repair_source_dir.split(":") if p.strip()]
+    if out_dir not in repair_source_dirs:
+        repair_source_dirs.append(out_dir)
     cache_dir = Path(args.cache_dir).resolve() if args.cache_dir else (root / "cache")
     out_dir.mkdir(parents=True, exist_ok=True)
     for sub in ("drama3_tts", "moss_sfx", "acestep_bgm", "logs"):
@@ -755,7 +1071,8 @@ def main() -> int:
     print(f"🎬 《诸界锁仙》 Fish Audio Drama 3 影视级有声剧合成台 | 待处理任务数: {len(targets)} ({targets[0][0]}..{targets[-1][0]})", flush=True)
     print(
         f"🖥️  设备: {gpu_name} ({vram_gb:.1f} GB, sm_{cc[0]}{cc[1]}) | "
-        f"模式: {'离线干跑自检' if args.offline_dry_run else ('96GB 三模型同卡满血常驻' if co_resident_96g else '显存分阶段接力')}",
+        f"模式: {'离线干跑自检' if args.offline_dry_run else ('96GB 三模型同卡满血常驻' if co_resident_96g else '显存分阶段接力')}"
+        f"{' | 🔧 手术级截断修复模式' if args.repair_truncated else ''}",
         flush=True,
     )
     print(f"🎙️  已加载 {len(characters)} 位国风角色声线锚点 | 跨集母题库: {len(registry.sonic_motifs)} 枚", flush=True)
@@ -792,8 +1109,12 @@ def main() -> int:
                     check_dirs.append(extra_existing_dir)
                 existing: list[Path] = []
                 for cdir in check_dirs:
-                    existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_*Drama3*.mp3")))
-                    existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_drama3_master_*.mp3")))
+                    if args.repair_truncated and not args.replace_v001:
+                        existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_*Drama3*_v00[2-9].mp3")))
+                        existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_drama3_master_v00[2-9].mp3")))
+                    else:
+                        existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_*Drama3*.mp3")))
+                        existing.extend(sorted(cdir.glob(f"{cue_sheet.episode_id}_drama3_master_*.mp3")))
                 if existing:
                     print(f"⏭️  [{cue_sheet.episode_id}] 已存在成品 {existing[-1].name}，自动跳过。", flush=True)
                     continue
@@ -801,152 +1122,41 @@ def main() -> int:
             t_ep = time.time()
             dialogue_cues = [c for c in cue_sheet.cues if c.kind == "dialogue"]
             sfx_cues = [c for c in cue_sheet.cues if c.kind == "sfx"]
-            print(
-                f"\n▶️  开始合成 [{label}] 《{cue_sheet.title}》 "
-                f"(对白 {len(dialogue_cues)} 轨 | 音效 {len(sfx_cues)} 轨 | 分幕配乐 {len(cue_sheet.acts)} 幕)",
-                flush=True,
-            )
-
-            cue_audio_map: dict[str, Path] = {}
-            cue_meta_map: dict[str, dict[str, Any]] = {}
-            act_bgm_map: dict[str, Path] = {}
-
-            # ------------------------------------------------------------------
-            # Stage 1: Dialogue Synthesis via Fish Audio Drama 3 (+ QA Retry)
-            # ------------------------------------------------------------------
-            if not args.offline_dry_run and not co_resident_96g:
-                assert drama_client is not None
-                drama_client.start()
-
-            for idx, cue in enumerate(dialogue_cues, 1):
-                if cue.role_id not in characters:
-                    raise KeyError(f"[{cue.cue_id}] 角色 {cue.role_id!r} 未在 voice_cast_drama3.json 中注册！")
-                cinfo = characters[cue.role_id]
-                prof = registry.resolve_role(cue.role_id)
-                anchor_wav = root / cinfo["anchor_wav"]
-                anchor_text = cinfo["anchor_text"]
-
-                prompt_a1 = translate_cue_to_drama3_input(
-                    cue, prof, attempt=1, use_phoneme_pins=args.phoneme_pins
-                )
-                cache_key = _sha24(
-                    {
-                        "engine": drama_repo,
-                        "role_id": cue.role_id,
-                        "anchor_sha": anchor_wav.stat().st_size,
-                        "prompt": prompt_a1,
-                    }
-                )
-                cached_wav = cache_dir / "drama3_tts" / f"{cache_key}.wav"
-
-                if args.offline_dry_run:
-                    _, spoken = extract_tags_and_spoken_text(cue.text)
-                    est_dur = max(0.8, min(14.0, len(_CJK_RE.findall(spoken)) * 0.21))
-                    freq = 185.0 if cue.role_id == "narrator" else (240.0 if cinfo.get("gender") == "male" else 330.0)
-                    _write_synthetic_tone_wav(cached_wav, duration_s=est_dur, freq_hz=freq, amp=0.22)
-                    cue_audio_map[cue.cue_id] = cached_wav
-                    cue_meta_map[cue.cue_id] = {
-                        "voice_id": f"drama3:{cue.role_id}",
-                        "drama3_prompt": prompt_a1,
-                        "qa_passed": True,
-                    }
-                    continue
-
-                if cached_wav.is_file() and cached_wav.stat().st_size > 1024:
-                    cue_audio_map[cue.cue_id] = cached_wav
-                    cue_meta_map[cue.cue_id] = {
-                        "voice_id": f"drama3:{cue.role_id}",
-                        "drama3_prompt": prompt_a1,
-                        "qa_passed": True,
-                        "cached": True,
-                    }
-                    continue
-
-                assert drama_client is not None
-                best_wav: Path | None = None
-                best_score = -1.0
-                final_qa_passed = False
-                used_prompt = prompt_a1
-
-                for attempt in (1, 2, 3):
-                    cur_prompt = translate_cue_to_drama3_input(
-                        cue, prof, attempt=attempt, use_phoneme_pins=(args.phoneme_pins and attempt == 1)
-                    )
-                    try_wav = cache_dir / "drama3_tts" / f"{cache_key}_try{attempt}.wav"
-                    drama_client.synthesize(
-                        drama3_input=cur_prompt,
-                        anchor_wav=anchor_wav,
-                        anchor_text=anchor_text,
-                        out_wav=try_wav,
-                    )
-                    dur_s, peak_db = inspect_audio_peak_dbfs(try_wav)
-                    rate_ok, rate_msg = check_speaking_rate_ok(cue, dur_s)
-                    asr_txt = whisper_qa.transcribe(try_wav)
-
-                    if asr_txt is not None:
-                        qa_res = evaluate_dialogue_qa(
-                            tagged_prompt=cue.tts_text or cue.text,
-                            asr_text=asr_txt,
-                            duration_s=dur_s,
-                            peak_dbfs=peak_db,
-                            attempt=attempt,
-                            min_char_recall=0.70,
-                            canonical_prompt=cue.text,
-                        )
-                        passed = qa_res.passed and rate_ok
-                        score = qa_res.char_recall - (0.25 if not rate_ok else 0.0) - (0.4 * len(qa_res.leaked_tags))
-                        reason_str = "; ".join(qa_res.reasons + ([] if rate_ok else [rate_msg]))
-                    else:
-                        passed = (dur_s >= 0.30) and (peak_db >= -44.0) and rate_ok
-                        score = 1.0 if passed else 0.2
-                        reason_str = "" if passed else f"dur={dur_s:.2f}s, peak={peak_db:.1f}dB, {rate_msg}"
-
-                    if score > best_score:
-                        best_score = score
-                        best_wav = try_wav
-                        used_prompt = cur_prompt
-                        final_qa_passed = passed
-
-                    if passed:
-                        break
-                    print(
-                        f"   ⚠️ [{cue.cue_id}] 第 {attempt} 次质检未过 ({reason_str})，自动降级提示词重抽...",
-                        flush=True,
-                    )
-
-                assert best_wav is not None
-                shutil.copy2(best_wav, cached_wav)
-                for a_idx in (1, 2, 3):
-                    (cache_dir / "drama3_tts" / f"{cache_key}_try{a_idx}.wav").unlink(missing_ok=True)
-
-                cue_audio_map[cue.cue_id] = cached_wav
-                cue_meta_map[cue.cue_id] = {
-                    "voice_id": f"drama3:{cue.role_id}",
-                    "drama3_prompt": used_prompt,
-                    "qa_passed": final_qa_passed,
-                }
-                if idx % 10 == 0 or idx == len(dialogue_cues):
-                    print(
-                        f"   🎙️ 对白进度: {idx}/{len(dialogue_cues)} ({cue.role_id}: {probe_duration_seconds(cached_wav):.1f}s)",
-                        flush=True,
-                    )
-
-            if not args.offline_dry_run and not co_resident_96g and drama_client is not None:
-                drama_client.close()
 
             # Fast path for dialogue-only Audition Pack (`--episodes AUDITION`)
             if cue_sheet.mode == "audition_pack":
+                print(f"\n▶️  开始合成试听合集 [{label}] (对白 {len(dialogue_cues)} 轨)", flush=True)
+                if not args.offline_dry_run and not co_resident_96g:
+                    assert drama_client is not None
+                    drama_client.start()
                 aud_items = []
                 for cue in dialogue_cues:
+                    cinfo = characters[cue.role_id]
+                    prof = registry.resolve_role(cue.role_id)
+                    wav_p, _ = synthesize_cue_chunked(
+                        cue,
+                        drama_repo=drama_repo,
+                        cinfo=cinfo,
+                        prof=prof,
+                        anchor_wav=root / cinfo["anchor_wav"],
+                        anchor_text=cinfo["anchor_text"],
+                        cache_dir=cache_dir,
+                        phoneme_pins=args.phoneme_pins,
+                        offline_dry_run=args.offline_dry_run,
+                        drama_client=drama_client,
+                        whisper_qa=whisper_qa,
+                    )
                     _, spoken = extract_tags_and_spoken_text(cue.text)
                     aud_items.append(
                         {
                             "cue_id": cue.cue_id,
                             "role_id": cue.role_id,
-                            "wav_path": cue_audio_map[cue.cue_id],
+                            "wav_path": wav_p,
                             "spoken_text": spoken,
                         }
                     )
+                if not args.offline_dry_run and not co_resident_96g and drama_client is not None:
+                    drama_client.close()
                 reel = render_audition_reel(aud_items, out_dir, "AUDITION_A_drama3_reel")
                 aud_summary = {
                     "episode_id": "AUDITION_A",
@@ -962,15 +1172,66 @@ def main() -> int:
                 rendered_summaries.append(aud_summary)
                 continue
 
+            # Pre-inspect v001 manifest in `--repair-truncated` mode so 0-truncation episodes skip in <10ms!
+            v001_json_path: Path | None = None
+            v001_wav_path: Path | None = None
+            drive_wav_id: str | None = None
+            drive_tok: str | None = None
+            truncated_ids: set[str] = set()
+            temp_staged_files: list[Path] = []
+
+            if args.repair_truncated:
+                local_jp, local_wp = _find_local_v001_pair(cue_sheet.episode_id, repair_source_dirs)
+                drive_tok = _get_colab_drive_token()
+                if drive_tok:
+                    dj_id, dw_id = _drive_find_v001_ids(cue_sheet.episode_id, drive_tok)
+                    if dj_id and dw_id:
+                        staged_jp = cache_dir / "logs" / f"_v001_{cue_sheet.episode_id}.json"
+                        _drive_download_to_path(dj_id, staged_jp, drive_tok)
+                        temp_staged_files.append(staged_jp)
+                        v001_json_path = staged_jp
+                        drive_wav_id = dw_id
+                if v001_json_path is None and local_jp is not None:
+                    v001_json_path = local_jp
+                    v001_wav_path = local_wp
+
+                if v001_json_path is not None and v001_json_path.is_file():
+                    v001_manifest_obj = json.loads(v001_json_path.read_text(encoding="utf-8"))
+                    truncated_ids = find_truncated_cue_ids_in_manifest(v001_manifest_obj)
+                    if not truncated_ids:
+                        for tf in temp_staged_files:
+                            tf.unlink(missing_ok=True)
+                        print(
+                            f"✨ [{cue_sheet.episode_id}] 《{cue_sheet.title}》 v001 全轨完好无截断 (0 处超长轨)，无需重制！",
+                            flush=True,
+                        )
+                        continue
+                else:
+                    print(
+                        f"⚠️ [{cue_sheet.episode_id}] 未找到 v001 母带清单，自动回退全轨分句重录。",
+                        flush=True,
+                    )
+
+            print(
+                f"\n▶️  开始{'手术级修复' if (args.repair_truncated and v001_json_path) else '合成'} [{label}] 《{cue_sheet.title}》 "
+                f"(对白 {len(dialogue_cues)} 轨 | 音效 {len(sfx_cues)} 轨 | 分幕配乐 {len(cue_sheet.acts)} 幕)",
+                flush=True,
+            )
+
+            cue_audio_map: dict[str, Path] = {}
+            cue_meta_map: dict[str, dict[str, Any]] = {}
+            act_bgm_map: dict[str, Path] = {}
+            preconditioned_samples: dict[str, array] = {}
+
             # ------------------------------------------------------------------
-            # Stage 2: Foreground SFX (6 Studio Motifs Direct Reuse + MOSS v2.0)
+            # Stage 1/4: Foreground SFX (6 Studio Motifs Direct Reuse + MOSS v2.0)
             # ------------------------------------------------------------------
             novel_sfx_cues: list[TimelineCue] = []
             for cue in sfx_cues:
                 if cue.motif_id and cue.motif_id in registry.sonic_motifs:
                     motif = registry.sonic_motifs[cue.motif_id]
                     m_path = Path(motif.cached_file)
-                    if not m_path.is_Absolute() if hasattr(m_path, "is_Absolute") else not m_path.is_absolute():
+                    if not m_path.is_absolute():
                         m_path = root / m_path
                     if m_path.is_file():
                         cue_audio_map[cue.cue_id] = m_path
@@ -978,7 +1239,15 @@ def main() -> int:
                 novel_sfx_cues.append(cue)
 
             if novel_sfx_cues:
-                if not args.offline_dry_run and not co_resident_96g:
+                need_moss_gpu = (not args.offline_dry_run) and any(
+                    not (
+                        cache_dir
+                        / "moss_sfx"
+                        / f"{_sha24({'prompt': sanitize_moss_foley_prompt(c.sfx_prompt or (registry.sonic_motifs[c.motif_id].sfx_prompt if c.motif_id in registry.sonic_motifs else '')), 'dur': round(c.duration_seconds, 2)})}.wav"
+                    ).is_file()
+                    for c in novel_sfx_cues
+                )
+                if need_moss_gpu and not co_resident_96g:
                     assert moss_worker is not None
                     moss_worker.start()
 
@@ -1034,11 +1303,11 @@ def main() -> int:
                         raw_moss.unlink(missing_ok=True)
                     cue_audio_map[cue.cue_id] = sfx_wav
 
-                if not args.offline_dry_run and not co_resident_96g and moss_worker is not None:
+                if need_moss_gpu and not co_resident_96g and moss_worker is not None:
                     moss_worker.close()
 
             # ------------------------------------------------------------------
-            # Stage 3: Per-Act BGM Score (Cached Studio BGM or ACE-Step 1.5 XL)
+            # Stage 2/4: Per-Act BGM Score (Cached Studio BGM or ACE-Step 1.5 XL)
             # ------------------------------------------------------------------
             novel_acts = []
             for act in cue_sheet.acts:
@@ -1052,7 +1321,15 @@ def main() -> int:
                 novel_acts.append(act)
 
             if novel_acts:
-                if not args.offline_dry_run and not co_resident_96g:
+                need_acestep_gpu = (not args.offline_dry_run) and any(
+                    not (
+                        cache_dir
+                        / "acestep_bgm"
+                        / f"{_sha24({'prompt': enrich_acestep_bgm_prompt(a.bgm_prompt), 'vocal_language': 'unknown', 'dur': round(75.0 if float(a.bgm_duration_s or 75.0) >= 60.0 else 48.0, 1)})}.wav"
+                    ).is_file()
+                    for a in novel_acts
+                )
+                if need_acestep_gpu and not co_resident_96g:
                     assert acestep_worker is not None
                     acestep_worker.start()
 
@@ -1111,12 +1388,88 @@ def main() -> int:
                         raw_bgm.unlink(missing_ok=True)
                     act_bgm_map[act.act_id] = bgm_wav
 
-                if not args.offline_dry_run and not co_resident_96g and acestep_worker is not None:
+                if need_acestep_gpu and not co_resident_96g and acestep_worker is not None:
                     acestep_worker.close()
 
             # ------------------------------------------------------------------
-            # Stage 4: Cinema-Grade 3-Bus Mastering (-16 LUFS + Ducked BGM + SRT)
+            # Stage 2.5/4 (Optional): Bit-Exact Surgical Recovery of Intact v001 Dialogue
             # ------------------------------------------------------------------
+            if args.repair_truncated and v001_json_path is not None and truncated_ids:
+                if drive_wav_id and drive_tok:
+                    staged_wp = cache_dir / "logs" / f"_v001_{cue_sheet.episode_id}.wav"
+                    _drive_download_to_path(drive_wav_id, staged_wp, drive_tok)
+                    temp_staged_files.append(staged_wp)
+                    v001_wav_path = staged_wp
+                if v001_wav_path is not None and v001_wav_path.is_file():
+                    keep_ids = {c.cue_id for c in dialogue_cues if c.cue_id not in truncated_ids}
+                    rec_samples, rec_meta = recover_intact_dialogue_from_master(
+                        cue_sheet=cue_sheet,
+                        v001_wav_path=v001_wav_path,
+                        v001_manifest_path=v001_json_path,
+                        sfx_audio_map=cue_audio_map,
+                        act_bgm_map=act_bgm_map,
+                        keep_cue_ids=keep_ids,
+                    )
+                    preconditioned_samples.update(rec_samples)
+                    cue_meta_map.update(rec_meta)
+                    print(
+                        f"   🔧 [{cue_sheet.episode_id}] 已逐帧无损剥离恢复 {len(preconditioned_samples)}/{len(dialogue_cues)} 轨完好对白，"
+                        f"仅需分句补录超长旁白 {len(dialogue_cues) - len(preconditioned_samples)} 轨: {sorted(truncated_ids)}",
+                        flush=True,
+                    )
+                for tf in temp_staged_files:
+                    tf.unlink(missing_ok=True)
+                temp_staged_files.clear()
+
+            # ------------------------------------------------------------------
+            # Stage 3/4: Dialogue Synthesis via Fish Audio Drama 3 (<=105字分句 + QA)
+            # ------------------------------------------------------------------
+            cues_to_synthesize = [c for c in dialogue_cues if c.cue_id not in preconditioned_samples]
+            if cues_to_synthesize and not args.offline_dry_run and not co_resident_96g:
+                assert drama_client is not None
+                drama_client.start()
+
+            for idx, cue in enumerate(cues_to_synthesize, 1):
+                if cue.role_id not in characters:
+                    raise KeyError(f"[{cue.cue_id}] 角色 {cue.role_id!r} 未在 voice_cast_drama3.json 中注册！")
+                cinfo = characters[cue.role_id]
+                prof = registry.resolve_role(cue.role_id)
+                wav_p, meta_d = synthesize_cue_chunked(
+                    cue,
+                    drama_repo=drama_repo,
+                    cinfo=cinfo,
+                    prof=prof,
+                    anchor_wav=root / cinfo["anchor_wav"],
+                    anchor_text=cinfo["anchor_text"],
+                    cache_dir=cache_dir,
+                    phoneme_pins=args.phoneme_pins,
+                    offline_dry_run=args.offline_dry_run,
+                    drama_client=drama_client,
+                    whisper_qa=whisper_qa,
+                )
+                cue_audio_map[cue.cue_id] = wav_p
+                cue_meta_map[cue.cue_id] = meta_d
+                if args.repair_truncated or idx % 10 == 0 or idx == len(cues_to_synthesize):
+                    print(
+                        f"   🎙️ 对白进度: {idx}/{len(cues_to_synthesize)} ({cue.cue_id} [{cue.role_id}], "
+                        f"{meta_d.get('subcue_count', 1)} 分句 -> {probe_duration_seconds(wav_p):.1f}s)",
+                        flush=True,
+                    )
+
+            if cues_to_synthesize and not args.offline_dry_run and not co_resident_96g and drama_client is not None:
+                drama_client.close()
+
+            # ------------------------------------------------------------------
+            # Stage 4/4: Cinema-Grade 3-Bus Mastering (-16 LUFS + Ducked BGM + SRT)
+            # ------------------------------------------------------------------
+            stem_prefix = canonical_drama3_stem(cue_sheet)
+            sentinel_v001: Path | None = None
+            if args.repair_truncated and not args.replace_v001:
+                v001_cand = out_dir / f"{stem_prefix}_v001.wav"
+                if not v001_cand.exists():
+                    v001_cand.touch()
+                    sentinel_v001 = v001_cand
+
             print(f"   🎚️  [{cue_sheet.episode_id}] 正在执行三母线混音母带处理 (-16 LUFS + 侧链闪避 + 识海混响)...", flush=True)
             master_res = master_episode_three_bus(
                 cue_sheet=cue_sheet,
@@ -1124,12 +1477,16 @@ def main() -> int:
                 act_bgm_map=act_bgm_map,
                 output_dir=out_dir,
                 cue_meta_map=cue_meta_map,
+                preconditioned_samples=preconditioned_samples or None,
                 registry=registry,
                 workers=4,
                 clean_work_dir=True,
-                stem_prefix=canonical_drama3_stem(cue_sheet),
+                stem_prefix=stem_prefix,
                 mp3_bitrate=args.mp3_bitrate,
             )
+            if sentinel_v001 is not None:
+                sentinel_v001.unlink(missing_ok=True)
+
             lufs, tp_db = measure_ebur128(master_res["master_wav"])
             # Write `.done` marker AFTER WAV + MP3 + SRT + JSON are all flushed so background Drive sync is atomic!
             done_marker = Path(str(master_res["master_wav"])).with_suffix(".done")
@@ -1143,6 +1500,7 @@ def main() -> int:
                 "total_duration_s": master_res["total_duration_s"],
                 "integrated_lufs": round(lufs, 2),
                 "true_peak_dbfs": round(tp_db, 2),
+                "repaired_cues": sorted(truncated_ids) if args.repair_truncated else [],
                 "master_wav": str(master_res["master_wav"]),
                 "master_mp3": str(master_res["master_mp3"]),
                 "subtitles_srt": str(master_res["subtitles_srt"]),
@@ -1172,3 +1530,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

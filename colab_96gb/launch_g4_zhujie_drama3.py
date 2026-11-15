@@ -200,7 +200,7 @@ def unpack_project_to_nvme() -> Path:
             zf.extractall(local_studio)
         print(f"✅ 120集全本工程包本地 NVMe 极速解压完成 ({time.time() - t0:.2f}s) -> {local_studio}", flush=True)
 
-    # Overlay latest run_zhujie_96gb_studio.py / voice_cast_drama3.json from Drive or /content upload
+    # Overlay latest run_zhujie_96gb_studio.py / voice_cast_drama3.json / src patch from Drive or /content
     for rel in ("run_zhujie_96gb_studio.py", "voice_cast_drama3.json"):
         nvme_override = NVME_ROOT / rel
         drive_override = DRIVE_STUDIO_DIR / rel
@@ -210,6 +210,15 @@ def unpack_project_to_nvme() -> Path:
         elif DRIVE_STUDIO_DIR.exists() and drive_override.is_file():
             try:
                 shutil.copy2(drive_override, f_dst)
+            except Exception:
+                pass
+
+    for src_zip in (NVME_ROOT / "aigc_audio_pipeline_src.zip", DRIVE_STUDIO_DIR / "aigc_audio_pipeline_src.zip"):
+        if src_zip.is_file():
+            try:
+                with zipfile.ZipFile(src_zip, "r") as szf:
+                    szf.extractall(local_studio / "src")
+                break
             except Exception:
                 pass
     return local_studio
@@ -229,17 +238,21 @@ def ensure_uv_and_hf_tools() -> str:
     return uv_bin
 
 
-def stage_hf_models_nvme(drama_repo: str) -> None:
-    """Prefetch Drama 3 + MOSS v2.0 + ACE-Step 1.5 XL + faster-whisper-small onto NVMe."""
+def stage_hf_models_nvme(drama_repo: str, *, repair_only: bool = False) -> None:
+    """Prefetch Drama 3 (+ MOSS v2.0 + ACE-Step 1.5 XL unless repair_only) + faster-whisper-small onto NVMe."""
     from huggingface_hub import snapshot_download
 
     HF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    repos = [
-        drama_repo,
-        "OpenMOSS-Team/MOSS-SoundEffect-v2.0",
-        "ACE-Step/acestep-v15-xl-turbo-diffusers",
-        "Systran/faster-whisper-small",
-    ]
+    repos = (
+        [drama_repo, "Systran/faster-whisper-small"]
+        if repair_only
+        else [
+            drama_repo,
+            "OpenMOSS-Team/MOSS-SoundEffect-v2.0",
+            "ACE-Step/acestep-v15-xl-turbo-diffusers",
+            "Systran/faster-whisper-small",
+        ]
+    )
     for repo_id in repos:
         t_m = time.time()
         print(f"🚀 [HF CDN -> NVMe] 高速预取权重: {repo_id} ...", flush=True)
@@ -441,9 +454,12 @@ def start_cloudflare_tunnel(port: int = 8000) -> Optional[subprocess.Popen]:
 
 
 def seed_and_sync_reusable_stems(nvme_cache: Path, drive_cache: Path, direction: str) -> None:
-    """Sync lightweight reusable BGM/SFX stems (~30-80 WAVs) between Drive FUSE and local NVMe."""
+    """Sync lightweight reusable BGM/SFX stems (~677 WAVs) between Drive FUSE and local NVMe in parallel."""
+    from concurrent.futures import ThreadPoolExecutor
+
     if not DRIVE_STUDIO_DIR.exists():
         return
+    copy_pairs: list[tuple[Path, Path]] = []
     for sub in ("acestep_bgm", "moss_sfx"):
         src_d = (drive_cache / sub) if direction == "pull" else (nvme_cache / sub)
         dst_d = (nvme_cache / sub) if direction == "pull" else (drive_cache / sub)
@@ -455,10 +471,19 @@ def seed_and_sync_reusable_stems(nvme_cache: Path, drive_cache: Path, direction:
                 continue
             target = dst_d / wf.name
             if not target.exists():
-                try:
-                    shutil.copy2(wf, target)
-                except Exception:
-                    pass
+                copy_pairs.append((wf, target))
+
+    if not copy_pairs:
+        return
+
+    def _cp(pair: tuple[Path, Path]) -> None:
+        try:
+            shutil.copy2(pair[0], pair[1])
+        except Exception:
+            pass
+
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        list(pool.map(_cp, copy_pairs))
 
 
 def populate_existing_markers_dir(markers_dir: Path) -> Path:
@@ -532,7 +557,7 @@ def main() -> None:
     parser.add_argument(
         "--episodes",
         default="AUDITION,E001",
-        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）、E002-E120（全本收官续跑）或 SERVE",
+        help="要渲染的集数，例如 AUDITION,E001（试听+首集A/B对照）、E001-E120（全本收官续跑）或 SERVE",
     )
     parser.add_argument(
         "--profile",
@@ -542,6 +567,16 @@ def main() -> None:
     )
     parser.add_argument("--skip-existing", action="store_true", help="跳过本地或云盘 outputs/ 已存在成品的集数")
     parser.add_argument("--phoneme-pins", action="store_true", help="启用 Drama 3 原生 <|phoneme_start|> 拼音锚点")
+    parser.add_argument(
+        "--repair-truncated",
+        action="store_true",
+        help="手术级无损修复超长旁白：保留 94% 完好对白与全部缓存 BGM/SFX，仅分句补录 ~342 处触及 71.33s 的超长旁白",
+    )
+    parser.add_argument(
+        "--replace-v001",
+        action="store_true",
+        help="搭配 --repair-truncated 使用：直接原位更新云盘 _v001 母带，不生成 _v002 副本",
+    )
     parser.add_argument(
         "--mirror-to-main-masters",
         action="store_true",
@@ -581,12 +616,12 @@ def main() -> None:
     local_studio = unpack_project_to_nvme()
     uv_bin = ensure_uv_and_hf_tools()
 
-    print(f"=== [并发冷启动] 通道 A: HF CDN 高速预取 ({drama_repo} + MOSS v2.0 + ACE-Step 1.5 XL) || 通道 B: 隔离环境就绪 ===", flush=True)
+    print(f"=== [并发冷启动] 通道 A: HF CDN 高速预取 ({drama_repo}) || 通道 B: 隔离环境就绪 ===", flush=True)
     bg_errors: list[Exception] = []
 
     def _download_worker() -> None:
         try:
-            stage_hf_models_nvme(drama_repo)
+            stage_hf_models_nvme(drama_repo, repair_only=args.repair_truncated)
         except Exception as exc:
             bg_errors.append(exc)
 
@@ -662,6 +697,16 @@ def main() -> None:
         cmd.append("--skip-existing")
     if args.phoneme_pins:
         cmd.append("--phoneme-pins")
+    if args.repair_truncated:
+        cmd.extend(
+            [
+                "--repair-truncated",
+                "--repair-source-dir",
+                f"{DRIVE_OUTPUTS_DIR}:{DRIVE_MAIN_MASTERS_DIR}",
+            ]
+        )
+        if args.replace_v001:
+            cmd.append("--replace-v001")
 
     synced_markers: set[str] = set()
     # Sync any already-finished `.done` episodes on NVMe before starting!

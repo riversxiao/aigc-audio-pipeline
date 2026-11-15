@@ -432,6 +432,7 @@ def master_episode_three_bus(
     output_dir: Path,
     *,
     cue_meta_map: dict[str, dict[str, Any]] | None = None,
+    preconditioned_samples: dict[str, array] | None = None,
     registry: Any | None = None,
     workers: int = 4,
     clean_work_dir: bool = False,
@@ -445,6 +446,8 @@ def master_episode_three_bus(
 
     # 1. Condition each cue clip concurrently & compute exact natural timeline
     def _cond_one(cue: Any) -> tuple[str, array]:
+        if preconditioned_samples and cue.cue_id in preconditioned_samples:
+            return cue.cue_id, preconditioned_samples[cue.cue_id]
         raw_path = cue_audio_map[cue.cue_id]
         cond_path = work_dir / f"{cue.cue_id}_cond.wav"
         if cue.kind == "dialogue":
@@ -464,7 +467,7 @@ def master_episode_three_bus(
     act_spans: dict[str, list[float]] = {}
 
     for cue in cue_sheet.cues:
-        raw_path = cue_audio_map[cue.cue_id]
+        raw_path = cue_audio_map.get(cue.cue_id, work_dir / f"{cue.cue_id}_recovered.wav")
         samples = conditioned_map[cue.cue_id]
         dur_s = (len(samples) // CHANNELS) / SAMPLE_RATE
 
@@ -666,3 +669,180 @@ def master_episode_three_bus(
         "manifest_json": manifest_path,
         "total_duration_s": round(total_duration_s, 3),
     }
+
+
+def recover_intact_dialogue_from_master(
+    cue_sheet: EpisodeCueSheet,
+    v001_wav_path: Path,
+    v001_manifest_path: Path,
+    sfx_audio_map: dict[str, Path],
+    act_bgm_map: dict[str, Path],
+    keep_cue_ids: set[str],
+    *,
+    work_dir: Path | None = None,
+    default_alimiter_delay_frames: int = 239,
+) -> tuple[dict[str, array], dict[str, dict[str, Any]]]:
+    """Recover conditioned 48kHz stereo dialogue stems from an existing `v001` master WAV.
+
+    `master_episode_three_bus` sums `dialogue_buf + sfx_buf + bgm_ducked_buf` through FFmpeg
+    `amix=inputs=3:normalize=0,alimiter=limit=0.891:attack=5:release=50:level=disabled`, which applies
+    unity gain below -1.0 dBFS with a deterministic 5ms (`239`-frame at 48kHz) lookahead shift.
+    Reconstructing `sfx_buf` and `bgm_ducked_buf` from `v001_manifest_path` + cached BGM/SFX stems
+    and subtracting them recovers bit-exact conditioned dialogue clips for all intact cues.
+    """
+    manifest = json.loads(v001_manifest_path.read_text(encoding="utf-8"))
+    timeline_items: list[dict[str, Any]] = manifest.get("timeline", [])
+    if not timeline_items:
+        raise ValueError(f"Empty timeline in manifest: {v001_manifest_path}")
+
+    tmp_dir = work_dir or (v001_wav_path.parent / f"_recover_work_{cue_sheet.episode_id}")
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    clean_tmp = work_dir is None
+
+    cue_lookup = {c.cue_id: c for c in cue_sheet.cues}
+    master_samples = _read_stereo_s16(v001_wav_path)
+    master_frames = len(master_samples) // CHANNELS
+
+    # Reconstruct exact v001 timeline duration and frame buffer length
+    max_item_end = max(float(it["end_s"]) for it in timeline_items)
+    last_it = timeline_items[-1]
+    last_cue = cue_lookup.get(last_it["cue_id"])
+    if last_cue is not None and last_cue.kind == "sfx" and last_cue.placement == "overlay_next":
+        cursor_end = float(last_it["start_s"]) + float(last_it.get("gap_after_s", last_cue.gap_after_s))
+    else:
+        cursor_end = float(last_it["end_s"]) + float(last_it.get("gap_after_s", 0.0))
+    total_duration_s = max(cursor_end, max_item_end) + cue_sheet.tail_pad_s
+    total_frames = max(master_frames, int(math.ceil(total_duration_s * SAMPLE_RATE)))
+
+    # 1. Reconstruct v001 Bus B (Foreground SFX) & speech intervals + act spans
+    sfx_buf = array("h", [0]) * (total_frames * CHANNELS)
+    speech_intervals: list[tuple[float, float]] = []
+    act_spans: dict[str, list[float]] = {}
+
+    for it in timeline_items:
+        cid = str(it["cue_id"])
+        act_id = str(it.get("act_id", ""))
+        st_s = float(it["start_s"])
+        en_s = float(it["end_s"])
+        if act_id:
+            if act_id not in act_spans:
+                act_spans[act_id] = [st_s, en_s]
+            else:
+                act_spans[act_id][0] = min(act_spans[act_id][0], st_s)
+                act_spans[act_id][1] = max(act_spans[act_id][1], en_s)
+
+        if it.get("kind") == "dialogue":
+            speech_intervals.append((st_s, en_s))
+        elif cid in sfx_audio_map and sfx_audio_map[cid].is_file():
+            cue_obj = cue_lookup.get(cid)
+            gain_db = cue_obj.gain_db if cue_obj is not None else 0.0
+            cond_sfx = tmp_dir / f"rec_sfx_{cid}.wav"
+            condition_sfx_clip(sfx_audio_map[cid], cond_sfx, gain_db=gain_db)
+            sfx_samples = _read_stereo_s16(cond_sfx)
+            _mix_into_buffer(sfx_buf, sfx_samples, int(round(st_s * SAMPLE_RATE)), gain=1.0)
+
+    # 2. Reconstruct v001 Bus C (Ducked Per-Act BGM)
+    bgm_ducked_buf = array("h", [0]) * (total_frames * CHANNELS)
+    acts_with_bgm = [a for a in cue_sheet.acts if a.act_id in act_bgm_map and act_bgm_map[a.act_id].is_file()]
+    for idx, act in enumerate(acts_with_bgm):
+        if act.act_id not in act_spans:
+            continue
+        act_st = 0.0 if idx == 0 else max(0.0, act_spans[act.act_id][0] - 0.6)
+        if idx == len(acts_with_bgm) - 1:
+            act_en = total_duration_s
+        else:
+            next_act = acts_with_bgm[idx + 1]
+            next_st = act_spans.get(next_act.act_id, [act_spans[act.act_id][1]])[0]
+            act_en = min(total_duration_s, next_st + 0.6)
+        span_dur = max(1.0, act_en - act_st)
+
+        fitted_wav = tmp_dir / f"rec_bgm_{act.act_id}.wav"
+        fit_bgm_to_duration(act_bgm_map[act.act_id], span_dur, fitted_wav)
+        raw_act_samples = _read_stereo_s16(fitted_wav)
+        rel_speech = [
+            (max(0.0, st - act_st), min(span_dur, en - act_st))
+            for st, en in speech_intervals
+            if en > act_st and st < act_en
+        ]
+        ducked_act_samples = apply_bgm_ducking_envelope(
+            raw_act_samples,
+            rel_speech,
+            gain_speech=act.bgm_gain_speech,
+            gain_gap=act.bgm_gain_gap,
+        )
+        _mix_into_buffer(bgm_ducked_buf, ducked_act_samples, int(round(act_st * SAMPLE_RATE)), gain=1.0)
+
+    # Combine sfx_buf + bgm_ducked_buf into non-dialogue accompaniment buffer
+    accompaniment = array("h", sfx_buf)
+    _mix_into_buffer(accompaniment, bgm_ducked_buf, 0, gain=1.0)
+
+    # 3. Auto-verify lookahead delay on leading head_pad silence (typically 239 frames at 48kHz)
+    delay_frames = default_alimiter_delay_frames
+    first_speech_s = min((st for st, _ in speech_intervals), default=cue_sheet.head_pad_s)
+    probe_end_frame = min(master_frames - 260, int((first_speech_s - 0.02) * SAMPLE_RATE))
+    if probe_end_frame > 2400:
+        best_err = float("inf")
+        for cand in (default_alimiter_delay_frames, 240, 238, 0):
+            err_sum = 0
+            cnt = 0
+            for f in range(1200, probe_end_frame, 16):
+                mf = f + cand
+                if 0 <= mf < master_frames:
+                    acc_l = accompaniment[f * CHANNELS]
+                    if abs(acc_l) > 8:
+                        err_sum += abs(master_samples[mf * CHANNELS] - acc_l)
+                        cnt += 1
+            if cnt >= 10:
+                mean_err = err_sum / cnt
+                if mean_err < best_err:
+                    best_err = mean_err
+                    delay_frames = cand
+
+    # 4. Subtract accompaniment at `delay_frames` and slice each intact dialogue cue
+    recovered_samples: dict[str, array] = {}
+    recovered_meta: dict[str, dict[str, Any]] = {}
+
+    for it in timeline_items:
+        cid = str(it["cue_id"])
+        if it.get("kind") != "dialogue" or cid not in keep_cue_ids:
+            continue
+        st_frame = int(round(float(it["start_s"]) * SAMPLE_RATE))
+        n_frames = max(1, int(round(float(it["duration_s"]) * SAMPLE_RATE)))
+        end_frame = min(total_frames, st_frame + n_frames)
+
+        # Slice master[st_frame + delay : end_frame + delay] - accompaniment[st_frame : end_frame]
+        m_start = st_frame + delay_frames
+        m_end = end_frame + delay_frames
+        slice_frames = max(0, min(end_frame - st_frame, master_frames - m_start))
+        if slice_frames <= 0:
+            continue
+
+        if _audioop is not None:
+            m_bytes = memoryview(master_samples)[m_start * CHANNELS : (m_start + slice_frames) * CHANNELS].tobytes()
+            a_bytes = memoryview(accompaniment)[st_frame * CHANNELS : (st_frame + slice_frames) * CHANNELS].tobytes()
+            neg_a = _audioop.mul(a_bytes, 2, -1.0)
+            diff_bytes = _audioop.add(m_bytes, neg_a, 2)
+            clip_arr = array("h")
+            clip_arr.frombytes(diff_bytes)
+        else:
+            clip_arr = array("h", [0]) * (slice_frames * CHANNELS)
+            for i in range(slice_frames * CHANNELS):
+                val = master_samples[m_start * CHANNELS + i] - accompaniment[st_frame * CHANNELS + i]
+                if val > 32767:
+                    val = 32767
+                elif val < -32768:
+                    val = -32768
+                clip_arr[i] = val
+
+        recovered_samples[cid] = clip_arr
+        recovered_meta[cid] = {
+            "voice_id": str(it.get("voice_id", f"drama3:{it.get('role_id', '')}")),
+            "qa_passed": bool(it.get("qa_passed", True)),
+            "recovered_from_v001": True,
+        }
+
+    if clean_tmp and tmp_dir.is_dir():
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    return recovered_samples, recovered_meta
+
