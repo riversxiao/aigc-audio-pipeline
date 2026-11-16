@@ -453,7 +453,7 @@ class Drama3ServerClient:
         anchor_wav: Path,
         anchor_text: str,
         out_wav: Path,
-        max_new_tokens: int = 2560,
+        max_new_tokens: int = 2048,
         timeout_s: int = 300,
     ) -> Path:
         import urllib.error
@@ -823,7 +823,7 @@ def _synthesize_subcue_with_qa(
             "role_id": subcue.role_id,
             "anchor_sha": anchor_wav.stat().st_size,
             "prompt": prompt_a1,
-            "max_tok": 2560,
+            "max_tok": 2048,
         }
     )
     cached_wav = cache_dir / "drama3_tts" / f"{cache_key}.wav"
@@ -856,11 +856,11 @@ def _synthesize_subcue_with_qa(
             anchor_wav=anchor_wav,
             anchor_text=anchor_text,
             out_wav=try_wav,
-            max_new_tokens=2560,
+            max_new_tokens=2048,
         )
         dur_s, peak_db = inspect_audio_peak_dbfs(try_wav)
         rate_ok, rate_msg = check_speaking_rate_ok(subcue, dur_s)
-        ceiling_ok = dur_s < 108.0
+        ceiling_ok = dur_s < 90.0
         if not ceiling_ok:
             rate_ok = False
             rate_msg = f"接近 token 上限 ({dur_s:.2f}s)"
