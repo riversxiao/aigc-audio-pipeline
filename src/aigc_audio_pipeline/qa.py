@@ -59,7 +59,9 @@ COMMON_TAG_WORDS: frozenset[str] = frozenset(
 
 
 def _cjk_chars(text: str) -> str:
-    return "".join(_CJK_ONLY.findall(text)).translate(_DIGIT_MAP)
+    norm = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"百分之\1", text)
+    norm = re.sub(r"(?<=\d)\.(?=\d)", "点", norm)
+    return "".join(_CJK_ONLY.findall(norm)).translate(_DIGIT_MAP)
 
 
 def _en_words(text: str) -> list[str]:

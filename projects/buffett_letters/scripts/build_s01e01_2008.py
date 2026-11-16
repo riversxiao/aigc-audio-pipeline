@@ -107,15 +107,15 @@ def _motif_sfx(
 
 
 def build_audition_pack() -> EpisodeCueSheet:
-    """Build an 8-cue cohesive ~75s mini-roundtable audition scene verifying all 4 real-human anchors & pacing."""
+    """Build a 9-cue cohesive ~85s mini-roundtable audition scene verifying all 4 real-human anchors & pacing."""
     cues = [
         _dlg(
             "aud01_zhiwei_open",
             "audition",
             "host_zhiwei",
-            "二〇〇九年二月最后一个星期六，奥马哈还在下雪。七十八岁的巴菲特把二〇〇八年的致股东信挂上网，第一行就是四十四年里最难看的成绩单。",
+            "哎，怀远、老周，今天咱们第一期没从一九六五年顺着念，直接翻到了二〇〇九年二月底那个周末——巴菲特刚把〇八年的股东信挂上网，第一行就是四十四年里最难看的账单。",
             gap_after_s=0.14,
-            director_note="许知微：松弛近麦叙事起手，零播音腔，像深夜隔着木桌聊天。",
+            director_note="许知微：松弛近麦聊天起手，零播音腔，像深夜隔着木桌对谈。",
         ),
         _dlg(
             "aud02_laozhou_banter",
@@ -130,7 +130,7 @@ def build_audition_pack() -> EpisodeCueSheet:
             "aud03_huaiyuan_setup",
             "audition",
             "guest_huaiyuan",
-            "华尔街那会儿其实也一样。巴菲特没掉书袋，直接搬出了他年轻时在小餐馆墙上见过的一句老话。",
+            "那会儿华尔街也一模一样。巴菲特没掉书袋，直接搬出了他年轻时在小餐馆墙上见过的一句老话。",
             gap_after_s=0.22,
             director_note="陈怀远：沉稳松弛男中音，自然引出英文原声。",
         ),
@@ -156,17 +156,25 @@ def build_audition_pack() -> EpisodeCueSheet:
             "buffett_prime_en",
             "[seriously] I have pledged – to you, the rating agencies and myself – to always run Berkshire with more than ample cash. We never want to count on the kindness of strangers in order to meet tomorrow's obligations. When forced to choose, I will not trade even a night's sleep for the chance of extra profits.",
             duck_under_next=True,
-            duck_lead_in_s=5.4,
+            duck_lead_in_s=6.8,
             duck_gain=0.11,
-            director_note="长段原典：完整读完第一句(~5.4s)后再平滑压低至-19dB垫底。",
+            director_note="长段原典：完整读完第一句自动寻气口后再平滑压低至-19dB垫底。",
         ),
         _dlg(
             "aud07_huaiyuan_simul_zh",
             "audition",
             "guest_huaiyuan",
             "我向你们、向评级机构、也向我自己立过誓：永远让伯克希尔保有绰绰有余的现金。我们绝不指望靠陌生人的仁慈，去偿付明天的债务。真要二选一，我绝不会拿哪怕一夜的安稳觉，去换取额外利润。",
-            gap_after_s=0.52,
+            gap_after_s=0.45,
             director_note="陈怀远：纯粹克制的同传译文，读完留半秒呼吸，绝不混入个人议论。",
+        ),
+        _dlg(
+            "aud07b_zhiwei_bridge",
+            "audition",
+            "host_zhiwei",
+            "绝不指望陌生人的仁慈——这话搁在当年华尔街也太扎心了。",
+            gap_after_s=0.14,
+            director_note="许知微：自然短句承接，避免同一嘉宾同传后连说两段。",
         ),
         _dlg(
             "aud08_huaiyuan_bilingual_tag",
@@ -185,7 +193,16 @@ def build_audition_pack() -> EpisodeCueSheet:
         mode="audition_pack",
         head_pad_s=0.35,
         tail_pad_s=0.85,
-        acts=[],
+        acts=[
+            ActMusicSpec(
+                act_id="audition",
+                title="深夜书房双语圆桌试听",
+                bgm_prompt=BUFFETT_DOCUMENTARY_OST["omaha_study_acoustic_guitar"],
+                bgm_duration_s=95.0,
+                bgm_gain_speech=0.055,
+                bgm_gain_gap=0.22,
+            )
+        ],
         cues=cues,
     )
 
@@ -230,11 +247,11 @@ def build_ep01_2008_cue_sheet() -> EpisodeCueSheet:
     cues: list[TimelineCue] = [
         # ==================== ACT 1: COLD OPEN — CASH, FLOAT & SLEEP ====================
         _motif_sfx(
-            "c001_sfx_bell",
+            "c001_sfx_page_open",
             "act1_cash_and_sleep",
-            "nyse_crisis_bell_distant",
-            placement="overlay_next",
-            gap_after_s=1.20,
+            "vintage_report_page_turn",
+            placement="sequential",
+            gap_after_s=0.18,
             gain_db=-3.5,
         ),
         _dlg(
@@ -637,10 +654,25 @@ def build_ep01_2008_cue_sheet() -> EpisodeCueSheet:
             gap_after_s=0.14,
         ),
         _dlg(
-            "c056_laozhou",
+            "c056a_laozhou",
             "act3_yawns_and_confession",
             "guest_laozhou",
-            "[chuckles] 哎哟，这老头真是成精了！‘迎来的是一片哈欠’！我太有画面感了。前几年新消费最热那阵子，谁要是在饭局上说自己拿了三千万风投、要在上海核心商圈开五百平旗舰店，满桌子鼓掌敬酒；我有个佛山做不锈钢酱油发酵罐的老哥，那两年钢材跌价，他闷声不响把隔壁倒闭五金厂的地皮盘下来扩建晒场，饭局上刚说两句，旁边人全低头刷手机打哈欠。",
+            "这老头真是看透人性了。前几年新消费最热那阵子，谁在饭局上说自己拿了三千万风投、要在上海核心商圈开五百平旗舰店，满桌子人都站起来鼓掌敬酒。",
+            stability=0.0,
+            gap_after_s=0.12,
+        ),
+        _dlg(
+            "c056b_zhiwei",
+            "act3_yawns_and_confession",
+            "host_zhiwei",
+            "那换作让人打哈欠的生意呢？",
+            gap_after_s=0.10,
+        ),
+        _dlg(
+            "c056c_laozhou",
+            "act3_yawns_and_confession",
+            "guest_laozhou",
+            "我有个佛山做不锈钢酱油发酵罐的老哥，那两年钢材跌价，他闷声不响把隔壁倒闭五金厂的地皮盘下来扩建晒场。饭局上刚聊两句，旁边人全低头刷手机打哈欠。",
             stability=0.0,
             gap_after_s=0.12,
         ),
@@ -713,7 +745,7 @@ def build_ep01_2008_cue_sheet() -> EpisodeCueSheet:
             "c066_laozhou",
             "act3_yawns_and_confession",
             "guest_laozhou",
-            "我最佩服的是他开头那半句：跟查理没关系，也没任何人忽悠我，纯属我自己瞎买！你知道在生意场上让一个一把手承认‘这几十亿是我一个人蠢掉的’有多难吗？十个老板九个半要把采购总监或者投研团队拉出来祭旗。",
+            "我最服气的是他开头那半句：跟查理没关系，也没任何人忽悠我，纯属我自己看走眼。在生意场上让一个一把手公开承认‘这几十亿是我一个人蠢掉的’，太难得了，十个老板有九个半得找下属出来背锅。",
             stability=0.0,
             gap_after_s=0.16,
         ),

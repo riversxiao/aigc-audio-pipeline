@@ -1186,7 +1186,7 @@ class AudioPipelineTests(unittest.TestCase):
         second_start = ts_lines[1].split(" --> ")[0]
         self.assertLessEqual(first_end, second_start)
 
-        # 4. Compiled V2 AUDITION_BUFFETT and E001 cue sheets validate cleanly with zero clichés
+        # 4. Compiled V2.1 AUDITION_BUFFETT and E001 cue sheets validate cleanly with zero clichés
         for fn in (
             "AUDITION_BUFFETT_四角色定角试听包.json",
             "E001_2008年致股东信_满地是血的夜晚谁在裸泳_完整圆桌台本.json",
@@ -1196,6 +1196,31 @@ class AudioPipelineTests(unittest.TestCase):
             joined_zh = "\n".join(c.text for c in cs.cues if c.kind == "dialogue" and c.language_code != "en")
             for banned in ("问到根子上了", "这个比方绝了", "穿越周期·三阶锦囊", "各位听众"):
                 self.assertNotIn(banned, joined_zh)
+
+        # 5. Natural sentence-pause ducking snap & percentage ASR QA normalization ("百分之二十？" == "20%?")
+        from aigc_audio_pipeline.mixer import find_natural_duck_pause_s
+
+        sr = 48000
+        speech_a = array("h", [9000]) * int(6.60 * sr * 2)
+        pause_gap = array("h", [80]) * int(0.32 * sr * 2)  # natural sentence break at 6.60s..6.92s
+        speech_b = array("h", [9000]) * int(5.00 * sr * 2)
+        full_clip = speech_a + pause_gap + speech_b
+        snapped_s = find_natural_duck_pause_s(
+            full_clip,
+            target_s=5.4,
+            dur_s=(len(full_clip) // 2) / sr,
+            sample_rate=sr,
+        )
+        self.assertGreaterEqual(snapped_s, 6.60)
+        self.assertLessEqual(snapped_s, 6.92)
+
+        pct_qa = evaluate_dialogue_qa(
+            tagged_prompt="百分之二十？",
+            asr_text="20%?",
+            duration_s=1.4,
+            peak_dbfs=-11.0,
+        )
+        self.assertTrue(pct_qa.passed)
 
 
 if __name__ == "__main__":

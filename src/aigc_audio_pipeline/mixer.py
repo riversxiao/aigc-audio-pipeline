@@ -89,8 +89,8 @@ def condition_dialogue_clip(
         # Warm broadcast condenser podcast intimacy without room echo
         filters.append("equalizer=f=175:t=q:w=1.2:g=1.2,equalizer=f=3600:t=q:w=1.4:g=0.8")
     elif acoustic_space == "vintage_study":
-        # Prime-age Omaha / PBS studio close-mic warmth (crisp articulation, zero artificial room echo)
-        filters.append("equalizer=f=220:t=q:w=1.2:g=0.9,lowpass=f=14500")
+        # Prime-age Omaha / PBS studio close-mic warmth (crisp articulation, zero analog tape hiss or echo)
+        filters.append("equalizer=f=220:t=q:w=1.2:g=0.9,lowpass=f=9600")
 
     if dur >= 1.4:
         # EBU R128 / podcast-drama broadcast loudness target (-16 LUFS) for consistent actor levels
@@ -532,6 +532,63 @@ def _excerpt_opening_english(text: str, max_chars: int = 92) -> str:
     return f"{cut}…"
 
 
+def find_natural_duck_pause_s(
+    stereo_samples: array,
+    *,
+    target_s: float,
+    dur_s: float,
+    sample_rate: int = SAMPLE_RATE,
+) -> float:
+    """Snap `target_s` to the cleanest inter-sentence breath pause (`~180ms` RMS valley) if one exists."""
+    fallback = min(float(target_s), max(0.8, dur_s * 0.85))
+    if dur_s < 4.5 or len(stereo_samples) < sample_rate * CHANNELS * 3:
+        return fallback
+
+    win_frames = max(1, int(0.18 * sample_rate))
+    step_frames = max(1, int(0.04 * sample_rate))
+    lo_s = max(2.6, min(target_s - 1.2, dur_s * 0.55))
+    hi_s = min(dur_s * 0.85, max(lo_s + 0.5, target_s + 3.6))
+    lo_f = int(lo_s * sample_rate)
+    hi_f = int(hi_s * sample_rate) - win_frames
+    if hi_f <= lo_f:
+        return fallback
+
+    raw_mv = memoryview(stereo_samples).cast("B")
+    bytes_per_frame = CHANNELS * 2
+    if _audioop is not None:
+        overall_rms = float(_audioop.rms(raw_mv.tobytes(), 2))
+    else:
+        overall_rms = 3000.0
+    if overall_rms < 120.0:
+        return fallback
+
+    best_score = float("inf")
+    best_rms = overall_rms
+    best_center_s = fallback
+    for f0 in range(lo_f, hi_f + 1, step_frames):
+        b0 = f0 * bytes_per_frame
+        b1 = (f0 + win_frames) * bytes_per_frame
+        if _audioop is not None:
+            w_rms = float(_audioop.rms(raw_mv[b0:b1].tobytes(), 2))
+        else:
+            s0 = f0 * CHANNELS
+            s1 = (f0 + win_frames) * CHANNELS
+            seg = stereo_samples[s0:s1:4]
+            w_rms = math.sqrt(sum(int(x) * int(x) for x in seg) / max(1, len(seg)))
+        center_s = (f0 + 0.5 * win_frames) / sample_rate
+        # Prefer genuine silence valleys (< 28% of speech RMS) with mild proximity preference to target_s
+        dist_penalty = 1.0 + 0.06 * abs(center_s - target_s)
+        score = w_rms * dist_penalty
+        if score < best_score:
+            best_score = score
+            best_rms = w_rms
+            best_center_s = center_s
+
+    if best_rms <= 0.30 * overall_rms:
+        return round(best_center_s, 3)
+    return fallback
+
+
 def master_episode_three_bus(
     cue_sheet: EpisodeCueSheet,
     cue_audio_map: dict[str, Path],
@@ -598,6 +655,11 @@ def master_episode_three_bus(
             and idx + 1 < len(cue_sheet.cues)
             and cue_sheet.cues[idx + 1].kind == "dialogue"
         )
+        effective_lead_in_s = (
+            find_natural_duck_pause_s(samples, target_s=float(getattr(cue, "duck_lead_in_s", 3.5)), dur_s=dur_s)
+            if has_valid_duck_target
+            else float(getattr(cue, "duck_lead_in_s", 3.5))
+        )
 
         resolved_items.append(
             ResolvedTimelineItem(
@@ -618,7 +680,7 @@ def master_episode_three_bus(
                 stability=cue.stability,
                 qa_passed=bool(meta.get("qa_passed", True)),
                 duck_under_next=has_valid_duck_target,
-                duck_lead_in_s=float(getattr(cue, "duck_lead_in_s", 3.5)),
+                duck_lead_in_s=effective_lead_in_s,
                 duck_gain=float(getattr(cue, "duck_gain", 0.15)),
                 duck_tail_out_s=float(getattr(cue, "duck_tail_out_s", 0.80)),
             )
@@ -628,10 +690,9 @@ def master_episode_three_bus(
             # Optional pre-offset before dialogue enters while SFX continues underneath
             cursor_s = start_s + cue.gap_after_s
         elif has_valid_duck_target:
-            # Documentary simultaneous-translation: play solo English hook for lead_in_s, then start Chinese interpreter
-            lead_in_s = min(float(getattr(cue, "duck_lead_in_s", 3.5)), max(0.8, dur_s * 0.85))
+            # Documentary simultaneous-translation: play solo English sentence up to natural pause, then start interpreter
             active_duck_bed_end_s = end_s
-            cursor_s = start_s + lead_in_s
+            cursor_s = start_s + effective_lead_in_s
         else:
             effective_end_s = max(end_s, active_duck_bed_end_s)
             active_duck_bed_end_s = 0.0

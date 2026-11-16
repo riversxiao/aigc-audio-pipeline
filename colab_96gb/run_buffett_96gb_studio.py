@@ -662,15 +662,20 @@ class BilingualWhisperQA:
                 )
                 return " ".join(seg.text.strip() for seg in segments if seg.text.strip()).strip()
 
+            zh_prompt = (
+                "以下是现代中文商业播客日常对谈：许知微、陈怀远、老周、沃伦巴菲特、伯克希尔哈撒韦、百分之二十。"
+                if language_code == "zh"
+                else (
+                    "以下是现代中英双语商业圆桌播客对谈：许知微、陈怀远、老周、沃伦巴菲特、伯克希尔哈撒韦、"
+                    "insurance float、swimming naked、pay cash、house-price appreciation、skin in the game。"
+                )
+            )
             segments, _ = self._model.transcribe(
                 audio_16k,
                 language="zh",
                 beam_size=2,
-                vad_filter=True,
-                initial_prompt=(
-                    "以下是现代中英双语商业圆桌播客对谈：许知微、陈怀远、老周、沃伦巴菲特、伯克希尔哈撒韦、查理芒格、"
-                    "insurance float、swimming naked、pay cash、house-price appreciation、skin in the game。"
-                ),
+                vad_filter=(len(audio_16k) > 36000),
+                initial_prompt=zh_prompt,
             )
             return "".join(seg.text for seg in segments).strip()
         except Exception as exc:
@@ -913,7 +918,7 @@ def synthesize_cue_chunked(
     whisper_qa: BilingualWhisperQA,
     domain: str = "finance_podcast",
 ) -> tuple[Path, dict[str, Any]]:
-    subcues = split_cue_into_subcues_for_drama3(cue, max_cjk_chars=115, max_en_words=65, domain=domain)
+    subcues = split_cue_into_subcues_for_drama3(cue, max_cjk_chars=165, max_en_words=65, domain=domain)
     if len(subcues) == 1:
         wav_p, used_prompt, qa_ok = _synthesize_subcue_with_qa(
             subcues[0],

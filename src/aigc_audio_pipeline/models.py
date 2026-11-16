@@ -57,10 +57,11 @@ def next_append_only_path(directory: Path, stem_prefix: str, suffix: str) -> Pat
     if not suffix.startswith("."):
         suffix = f".{suffix}"
     version = 1
+    probe_exts = tuple(dict.fromkeys((suffix, ".mp3", ".json", ".done")))
     while True:
-        candidate = directory / f"{stem_prefix}_v{version:03d}{suffix}"
-        if not candidate.exists():
-            return candidate
+        base = f"{stem_prefix}_v{version:03d}"
+        if not any((directory / f"{base}{ext}").exists() for ext in probe_exts):
+            return directory / f"{base}{suffix}"
         version += 1
 
 
