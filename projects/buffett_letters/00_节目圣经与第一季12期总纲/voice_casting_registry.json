@@ -1,0 +1,194 @@
+{
+  "project_id": "buffett_letters",
+  "project_title": "《穿越周期的信》——巴菲特50年致股东信深度拆解",
+  "domain": "finance_podcast",
+  "language_code": "zh",
+  "dialogue_model_id": "fishaudio/drama-3",
+  "sfx_model_id": "OpenMOSS-Team/MOSS-SoundEffect-v2.0",
+  "music_model_id": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+  "asr_qa_model_id": "faster-whisper-large-v3-turbo-int8",
+  "roles": {
+    "host_zhiwei": {
+      "role_id": "host_zhiwei",
+      "display_name": "许知微",
+      "aliases": [
+        "知微",
+        "主持人"
+      ],
+      "tier": "protagonist",
+      "gender": "female",
+      "age_group": "young_adult",
+      "language_code": "zh",
+      "vocal_register": "清亮知性、自然松弛的现代中国大陆普通话女声（无播音腔、无古风拿腔作调）",
+      "persona_summary": "30岁财经播客主理人，打工人与年轻中产嘴替。敏锐好奇、语速利落、亲和力强，专门替普通人追问百亿商战背后的生活账本与防坑底线。",
+      "accent_requirement": "标准现代中国大陆普通话播客对谈口吻（严禁播音朗诵腔与古风腔）",
+      "status": "locked",
+      "voice_id": "drama3_anchor_host_zhiwei",
+      "public_owner_id": "",
+      "library_voice_name": "Drama3 Zero-Cost Studio Anchor (host_zhiwei)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.8,
+      "signature_tags": [
+        "[conversational]",
+        "[curious]",
+        "[pushback]",
+        "[warmly]"
+      ],
+      "forbidden_habits": [
+        "严禁字正腔圆的晚会播音腔",
+        "严禁古装仙侠剧拿腔作调"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "audition_line": "[curious] 当满街都在喊现金为王的时候，对靠死工资吃饭的普通人来说，到底什么才算真正的保命钱？",
+      "audition_history": []
+    },
+    "guest_huaiyuan": {
+      "role_id": "guest_huaiyuan",
+      "display_name": "陈怀远",
+      "aliases": [
+        "怀远",
+        "老陈"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "zh-en",
+      "vocal_register": "温润沉稳、松弛儒雅的现代大陆普通话男中音，夹带地道自然的美式英文短语发音",
+      "persona_summary": "40岁留美双语价值投资人，中产家庭理财嘴替。负责巴菲特英文原典的纪录片同声传译，说话温润通透，自然穿插 2-4 词地道英文原词并用大白话拆透底层逻辑。",
+      "accent_requirement": "现代大陆普通话温润学者/投资人口吻 + 自然美式英文词汇连读",
+      "status": "locked",
+      "voice_id": "drama3_anchor_guest_huaiyuan",
+      "public_owner_id": "",
+      "library_voice_name": "Drama3 Zero-Cost Studio Anchor (guest_huaiyuan)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.82,
+      "signature_tags": [
+        "[warmly]",
+        "[conversational]",
+        "[seriously]",
+        "[chuckles]"
+      ],
+      "forbidden_habits": [
+        "严禁卖弄生僻金融黑话不解释",
+        "严禁居高临下爹味说教"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "audition_line": "[conversational] 巴菲特真正的核心武器叫 insurance float，也就是保险浮存金。",
+      "audition_history": []
+    },
+    "guest_laozhou": {
+      "role_id": "guest_laozhou",
+      "display_name": "老周",
+      "aliases": [
+        "周老板",
+        "周哥"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "zh",
+      "vocal_register": "浑厚接地气、爽朗练达的大陆普通话中年男声，充满真实生活质感",
+      "persona_summary": "48岁草根餐饮连锁与小微制造老板，个体户与实体经营者嘴替。在生意场摔打二十年，说话实在、带爽朗笑声与人间烟火气，专门把华尔街账本翻译成盘门店、算房租、带徒弟、管现金流的大实话。",
+      "accent_requirement": "接地气、带生活烟火气的大陆普通话实业老板口吻",
+      "status": "locked",
+      "voice_id": "drama3_anchor_guest_laozhou",
+      "public_owner_id": "",
+      "library_voice_name": "Drama3 Zero-Cost Studio Anchor (guest_laozhou)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.8,
+      "signature_tags": [
+        "[earthy]",
+        "[chuckles]",
+        "[seriously]",
+        "[conversational]"
+      ],
+      "forbidden_habits": [
+        "严禁书面语背稿感",
+        "严禁浮夸小品腔"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "audition_line": "[earthy] [chuckles] 啥叫裸泳？就是把顾客充值的会员卡钱拿去开新店，房东一催租当场傻眼！",
+      "audition_history": []
+    },
+    "buffett_prime_en": {
+      "role_id": "buffett_prime_en",
+      "display_name": "沃伦·巴菲特",
+      "aliases": [
+        "Warren Buffett",
+        "巴菲特"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "en",
+      "vocal_register": "Prime-age 50-year-old American Midwestern male investor voice, brisk articulate pace, warm folksy nasal resonance, wry wit, zero elderly tremor",
+      "persona_summary": "50-60岁壮年黄金期的沃伦·巴菲特（1980s-1990s奥马哈书房原声态）。头脑如刀锋般敏捷，语速明快，带着标志性的美国中西部内布拉斯加温和鼻腔共鸣与冷幽默自嘲，毫无90岁高龄的苍老沙哑与颤音。",
+      "accent_requirement": "Pure American Midwestern / Omaha English (1980s-1990s prime-age Warren Buffett cadence, crisp and energetic)",
+      "status": "locked",
+      "voice_id": "drama3_anchor_buffett_prime_en",
+      "public_owner_id": "",
+      "library_voice_name": "Drama3 1980s-90s Prime-Age Warren Buffett Public Speech Anchor",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[folksy]",
+        "[wryly]",
+        "[seriously]",
+        "[warmly]"
+      ],
+      "forbidden_habits": [
+        "No 90-year-old elderly vocal tremor, rasp, or breathless wheezing",
+        "No theatrical movie-trailer baritone"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "audition_line": "[wryly] In God we trust; all others pay cash.",
+      "audition_history": []
+    }
+  },
+  "sonic_motifs": {
+    "vintage_report_page_turn": {
+      "motif_id": "vintage_report_page_turn",
+      "name": "奥马哈书房翻阅年报声",
+      "description": "翻开厚重伯克希尔纸质年报的书房纸张摩擦声（每次引入巴菲特英文原典前触发）",
+      "sfx_prompt": "Crisp tactile turn of a heavy vintage cotton-paper annual report page on a quiet mahogany study desk, subtle warm room tone, pure foley, no human voice",
+      "duration_seconds": 2.2,
+      "prompt_influence": 0.65,
+      "loop": false,
+      "cached_file": ""
+    },
+    "omaha_typewriter_carriage": {
+      "motif_id": "omaha_typewriter_carriage",
+      "name": "1980s机械打字机回车铃声",
+      "description": "1980年代老式机械打字机清脆敲击三声加金属回车铃响（分幕转场与《三阶锦囊》定格声效）",
+      "sfx_prompt": "Authentic 1980s mechanical typewriter short keystroke burst ending with a crisp metallic carriage return bell ding in a quiet wooden study, pure foley, no human voice",
+      "duration_seconds": 2.6,
+      "prompt_influence": 0.65,
+      "loop": false,
+      "cached_file": ""
+    },
+    "nyse_crisis_bell_distant": {
+      "motif_id": "nyse_crisis_bell_distant",
+      "name": "华尔街休市铜钟低沉回响",
+      "description": "远处低沉回荡的华尔街纽交所休市铜钟余韵（用于金融海啸与泡沫崩盘历史时刻）",
+      "sfx_prompt": "Distant resonant brass stock exchange closing bell echoing softly into a quiet late-night broadcast room, solemn financial documentary transition, pure foley, no human voice",
+      "duration_seconds": 3.0,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": ""
+    },
+    "studio_coffee_cup_settle": {
+      "motif_id": "studio_coffee_cup_settle",
+      "name": "深夜播客室放下温热咖啡杯",
+      "description": "深夜播客录音室里温热陶瓷咖啡杯轻放木杯垫声（用于圆桌松弛转场）",
+      "sfx_prompt": "Warm ceramic coffee mug gently set down onto a wooden coaster in an intimate late-night podcast studio, subtle cozy room presence, pure foley, no human voice",
+      "duration_seconds": 1.6,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": ""
+    }
+  }
+}

@@ -799,6 +799,407 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertTrue(str(v2["master_wav"]).endswith("_v002.wav"))
         self.assertGreater(v2["total_duration_s"], v1["total_duration_s"] + 1.4)
 
+    def test_bilingual_validation_finance_polyphones_and_english_qa(self) -> None:
+        from aigc_audio_pipeline.polyphones import (
+            apply_domain_polyphone_overrides,
+            apply_finance_polyphone_overrides,
+        )
+
+        # Pure English valid under language_code='en', rejected under strict 'zh'
+        en_line = "[wryly] In God we trust; all others pay cash."
+        self.assertEqual(validate_v3_dialogue_text(en_line, stability=0.5, language_code="en"), [])
+        self.assertTrue(len(validate_v3_dialogue_text(en_line, stability=0.5, language_code="zh")) > 0)
+
+        # Bilingual code-switched Chinese line valid under 'zh-en'
+        zhen_line = "[warmly] 巴菲特把这种退潮叫 swimming naked，也就是裸泳。"
+        self.assertEqual(validate_v3_dialogue_text(zhen_line, stability=0.5, language_code="zh-en"), [])
+
+        # Finance polyphones disambiguate without breaking '重仓'
+        fin_raw = "在伯克希尔·哈撒韦的老行当里，重仓优质股比频繁调仓或盲目资产重组更重要。"
+        fin_out = apply_finance_polyphone_overrides(fin_raw)
+        self.assertIn("伯克希尔哈撒韦", fin_out)
+        self.assertIn("老航当", fin_out)
+        self.assertIn("条仓", fin_out)
+        self.assertIn("资产崇组", fin_out)
+        self.assertIn("重仓", fin_out)
+        self.assertEqual(apply_domain_polyphone_overrides(fin_raw, domain="finance_podcast"), fin_out)
+
+        # English ASR QA: intact passes, tail truncation fails, tag leak fails
+        en_ok = evaluate_dialogue_qa(
+            tagged_prompt="[wryly] Beware the investment activity that produces applause; the great moves are usually greeted by yawns.",
+            asr_text="Beware the investment activity that produces applause, the great moves are usually greeted by yawns.",
+            duration_s=6.2,
+            peak_dbfs=-10.0,
+        )
+        self.assertTrue(en_ok.passed)
+        self.assertGreaterEqual(en_ok.char_recall, 0.95)
+
+        en_trunc = evaluate_dialogue_qa(
+            tagged_prompt="[wryly] Beware the investment activity that produces applause; the great moves are usually greeted by yawns.",
+            asr_text="Beware the investment activity that produces applause",
+            duration_s=3.1,
+            peak_dbfs=-10.0,
+        )
+        self.assertFalse(en_trunc.passed)
+
+        en_leak = evaluate_dialogue_qa(
+            tagged_prompt="[wryly] In God we trust; all others pay cash.",
+            asr_text="wryly In God we trust, all others pay cash.",
+            duration_s=3.4,
+            peak_dbfs=-10.0,
+        )
+        self.assertFalse(en_leak.passed)
+        self.assertIn("wryly", en_leak.leaked_tags)
+
+        # Bilingual guest code-switching ('swimming naked', 'float') must NOT trigger false tag-leak failure
+        bilingual_ok = evaluate_dialogue_qa(
+            tagged_prompt="[warmly] 这就是他说的 swimming naked，靠保险 float 才能在危机里接金子。",
+            asr_text="这就是他说的 swimming naked，靠保险 float 才能在危机里接金子。",
+            duration_s=5.1,
+            peak_dbfs=-10.5,
+        )
+        self.assertTrue(bilingual_ok.passed)
+        self.assertEqual(bilingual_ok.leaked_tags, [])
+
+    def test_drama3_podcast_buffett_translation_and_english_chunking(self) -> None:
+        from aigc_audio_pipeline.drama3_adapter import (
+            split_cue_into_subcues_for_drama3,
+            translate_cue_to_drama3_input,
+        )
+
+        buffett_prof = VoiceProfile(
+            role_id="buffett_prime_en",
+            display_name="沃伦·巴菲特",
+            language_code="en",
+            voice_id="anchor_buffett",
+            status="locked",
+        )
+        en_cue = TimelineCue(
+            cue_id="c_buf",
+            act_id="act1",
+            kind="dialogue",
+            role_id="buffett_prime_en",
+            language_code="en",
+            text=(
+                "[folksy] By the fourth quarter, the credit crisis, coupled with tumbling home and stock prices, "
+                "had produced a paralyzing fear that engulfed the country. "
+                "A freefall in business activity ensued, accelerating at a pace that I have never before witnessed. "
+                "The watchword throughout the country became the creed I saw on restaurant walls when I was young: "
+                "In God we trust; all others pay cash."
+            ),
+            stability=0.5,
+            gap_after_s=0.35,
+        )
+        d3_en = translate_cue_to_drama3_input(en_cue, buffett_prof, attempt=1, domain="finance_podcast")
+        self.assertIn("Midwestern storyteller cadence", d3_en)
+        self.assertIn("In God we trust; all others pay cash.", d3_en)
+
+        subcues_en = split_cue_into_subcues_for_drama3(en_cue, max_en_words=35, domain="finance_podcast")
+        self.assertGreaterEqual(len(subcues_en), 2)
+        self.assertTrue(all(sc.language_code == "en" for sc in subcues_en))
+        self.assertAlmostEqual(subcues_en[-1].gap_after_s, 0.35, places=2)
+
+    def test_documentary_simultaneous_translation_ducking_and_bilingual_srt(self) -> None:
+        from aigc_audio_pipeline.mixer import apply_voiceover_duck_envelope
+
+        # 1. Verify envelope gain shape directly on constant 10,000 amplitude stereo signal (10.0s)
+        en_raw = array("h", [10000]) * (10 * 48000 * 2)
+        env_out = apply_voiceover_duck_envelope(
+            en_raw,
+            rel_duck_start_s=3.5,
+            rel_duck_end_s=8.5,
+            duck_gain=0.15,
+        )
+        # Solo lead-in at t=1.5s -> ~10000; ducked bed at t=5.5s -> ~1500; tail lift at t=9.4s -> ~7800
+        self.assertAlmostEqual(env_out[int(1.5 * 48000) * 2], 10000, delta=60)
+        self.assertAlmostEqual(env_out[int(5.5 * 48000) * 2], 1500, delta=80)
+        self.assertAlmostEqual(env_out[int(9.4 * 48000) * 2], 7800, delta=120)
+
+        # 2. Verify full 3-bus timeline overlap, non-collision with c3, and non-overlapping bilingual SRT
+        tmp = Path("/tmp/test_aigc_simul_duck")
+        if tmp.exists():
+            subprocess.run(["rm", "-rf", str(tmp)], check=True)
+        tmp.mkdir(parents=True)
+
+        def _tone(p: Path, freq: float, dur: float) -> Path:
+            subprocess.run(
+                [
+                    "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                    "-f", "lavfi", "-i", f"sine=frequency={freq}:duration={dur}:sample_rate=48000",
+                    "-af", "pan=stereo|c0=c0|c1=c0,volume=-12dB", "-c:a", "pcm_s16le", str(p),
+                ],
+                check=True,
+            )
+            return p
+
+        en_wav = _tone(tmp / "en.wav", 190.0, 9.0)   # 9.0s English quote
+        zh_wav = _tone(tmp / "zh.wav", 260.0, 5.5)   # 5.5s Chinese translation (starts +2.5s -> ends +8.0s < 9.0s!)
+        c3_wav = _tone(tmp / "c3.wav", 310.0, 2.0)   # Next speaker must wait until max(9.0, 8.0) + gap!
+        bgm_wav = _tone(tmp / "bgm.wav", 110.0, 14.0)
+
+        reg = VoiceCastingRegistry(
+            project_id="buffett_letters",
+            project_title="穿越周期的信",
+            domain="finance_podcast",
+            roles={
+                "buffett_prime_en": VoiceProfile(
+                    role_id="buffett_prime_en", display_name="沃伦·巴菲特", language_code="en", voice_id="v_b", status="locked"
+                ),
+                "guest_huaiyuan": VoiceProfile(
+                    role_id="guest_huaiyuan", display_name="陈怀远", language_code="zh-en", voice_id="v_h", status="locked"
+                ),
+                "guest_laozhou": VoiceProfile(
+                    role_id="guest_laozhou", display_name="老周", language_code="zh", voice_id="v_z", status="locked"
+                ),
+            },
+        )
+        sheet = EpisodeCueSheet(
+            episode_id="E001_SIMUL",
+            chapter_number=1,
+            title="2008年致股东信",
+            mode="podcast_roundtable",
+            head_pad_s=0.5,
+            tail_pad_s=1.0,
+            acts=[ActMusicSpec(act_id="act1", title="第一幕", bgm_prompt="acoustic guitar study", bgm_duration_s=14.0)],
+            cues=[
+                TimelineCue(
+                    cue_id="c1_en",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="buffett_prime_en",
+                    language_code="en",
+                    text="[wryly] In God we trust; all others pay cash.",
+                    stability=0.5,
+                    acoustic_space="vintage_study",
+                    duck_under_next=True,
+                    duck_lead_in_s=2.5,
+                    duck_gain=0.15,
+                    gap_after_s=0.0,
+                ),
+                TimelineCue(
+                    cue_id="c2_zh",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="guest_huaiyuan",
+                    language_code="zh-en",
+                    text="[warmly] 我们相信上帝，但其他人请一律付现。",
+                    stability=0.5,
+                    acoustic_space="studio_warm",
+                    gap_after_s=0.4,
+                ),
+                TimelineCue(
+                    cue_id="c3_zhou",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="guest_laozhou",
+                    language_code="zh",
+                    text="[earthy] 这话太狠了，跟我们餐馆欠账免谈一模一样！",
+                    stability=0.0,
+                    acoustic_space="studio_warm",
+                    gap_after_s=0.3,
+                ),
+            ],
+        )
+        self.assertEqual(sheet.validate(registry=reg, require_locked_voices=True), [])
+
+        res = master_episode_three_bus(
+            cue_sheet=sheet,
+            cue_audio_map={"c1_en": en_wav, "c2_zh": zh_wav, "c3_zhou": c3_wav},
+            act_bgm_map={"act1": bgm_wav},
+            output_dir=tmp / "out",
+            registry=reg,
+        )
+        manifest = json.loads(res["manifest_json"].read_text(encoding="utf-8"))
+        tl = {it["cue_id"]: it for it in manifest["timeline"]}
+        # c1_en starts at 0.5s, ends ~9.5s; c2_zh starts at 0.5 + 2.5 = 3.0s, ends ~8.5s; c3_zhou starts at ~9.5 + 0.4 = ~9.9s!
+        self.assertAlmostEqual(tl["c1_en"]["start_s"], 0.5, delta=0.05)
+        self.assertAlmostEqual(tl["c2_zh"]["start_s"], 3.0, delta=0.05)
+        self.assertGreaterEqual(tl["c3_zhou"]["start_s"], tl["c1_en"]["end_s"] + 0.35)
+
+        srt_text = res["subtitles_srt"].read_text(encoding="utf-8")
+        self.assertIn("【沃伦·巴菲特】In God we trust; all others pay cash.", srt_text)
+        self.assertIn("【陈怀远】我们相信上帝，但其他人请一律付现。\nEN: In God we trust; all others pay cash.", srt_text)
+        self.assertIn("【老周】这话太狠了", srt_text)
+
+    def test_buffett_96gb_studio_guardrails_and_zero_cost_anchor_builder(self) -> None:
+        import importlib.util
+
+        repo_root = Path(__file__).resolve().parents[1]
+        studio_py = repo_root / "colab_96gb" / "run_buffett_96gb_studio.py"
+        spec_s = importlib.util.spec_from_file_location("run_buffett_96gb_studio", studio_py)
+        assert spec_s and spec_s.loader
+        studio_mod = importlib.util.module_from_spec(spec_s)
+        spec_s.loader.exec_module(studio_mod)
+
+        # 1. American documentary acoustic BGM enrichment must never inject ancient Chinese xianxia instruments
+        bgm_p = studio_mod.enrich_buffett_acestep_bgm_prompt("Warm Omaha midnight study reflection")
+        self.assertIn("acoustic guitar", bgm_p.lower())
+        self.assertIn("no singing", bgm_p.lower())
+        self.assertNotIn("xianxia", bgm_p.lower())
+
+        # 2. Bilingual speaking-rate gate handles both pure English Buffett lines and code-switched ZH-EN lines
+        en_cue = TimelineCue(
+            cue_id="en1",
+            act_id="act1",
+            kind="dialogue",
+            role_id="buffett_prime_en",
+            language_code="en",
+            text="[wryly] In God we trust; all others pay cash when the tide goes out.",
+            stability=0.5,
+        )
+        ok_en, _ = studio_mod.check_bilingual_speaking_rate_ok(en_cue, 4.8)
+        self.assertTrue(ok_en)
+        fast_en, _ = studio_mod.check_bilingual_speaking_rate_ok(en_cue, 0.9)
+        self.assertFalse(fast_en)
+
+        zhen_cue = TimelineCue(
+            cue_id="zh1",
+            act_id="act1",
+            kind="dialogue",
+            role_id="guest_huaiyuan",
+            language_code="zh-en",
+            text="[warmly] 巴菲特真正的底牌叫 insurance float，靠 house-price appreciation 赌命迟早翻车。",
+            stability=0.5,
+        )
+        ok_zh, _ = studio_mod.check_bilingual_speaking_rate_ok(zhen_cue, 7.2)
+        self.assertTrue(ok_zh)
+
+        # 3. Real-human vocal anchor builder (v2_real_human_studio, 0% edge-tts) produces all 4 locked roles
+        prep_py = repo_root / "colab_96gb" / "prepare_buffett_voice_anchors.py"
+        spec_p = importlib.util.spec_from_file_location("prepare_buffett_voice_anchors", prep_py)
+        assert spec_p and spec_p.loader
+        prep_mod = importlib.util.module_from_spec(spec_p)
+        spec_p.loader.exec_module(prep_mod)
+        self.assertEqual(prep_mod.ANCHOR_SCHEMA_VERSION, "v2_real_human_studio")
+        self.assertNotIn("edge_tts", prep_py.read_text(encoding="utf-8"))
+
+        tmp_anc = Path("/tmp/test_buffett_anchors_unit")
+        if tmp_anc.exists():
+            subprocess.run(["rm", "-rf", str(tmp_anc)], check=True)
+        reg_path = repo_root / "projects" / "buffett_letters" / "00_节目圣经与第一季12期总纲" / "voice_casting_registry.json"
+        vc_res = prep_mod.prepare_all_buffett_anchors(
+            registry_path=reg_path,
+            output_dir=tmp_anc,
+            offline_stub=False,  # Uses bundled real-human voice_anchors/*.wav directly!
+        )
+        self.assertEqual(vc_res["role_count"], 4)
+        self.assertEqual(vc_res["anchor_schema_version"], "v2_real_human_studio")
+        for rid in ("host_zhiwei", "guest_huaiyuan", "guest_laozhou", "buffett_prime_en"):
+            self.assertTrue((tmp_anc / f"voice_anchors/{rid}.wav").is_file())
+
+    def test_v2_podcast_zero_announcer_and_micro_interruption(self) -> None:
+        from aigc_audio_pipeline.drama3_adapter import (
+            estimate_drama3_max_new_tokens,
+            translate_cue_to_drama3_input,
+        )
+
+        repo_root = Path(__file__).resolve().parents[1]
+        reg_path = repo_root / "projects" / "buffett_letters" / "00_节目圣经与第一季12期总纲" / "voice_casting_registry.json"
+        reg = VoiceCastingRegistry.load(reg_path)
+
+        # 1. Chinese podcast dialogue must NOT inject announcer-inducing '[...podcast host tone]' prefixes
+        zhiwei_prof = reg.roles["host_zhiwei"]
+        zh_plain = TimelineCue(
+            cue_id="c_zw_plain",
+            act_id="act1",
+            kind="dialogue",
+            role_id="host_zhiwei",
+            language_code="zh",
+            text="你是说充会员卡？",
+            stability=0.5,
+        )
+        d3_plain = translate_cue_to_drama3_input(zh_plain, zhiwei_prof, attempt=1, domain="finance_podcast")
+        self.assertEqual(d3_plain, "你是说充会员卡？")
+        self.assertNotIn("podcast host", d3_plain)
+
+        zh_laugh = TimelineCue(
+            cue_id="c_lz_laugh",
+            act_id="act1",
+            kind="dialogue",
+            role_id="guest_laozhou",
+            language_code="zh",
+            text="[chuckles] 跌九点六就叫狠啊？",
+            stability=0.0,
+        )
+        d3_laugh = translate_cue_to_drama3_input(zh_laugh, reg.roles["guest_laozhou"], attempt=1, domain="finance_podcast")
+        self.assertEqual(d3_laugh, "[light chuckle] 跌九点六就叫狠啊？")
+
+        # 2. Token budget scales safely with utterance length without bloated 2048 runaway window on short turns
+        self.assertLessEqual(estimate_drama3_max_new_tokens(zh_plain), 560)
+        en_long = TimelineCue(
+            cue_id="c_en_long",
+            act_id="act1",
+            kind="dialogue",
+            role_id="buffett_prime_en",
+            language_code="en",
+            text="[seriously] " + " ".join(["cash"] * 60),
+            stability=0.5,
+        )
+        self.assertGreaterEqual(estimate_drama3_max_new_tokens(en_long), 750)
+
+        # 3. Negative gap_after_s (-0.06s conversational latch) mixes cleanly AND clamps SRT timestamps to prevent overlap
+        tmp = Path("/tmp/test_v2_micro_interrupt")
+        if tmp.exists():
+            subprocess.run(["rm", "-rf", str(tmp)], check=True)
+        tmp.mkdir(parents=True)
+        for name, freq, dur in [("a.wav", 210.0, 2.0), ("b.wav", 280.0, 1.8), ("bgm.wav", 110.0, 6.0)]:
+            subprocess.run(
+                [
+                    "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                    "-f", "lavfi", "-i", f"sine=frequency={freq}:duration={dur}:sample_rate=48000",
+                    "-af", "pan=stereo|c0=c0|c1=c0,volume=-12dB", "-c:a", "pcm_s16le", str(tmp / name),
+                ],
+                check=True,
+            )
+        reg_locked = VoiceCastingRegistry.load(reg_path)
+        for r in reg_locked.roles.values():
+            r.voice_id = f"v_{r.role_id}"
+            r.status = "locked"
+        sheet = EpisodeCueSheet(
+            episode_id="TEST_LATCH",
+            chapter_number=1,
+            title="抢话测试",
+            mode="podcast_roundtable",
+            head_pad_s=0.4,
+            tail_pad_s=0.8,
+            acts=[ActMusicSpec(act_id="act1", title="第一幕", bgm_prompt="acoustic guitar", bgm_duration_s=6.0)],
+            cues=[
+                TimelineCue(cue_id="c1", act_id="act1", kind="dialogue", role_id="guest_laozhou", text="巴菲特手里那几百亿叫什么来着——", gap_after_s=-0.06),
+                TimelineCue(cue_id="c2", act_id="act1", kind="dialogue", role_id="guest_huaiyuan", language_code="zh-en", text="Insurance float，保险浮存金。", gap_after_s=0.3),
+            ],
+        )
+        self.assertEqual(sheet.validate(registry=reg_locked, require_locked_voices=True), [])
+        res = master_episode_three_bus(
+            cue_sheet=sheet,
+            cue_audio_map={"c1": tmp / "a.wav", "c2": tmp / "b.wav"},
+            act_bgm_map={"act1": tmp / "bgm.wav"},
+            output_dir=tmp / "out",
+            registry=reg_locked,
+        )
+        manifest = json.loads(res["manifest_json"].read_text(encoding="utf-8"))
+        tl = {it["cue_id"]: it for it in manifest["timeline"]}
+        self.assertLess(tl["c2"]["start_s"], tl["c1"]["end_s"])
+        srt_lines = res["subtitles_srt"].read_text(encoding="utf-8").splitlines()
+        ts_lines = [ln for ln in srt_lines if " --> " in ln]
+        self.assertEqual(len(ts_lines), 2)
+        first_end = ts_lines[0].split(" --> ")[1]
+        second_start = ts_lines[1].split(" --> ")[0]
+        self.assertLessEqual(first_end, second_start)
+
+        # 4. Compiled V2 AUDITION_BUFFETT and E001 cue sheets validate cleanly with zero clichés
+        for fn in (
+            "AUDITION_BUFFETT_四角色定角试听包.json",
+            "E001_2008年致股东信_满地是血的夜晚谁在裸泳_完整圆桌台本.json",
+        ):
+            cs = EpisodeCueSheet.load(repo_root / "projects" / "buffett_letters" / "02_分期圆桌台本" / fn)
+            self.assertEqual(cs.validate(registry=reg_locked, require_locked_voices=True), [])
+            joined_zh = "\n".join(c.text for c in cs.cues if c.kind == "dialogue" and c.language_code != "en")
+            for banned in ("问到根子上了", "这个比方绝了", "穿越周期·三阶锦囊", "各位听众"):
+                self.assertNotIn(banned, joined_zh)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+

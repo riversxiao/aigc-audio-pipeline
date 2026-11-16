@@ -29,7 +29,7 @@ from .models import (
     extract_tags_and_spoken_text,
     utc_now_iso,
 )
-from .polyphones import apply_xianxia_polyphone_overrides
+from .polyphones import apply_domain_polyphone_overrides, apply_xianxia_polyphone_overrides
 
 DRAMA3_ANCHOR_SAMPLE_RATE = 44100
 _TAG_TOKEN_RE = re.compile(r"\[([^\[\]]+)\]")
@@ -60,6 +60,15 @@ DRAMA3_TAG_MAP: dict[str, tuple[str, str]] = {
     "rushed": ("urgent, rapid breathless pace", ""),
     "excited": ("intense, surging excitement", ""),
     "mischievously": ("sly, knowing smirk", ""),
+    # Modern conversational podcast & prime-age Omaha Buffett delivery tags
+    "conversational": ("warm, relaxed modern podcast conversation", ""),
+    "curious": ("bright, curious and engaging podcast host tone", ""),
+    "pushback": ("sharp, lively conversational pushback", ""),
+    "warmly": ("warm, measured and thoughtful tone", ""),
+    "wryly": ("wry, folksy Midwestern wit with a knowing smile", ""),
+    "folksy": ("energetic, clear prime-age Midwestern storyteller cadence", ""),
+    "earthy": ("hearty, down-to-earth street-smart entrepreneur tone", ""),
+    "seriously": ("grounded, sober and earnest gravity", ""),
 }
 
 # Paralinguistic point events kept inline in Drama 3 square brackets
@@ -69,6 +78,9 @@ DRAMA3_POINT_EVENTS: dict[str, str] = {
     "gasps": "[sharp inhale]",
     "pause": "[short pause]",
     "short pause": "[short pause]",
+    "long pause": "[short pause]",
+    "chuckles": "[light chuckle]",
+    "clears throat": "[clears throat]",
 }
 
 # Optional Fish Audio Drama 3 native Chinese Pinyin phoneme overrides (<|phoneme_start|>...<|phoneme_end|>)
@@ -116,7 +128,17 @@ def split_tagged_clauses(tagged_text: str) -> list[tuple[list[str], str]]:
     return segments
 
 
-def _apply_drama3_phonetics(raw_tagged: str, *, use_phoneme_pins: bool = False) -> str:
+def _apply_drama3_phonetics(
+    raw_tagged: str,
+    *,
+    use_phoneme_pins: bool = False,
+    domain: str = "xianxia",
+    language_code: str = "zh",
+) -> str:
+    if language_code == "en":
+        return raw_tagged
+    if domain != "xianxia":
+        return apply_domain_polyphone_overrides(raw_tagged, domain=domain)
     if use_phoneme_pins:
         out = raw_tagged
         for canonical, pin in XIANXIA_DRAMA3_PHONEME_PINS:
@@ -133,23 +155,63 @@ def strip_drama3_markup(drama3_text: str) -> str:
     return re.sub(r"\s+", " ", no_brackets).strip()
 
 
+# Subtle non-announcer micro-cues for Chinese finance_podcast (conversational/curious/warmly/earthy/seriously
+# intentionally map to "" so the real-human podcast reference WAV drives 100% natural, unforced prosody!)
+FINANCE_PODCAST_ZH_MICRO_MAP: dict[str, tuple[str, str]] = {
+    "softly": ("", "soft"),
+    "whispers": ("压低声音", "whisper"),
+    "whispering": ("压低声音", "whisper"),
+    "pushback": ("语气微顿、敏锐追问", ""),
+    "wryly": ("带着一丝冷幽默", ""),
+    "sarcastic": ("略带反讽", ""),
+}
+
+
+def estimate_drama3_max_new_tokens(drama3_input: str | TimelineCue, *, language_code: str = "zh") -> int:
+    """Estimate safe upper-bound `max_new_tokens` (~3.2x expected 21.53Hz frames, clamped to [384, 2048])."""
+    if isinstance(drama3_input, TimelineCue):
+        language_code = drama3_input.language_code or language_code
+        raw_text = drama3_input.tts_text or drama3_input.text
+    else:
+        raw_text = drama3_input
+    plain = strip_drama3_markup(_PHONEME_SPAN_RE.sub("字", raw_text))
+    cjk_n = len(_CJK_COUNT_RE.findall(plain))
+    en_words = len(re.findall(r"[A-Za-z]+(?:'[A-Za-z]+)?", plain))
+    if language_code == "en" or (cjk_n == 0 and en_words > 0):
+        est_sec = max(1.5, en_words / 2.35)
+    else:
+        est_sec = max(1.2, (cjk_n + 2.2 * en_words) / 3.6)
+    est_tokens = int(math.ceil(est_sec * 21.53 * 3.2)) + 96
+    return max(384, min(2048, est_tokens))
+
+
 def translate_cue_to_drama3_input(
     cue: TimelineCue,
     profile: VoiceProfile | None = None,
     *,
     attempt: int = 1,
     use_phoneme_pins: bool = False,
+    domain: str = "xianxia",
 ) -> str:
     """Translate an `EpisodeCueSheet` dialogue `TimelineCue` into Fish Audio Drama 3 acting syntax.
 
     - `attempt == 1`: Full multi-segment natural-language acting directions (`[...]`), paralinguistic
       point events (`[sighs]`, `[sharp inhale]`), and paired prosody spans (`<whisper>…</whisper>`,
-      `<forceful>…</forceful>`, `<slow>…</slow>`), plus Xianxia polyphone disambiguation.
-    - `attempt == 2`: Simplified single leading emotion bracket (no XML spans) for clean QA retry.
+      `<forceful>…</forceful>`, `<slow>…</slow>`), plus domain-aware polyphone disambiguation.
+      In `finance_podcast` mode for Chinese hosts/guests, avoids artificial "podcast host tone" prefixes
+      so real-human studio reference anchors preserve genuine conversational breath and cadence.
+    - `attempt == 2`: Simplified single leading emotion bracket (or clean text for `finance_podcast`) for retry.
     - `attempt >= 3`: Zero-tag plain phonetic text (guaranteed 0% tag-reading fallback).
     """
+    lang = cue.language_code or (profile.language_code if profile is not None else "") or "zh"
+    is_zh_podcast = (domain == "finance_podcast") and (lang != "en")
     source_tagged = cue.tts_text if (cue.tts_text and not use_phoneme_pins) else cue.text
-    phonetic_tagged = _apply_drama3_phonetics(source_tagged, use_phoneme_pins=use_phoneme_pins)
+    phonetic_tagged = _apply_drama3_phonetics(
+        source_tagged,
+        use_phoneme_pins=use_phoneme_pins,
+        domain=domain,
+        language_code=lang,
+    )
     all_tags, plain_spoken = extract_tags_and_spoken_text(phonetic_tagged)
 
     if attempt >= 3 or not plain_spoken:
@@ -164,6 +226,8 @@ def translate_cue_to_drama3_input(
         first_tag = all_tags[0].lower().strip()
         if first_tag in DRAMA3_POINT_EVENTS:
             return f"{DRAMA3_POINT_EVENTS[first_tag]} {plain_spoken}"
+        if is_zh_podcast:
+            return plain_spoken
         brief, _ = DRAMA3_TAG_MAP.get(first_tag, ("calm, natural dramatic delivery", ""))
         return f"[{brief}] {plain_spoken}"
 
@@ -181,10 +245,18 @@ def translate_cue_to_drama3_input(
         for raw_t in tags:
             t = raw_t.lower().strip()
             if t in ("laughs", "laughing"):
-                point_tokens.append("[cold laugh]" if is_villain else "[low chuckle]")
+                point_tokens.append("[cold laugh]" if is_villain else "[light chuckle]")
                 continue
             if t in DRAMA3_POINT_EVENTS:
                 point_tokens.append(DRAMA3_POINT_EVENTS[t])
+                continue
+            if is_zh_podcast:
+                if t in FINANCE_PODCAST_ZH_MICRO_MAP:
+                    zh_brief, span_candidate = FINANCE_PODCAST_ZH_MICRO_MAP[t]
+                    if zh_brief and zh_brief not in style_briefs:
+                        style_briefs.append(zh_brief)
+                    if span_candidate and not xml_span:
+                        xml_span = span_candidate
                 continue
             if t in DRAMA3_TAG_MAP:
                 brief, span_candidate = DRAMA3_TAG_MAP[t]
@@ -193,15 +265,18 @@ def translate_cue_to_drama3_input(
                 if span_candidate and not xml_span:
                     xml_span = span_candidate
 
-        # Inject subtle stability/space acting cues on the opening clause when appropriate
+        # Inject subtle stability/space acting cues on the opening clause when appropriate (never force announcer tone on zh_podcast)
         if seg_idx == 0:
-            if cue.stability == 1.0 and not style_briefs:
-                style_briefs.append("solemn, ancient monotone resonance")
-                xml_span = xml_span or "slow"
-            elif cue.acoustic_space == "memory_echo" and not style_briefs:
-                style_briefs.append("distant, solemn memory voice")
-            elif not style_briefs and role_tier == "narrator":
-                style_briefs.append("steady, cinematic Xianxia narration")
+            if lang == "en" and not style_briefs and cue.role_id.startswith("buffett"):
+                style_briefs.append("clear, brisk prime-age Midwestern investor voice, warm and folksy")
+            elif domain != "finance_podcast":
+                if cue.stability == 1.0 and not style_briefs:
+                    style_briefs.append("solemn, ancient monotone resonance")
+                    xml_span = xml_span or "slow"
+                elif cue.acoustic_space == "memory_echo" and not style_briefs:
+                    style_briefs.append("distant, solemn memory voice")
+                elif not style_briefs and role_tier == "narrator":
+                    style_briefs.append("steady, cinematic Xianxia narration")
 
         prefix_items: list[str] = []
         if style_briefs:
@@ -221,9 +296,9 @@ def translate_cue_to_drama3_input(
 def trim_edge_silence_wav(
     wav_path: Path,
     *,
-    threshold_dbfs: float = -46.0,
-    keep_head_ms: float = 45.0,
-    keep_tail_ms: float = 95.0,
+    threshold_dbfs: float = -48.0,
+    keep_head_ms: float = 65.0,
+    keep_tail_ms: float = 115.0,
     min_duration_s: float = 0.35,
 ) -> float:
     """Trim excess leading/trailing dead air on a 16-bit PCM WAV without touching interior pauses.
@@ -294,18 +369,26 @@ def trim_edge_silence_wav(
 _CJK_COUNT_RE = re.compile(r"[\u4e00-\u9fff]")
 _MAJOR_SENT_SPLIT_RE = re.compile(r"(?<=[。！？；…])\s*")
 _MINOR_CLAUSE_SPLIT_RE = re.compile(r"(?<=[，、：])\s*")
+_EN_MAJOR_SENT_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+_EN_MINOR_CLAUSE_SPLIT_RE = re.compile(r"(?<=[,;:])\s+")
 
 
-def split_cue_into_subcues_for_drama3(cue: TimelineCue, max_cjk_chars: int = 105) -> list[TimelineCue]:
+def split_cue_into_subcues_for_drama3(
+    cue: TimelineCue,
+    max_cjk_chars: int = 105,
+    *,
+    max_en_words: int = 65,
+    domain: str = "xianxia",
+) -> list[TimelineCue]:
     """Split long dialogue/narrator cues at natural sentence boundaries so Drama 3 never hits its token cap.
 
     Fish Audio Drama 3 operates at ~21.53 codec frames/s (`1536` tokens = `71.33s`, vocoder max ~`139s`).
-    Splitting cues > `max_cjk_chars` (~35-38s at 2.8 chars/s) into sentence-aligned sub-cues guarantees
-    >3x token headroom, crisper prosody, and 100% tail-completeness.
+    Splitting cues > `max_cjk_chars` (~35-38s at 2.8 chars/s) or > `max_en_words` (~25-28s at 2.5 words/s)
+    into sentence-aligned sub-cues guarantees >2.5x token headroom, crisper prosody, and 100% tail-completeness.
     """
     tags, spoken = extract_tags_and_spoken_text(cue.text)
-    if len(_CJK_COUNT_RE.findall(spoken)) <= max_cjk_chars:
-        return [cue]
+    cjk_count = len(_CJK_COUNT_RE.findall(spoken))
+    is_english = cue.language_code == "en" or (cjk_count == 0 and bool(spoken.strip()))
 
     # Inherit leading style tag(s) (excluding one-shot point laughs/sighs) across sub-cues for consistent tone
     inherited_tags = [
@@ -314,9 +397,66 @@ def split_cue_into_subcues_for_drama3(cue: TimelineCue, max_cjk_chars: int = 105
         if t.lower().strip() not in DRAMA3_POINT_EVENTS and t.lower().strip() not in ("laughs", "laughing")
     ]
     prefix = " ".join(inherited_tags)
-
-    # Strip inline tags from body before sentence chunking, preserving inline tags if attached to sentences
     clean_body = _TAG_TOKEN_RE.sub("", cue.text).strip()
+
+    if is_english:
+        en_words = spoken.split()
+        if len(en_words) <= max_en_words:
+            return [cue]
+        raw_sents = [s.strip() for s in _EN_MAJOR_SENT_SPLIT_RE.split(clean_body) if s.strip()]
+        atomic_units_en: list[str] = []
+        for sent in raw_sents:
+            if len(sent.split()) <= max_en_words:
+                atomic_units_en.append(sent)
+            else:
+                clauses = [c.strip() for c in _EN_MINOR_CLAUSE_SPLIT_RE.split(sent) if c.strip()]
+                atomic_units_en.extend(clauses if len(clauses) > 1 else [sent])
+
+        chunks_en: list[str] = []
+        cur_en = ""
+        for unit in atomic_units_en:
+            candidate = f"{cur_en} {unit}".strip() if cur_en else unit
+            if cur_en and len(candidate.split()) > max_en_words:
+                chunks_en.append(cur_en)
+                cur_en = unit
+            else:
+                cur_en = candidate
+        if cur_en:
+            if (
+                chunks_en
+                and len(cur_en.split()) < 8
+                and len(f"{chunks_en[-1]} {cur_en}".split()) <= max_en_words + 12
+            ):
+                chunks_en[-1] = f"{chunks_en[-1]} {cur_en}"
+            else:
+                chunks_en.append(cur_en)
+
+        if len(chunks_en) <= 1:
+            return [cue]
+
+        subcues_en: list[TimelineCue] = []
+        for idx, chunk_txt in enumerate(chunks_en, 1):
+            tagged_txt = f"{prefix} {chunk_txt}".strip() if prefix else chunk_txt
+            subcues_en.append(
+                TimelineCue(
+                    cue_id=f"{cue.cue_id}_pt{idx}",
+                    act_id=cue.act_id,
+                    kind="dialogue",
+                    role_id=cue.role_id,
+                    speaker_name=cue.speaker_name,
+                    language_code=cue.language_code or "en",
+                    text=tagged_txt,
+                    tts_text=None,
+                    stability=cue.stability,
+                    acoustic_space=cue.acoustic_space,
+                    gap_after_s=cue.gap_after_s if idx == len(chunks_en) else 0.16,
+                )
+            )
+        return subcues_en
+
+    if cjk_count <= max_cjk_chars:
+        return [cue]
+
     raw_sents = [s.strip() for s in _MAJOR_SENT_SPLIT_RE.split(clean_body) if s.strip()]
 
     # Sub-split any single ultra-long sentence on commas/colons
@@ -349,7 +489,7 @@ def split_cue_into_subcues_for_drama3(cue: TimelineCue, max_cjk_chars: int = 105
     subcues: list[TimelineCue] = []
     for idx, chunk_txt in enumerate(chunks, 1):
         tagged_txt = f"{prefix} {chunk_txt}".strip() if prefix else chunk_txt
-        phonetic_txt = apply_xianxia_polyphone_overrides(tagged_txt)
+        phonetic_txt = apply_domain_polyphone_overrides(tagged_txt, domain=domain)
         subcues.append(
             TimelineCue(
                 cue_id=f"{cue.cue_id}_pt{idx}",
@@ -357,6 +497,7 @@ def split_cue_into_subcues_for_drama3(cue: TimelineCue, max_cjk_chars: int = 105
                 kind="dialogue",
                 role_id=cue.role_id,
                 speaker_name=cue.speaker_name,
+                language_code=cue.language_code,
                 text=tagged_txt,
                 tts_text=phonetic_txt if phonetic_txt != tagged_txt else None,
                 stability=cue.stability,
@@ -477,8 +618,9 @@ def export_colab_96gb_bundle(
             "tier": prof.tier if prof else "recurring",
             "gender": prof.gender if prof else "male",
             "age_group": prof.age_group if prof else "adult",
+            "language_code": prof.language_code if prof else "zh",
             "vocal_register": prof.vocal_register if prof else "",
-            "source_voice_name": prof.library_voice_name if prof else "",
+            "source_voice_name": spec.get("source_voice_name") or (prof.library_voice_name if prof else ""),
             "anchor_wav": rel_wav,
             "anchor_duration_s": dur_s,
             "anchor_text": anchor_text,
@@ -489,6 +631,7 @@ def export_colab_96gb_bundle(
     voice_cast_payload = {
         "project_id": registry.project_id,
         "project_title": registry.project_title,
+        "domain": registry.domain,
         "engine": "fishaudio/drama-3 + OpenMOSS-Team/MOSS-SoundEffect-v2.0 + ACE-Step/acestep-v15-xl-turbo-diffusers",
         "exported_at": utc_now_iso(),
         "anchor_sample_rate_hz": DRAMA3_ANCHOR_SAMPLE_RATE,
@@ -533,7 +676,11 @@ def export_colab_96gb_bundle(
     registry.save(output_bundle_dir / "voice_casting_registry.json")
 
     copied_episodes: list[str] = []
-    for cs_path in sorted(cue_sheets_dir.glob("E*.json")):
+    candidate_jsons = sorted(
+        set(cue_sheets_dir.glob("E*.json")) | set(cue_sheets_dir.glob("AUDITION*.json")),
+        key=lambda p: p.name,
+    )
+    for cs_path in candidate_jsons:
         cs = EpisodeCueSheet.load(cs_path)
         if cs.mode == "audition_pack":
             cs.save(auditions_out_dir / cs_path.name)

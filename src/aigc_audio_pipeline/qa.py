@@ -14,6 +14,7 @@ from .models import extract_tags_and_spoken_text, simplify_inline_tags
 _CJK_ONLY = re.compile(r"[\u4e00-\u9fff0-9]+")
 _DIGIT_MAP = str.maketrans("0123456789", "零一二三四五六七八九")
 _LATIN_WORDS = re.compile(r"[a-zA-Z]{3,}")
+_EN_WORD_TOKENS = re.compile(r"[a-z0-9']+")
 # Strip Scribe non-speech event annotations like (笑声), (laughter), [sighs] before checking spoken leaks
 _AUDIO_EVENT_ANNOTATIONS = re.compile(r"\([^)]*\)|（[^）]*）|\[[^\]]*\]")
 
@@ -44,6 +45,15 @@ COMMON_TAG_WORDS: frozenset[str] = frozenset(
         "condescending",
         "hoarsely",
         "trembling",
+        "conversational",
+        "curious",
+        "pushback",
+        "warmly",
+        "wryly",
+        "folksy",
+        "earthy",
+        "seriously",
+        "chuckles",
     }
 )
 
@@ -52,7 +62,11 @@ def _cjk_chars(text: str) -> str:
     return "".join(_CJK_ONLY.findall(text)).translate(_DIGIT_MAP)
 
 
-def _longest_common_subsequence_len(a: str, b: str) -> int:
+def _en_words(text: str) -> list[str]:
+    return _EN_WORD_TOKENS.findall(text.lower())
+
+
+def _longest_common_subsequence_len(a: str | list[str], b: str | list[str]) -> int:
     if not a or not b:
         return 0
     dp = [0] * (len(b) + 1)
@@ -120,8 +134,9 @@ def evaluate_dialogue_qa(
     attempt: int = 1,
     min_char_recall: float = 0.72,
     canonical_prompt: str | None = None,
+    language_code: str = "zh",
 ) -> LineQAResult:
-    """Evaluate ASR transcript & signal stats against Playbook QA criteria."""
+    """Evaluate ASR transcript & signal stats against Playbook QA criteria (CJK, English & Bilingual)."""
     tags, expected_spoken = extract_tags_and_spoken_text(tagged_prompt)
     canon_tags, canon_spoken = (
         extract_tags_and_spoken_text(canonical_prompt)
@@ -131,7 +146,7 @@ def evaluate_dialogue_qa(
     cleaned_asr = _AUDIO_EVENT_ANNOTATIONS.sub("", asr_text)
 
     reasons: list[str] = []
-    # 1. Check leaked English audio tags
+    # 1. Check leaked English audio tags (ignoring words legitimately present in expected_spoken!)
     prompt_tag_tokens = {
         w.lower()
         for tag in (*tags, *canon_tags)
@@ -146,13 +161,32 @@ def evaluate_dialogue_qa(
     if leaked:
         reasons.append(f"Inline English audio tag(s) spoken aloud: {leaked}")
 
-    # 2. Check CJK completeness & tail preservation (against either phonetic tts_text or canonical text)
+    # 2. Check completeness & tail preservation (CJK for Mandarin/bilingual, word-level for pure English)
     exp_cjk = _cjk_chars(expected_spoken)
     canon_cjk = _cjk_chars(canon_spoken)
     got_cjk = _cjk_chars(cleaned_asr)
     if len(exp_cjk) == 0:
-        recall = 1.0
-        tail_ok = True
+        exp_en = _en_words(canon_spoken or expected_spoken)
+        got_en = _en_words(cleaned_asr)
+        if len(exp_en) == 0:
+            recall = 1.0
+            tail_ok = True
+        else:
+            recall = _longest_common_subsequence_len(exp_en, got_en) / len(exp_en)
+            tail_window_en = exp_en[-min(3, len(exp_en)) :]
+            got_tail_en = got_en[-min(6, max(1, len(got_en))) :]
+            tail_ok = any(w in got_tail_en for w in tail_window_en)
+            if not tail_ok and len(exp_en) >= 8 and recall >= 0.78 and len(got_en) >= len(exp_en) - 1:
+                tail_ok = True
+            if len(exp_en) >= 4 and recall < min_char_recall:
+                reasons.append(
+                    f"Low English word recall ({recall:.2f} < {min_char_recall:.2f}): "
+                    f"expected={canon_spoken!r}, got={asr_text!r}"
+                )
+            if len(exp_en) >= 5 and not tail_ok:
+                reasons.append(
+                    f"Potential English tail truncation: ending {tail_window_en!r} missing in ASR {asr_text!r}"
+                )
     else:
         recall_tts = _longest_common_subsequence_len(exp_cjk, got_cjk) / len(exp_cjk)
         recall_canon = (

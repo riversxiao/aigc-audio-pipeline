@@ -37,11 +37,16 @@ class ResolvedTimelineItem:
     gap_after_s: float
     stem_file: str
     speaker_name: str = ""
+    language_code: str = ""
     spoken_text: str = ""
     tagged_text: str = ""
     voice_id: str = ""
     stability: float = 0.5
     qa_passed: bool = True
+    duck_under_next: bool = False
+    duck_lead_in_s: float = 3.5
+    duck_gain: float = 0.15
+    duck_tail_out_s: float = 0.80
 
 
 def _format_srt_ts(seconds: float) -> str:
@@ -80,6 +85,12 @@ def condition_dialogue_clip(
     elif acoustic_space == "vast_hall":
         filters.append("aecho=0.88:0.85:35|75:0.16|0.08")
         filters.append("apad=pad_dur=0.12")
+    elif acoustic_space == "studio_warm":
+        # Warm broadcast condenser podcast intimacy without room echo
+        filters.append("equalizer=f=175:t=q:w=1.2:g=1.2,equalizer=f=3600:t=q:w=1.4:g=0.8")
+    elif acoustic_space == "vintage_study":
+        # Prime-age Omaha / PBS studio close-mic warmth (crisp articulation, zero artificial room echo)
+        filters.append("equalizer=f=220:t=q:w=1.2:g=0.9,lowpass=f=14500")
 
     if dur >= 1.4:
         # EBU R128 / podcast-drama broadcast loudness target (-16 LUFS) for consistent actor levels
@@ -276,6 +287,84 @@ def _merge_speech_intervals(
     return merged
 
 
+def apply_voiceover_duck_envelope(
+    primary_samples: array,
+    *,
+    rel_duck_start_s: float,
+    rel_duck_end_s: float,
+    duck_gain: float = 0.15,
+    ramp_down_s: float = 0.40,
+    ramp_up_s: float = 0.35,
+    tail_gain: float = 0.78,
+) -> array:
+    """Apply smooth BBC/Netflix documentary simultaneous-translation gain curve to an original English voice clip.
+
+    - `[0, rel_duck_start_s - ramp_down_s]`: `1.0` (full-clarity original English hook).
+    - `(rel_duck_start_s - ramp_down_s, rel_duck_start_s)`: half-cosine ramp down from `1.0` -> `duck_gain` (`0.15`).
+    - `[rel_duck_start_s, rel_duck_end_s]`: `duck_gain` (`-16.5 dB` warm English documentary bed under Chinese voiceover).
+    - If `clip_dur_s > rel_duck_end_s + 0.20s`: half-cosine ramp up to `tail_gain` (`0.78`) for resonant English tail.
+    """
+    total_frames = len(primary_samples) // CHANNELS
+    if total_frames == 0:
+        return array("h")
+
+    clip_dur_s = total_frames / SAMPLE_RATE
+    has_tail_lift = clip_dur_s > (rel_duck_end_s + 0.20)
+    ramp_down_st = max(0.0, rel_duck_start_s - ramp_down_s)
+
+    step_frames = 480  # 10ms control steps at 48kHz
+    num_steps = (total_frames + step_frames - 1) // step_frames
+    ctrl_gains = [1.0] * (num_steps + 1)
+
+    for step_idx in range(num_steps + 1):
+        t = (step_idx * step_frames) / SAMPLE_RATE
+        if t <= ramp_down_st:
+            g = 1.0
+        elif t < rel_duck_start_s:
+            alpha = (t - ramp_down_st) / max(rel_duck_start_s - ramp_down_st, 1e-3)
+            blend = 0.5 * (1.0 - math.cos(math.pi * alpha))
+            g = 1.0 + (duck_gain - 1.0) * blend
+        elif not has_tail_lift or t <= rel_duck_end_s:
+            g = duck_gain
+        elif t < rel_duck_end_s + ramp_up_s:
+            alpha = (t - rel_duck_end_s) / max(ramp_up_s, 1e-3)
+            blend = 0.5 * (1.0 - math.cos(math.pi * alpha))
+            g = duck_gain + (tail_gain - duck_gain) * blend
+        else:
+            g = tail_gain
+        ctrl_gains[step_idx] = g
+
+    if _audioop is not None and len(primary_samples) > 0:
+        raw_bytes = primary_samples.tobytes()
+        mv = memoryview(raw_bytes)
+        bytes_per_frame = CHANNELS * 2
+        out_chunks: list[bytes] = []
+        for step_idx in range(num_steps):
+            b_start = step_idx * step_frames * bytes_per_frame
+            b_end = min(len(raw_bytes), b_start + step_frames * bytes_per_frame)
+            g_mid = 0.5 * (ctrl_gains[step_idx] + ctrl_gains[step_idx + 1])
+            out_chunks.append(_audioop.mul(mv[b_start:b_end], 2, g_mid))
+        out = array("h")
+        out.frombytes(b"".join(out_chunks))
+        return out
+
+    out = array("h", [0]) * len(primary_samples)
+    for step_idx in range(num_steps):
+        f_start = step_idx * step_frames
+        f_end = min(total_frames, f_start + step_frames)
+        g0 = ctrl_gains[step_idx]
+        g1 = ctrl_gains[step_idx + 1]
+        span = max(1, f_end - f_start)
+        dg = (g1 - g0) / span
+        g = g0
+        for f in range(f_start, f_end):
+            idx = f * CHANNELS
+            out[idx] = int(primary_samples[idx] * g)
+            out[idx + 1] = int(primary_samples[idx + 1] * g)
+            g += dg
+    return out
+
+
 def apply_bgm_ducking_envelope(
     bgm_samples: array,
     speech_intervals: list[tuple[float, float]],
@@ -425,6 +514,24 @@ def render_audition_reel(
     return {"wav": wav_out, "mp3": mp3_out, "manifest": json_out}
 
 
+def _resolve_speaker_prefix(item: ResolvedTimelineItem, registry: Any | None) -> str:
+    if item.role_id == "narrator":
+        return ""
+    if item.speaker_name:
+        return f"【{item.speaker_name}】"
+    prof = registry.resolve_role(item.role_id) if registry is not None else None
+    speaker_label = prof.display_name if prof is not None else item.role_id
+    return f"【{speaker_label}】"
+
+
+def _excerpt_opening_english(text: str, max_chars: int = 92) -> str:
+    s = text.strip()
+    if len(s) <= max_chars:
+        return s
+    cut = s[:max_chars].rsplit(" ", 1)[0]
+    return f"{cut}…"
+
+
 def master_episode_three_bus(
     cue_sheet: EpisodeCueSheet,
     cue_audio_map: dict[str, Path],
@@ -465,8 +572,9 @@ def master_episode_three_bus(
     max_end_s = cursor_s
     resolved_items: list[ResolvedTimelineItem] = []
     act_spans: dict[str, list[float]] = {}
+    active_duck_bed_end_s = 0.0
 
-    for cue in cue_sheet.cues:
+    for idx, cue in enumerate(cue_sheet.cues):
         raw_path = cue_audio_map.get(cue.cue_id, work_dir / f"{cue.cue_id}_recovered.wav")
         samples = conditioned_map[cue.cue_id]
         dur_s = (len(samples) // CHANNELS) / SAMPLE_RATE
@@ -484,6 +592,12 @@ def master_episode_three_bus(
 
         meta = cue_meta_map.get(cue.cue_id, {})
         _, clean_spoken = extract_tags_and_spoken_text(cue.text) if cue.kind == "dialogue" else ([], "")
+        has_valid_duck_target = (
+            cue.kind == "dialogue"
+            and bool(getattr(cue, "duck_under_next", False))
+            and idx + 1 < len(cue_sheet.cues)
+            and cue_sheet.cues[idx + 1].kind == "dialogue"
+        )
 
         resolved_items.append(
             ResolvedTimelineItem(
@@ -497,32 +611,52 @@ def master_episode_three_bus(
                 gap_after_s=cue.gap_after_s,
                 stem_file=str(raw_path),
                 speaker_name=getattr(cue, "speaker_name", ""),
+                language_code=getattr(cue, "language_code", ""),
                 spoken_text=clean_spoken,
                 tagged_text=cue.text,
                 voice_id=str(meta.get("voice_id", "")),
                 stability=cue.stability,
                 qa_passed=bool(meta.get("qa_passed", True)),
+                duck_under_next=has_valid_duck_target,
+                duck_lead_in_s=float(getattr(cue, "duck_lead_in_s", 3.5)),
+                duck_gain=float(getattr(cue, "duck_gain", 0.15)),
+                duck_tail_out_s=float(getattr(cue, "duck_tail_out_s", 0.80)),
             )
         )
 
         if cue.kind == "sfx" and cue.placement == "overlay_next":
             # Optional pre-offset before dialogue enters while SFX continues underneath
             cursor_s = start_s + cue.gap_after_s
+        elif has_valid_duck_target:
+            # Documentary simultaneous-translation: play solo English hook for lead_in_s, then start Chinese interpreter
+            lead_in_s = min(float(getattr(cue, "duck_lead_in_s", 3.5)), max(0.8, dur_s * 0.85))
+            active_duck_bed_end_s = end_s
+            cursor_s = start_s + lead_in_s
         else:
-            cursor_s = end_s + cue.gap_after_s
+            effective_end_s = max(end_s, active_duck_bed_end_s)
+            active_duck_bed_end_s = 0.0
+            cursor_s = max(0.0, effective_end_s + cue.gap_after_s)
 
     total_duration_s = max(cursor_s, max_end_s) + cue_sheet.tail_pad_s
     total_frames = int(math.ceil(total_duration_s * SAMPLE_RATE))
 
-    # 2. Render Bus A (Dialogue) & Bus B (Foreground SFX - never ducked!)
+    # 2. Render Bus A (Dialogue, with documentary simultaneous-translation ducking when enabled) & Bus B (Foreground SFX)
     dialogue_buf = array("h", [0]) * (total_frames * CHANNELS)
     sfx_buf = array("h", [0]) * (total_frames * CHANNELS)
     speech_intervals: list[tuple[float, float]] = []
 
-    for item in resolved_items:
+    for idx, item in enumerate(resolved_items):
         samples = conditioned_map[item.cue_id]
         start_frame = int(round(item.start_s * SAMPLE_RATE))
         if item.kind == "dialogue":
+            if item.duck_under_next and idx + 1 < len(resolved_items) and resolved_items[idx + 1].kind == "dialogue":
+                next_it = resolved_items[idx + 1]
+                samples = apply_voiceover_duck_envelope(
+                    samples,
+                    rel_duck_start_s=max(0.0, next_it.start_s - item.start_s),
+                    rel_duck_end_s=max(0.0, next_it.end_s - item.start_s),
+                    duck_gain=item.duck_gain,
+                )
             _mix_into_buffer(dialogue_buf, samples, start_frame, gain=1.0)
             speech_intervals.append((item.start_s, item.end_s))
         else:
@@ -620,26 +754,61 @@ def master_episode_three_bus(
         check=True,
     )
 
-    # 5. Export sample-accurate SRT subtitles
+    # 5. Export sample-accurate non-overlapping SRT subtitles (with bilingual simultaneous-translation blocks)
     srt_blocks: list[str] = []
     sub_idx = 1
-    for item in resolved_items:
+    idx = 0
+    while idx < len(resolved_items):
+        item = resolved_items[idx]
         if item.kind != "dialogue" or not item.spoken_text:
+            idx += 1
             continue
-        if item.role_id == "narrator":
-            speaker_prefix = ""
-        elif item.speaker_name:
-            speaker_prefix = f"【{item.speaker_name}】"
-        else:
-            prof = registry.resolve_role(item.role_id) if registry is not None else None
-            speaker_label = prof.display_name if prof is not None else item.role_id
-            speaker_prefix = f"【{speaker_label}】"
+
+        next_dlg_start: float | None = None
+        for look_i in range(idx + 1, len(resolved_items)):
+            if resolved_items[look_i].kind == "dialogue" and resolved_items[look_i].spoken_text:
+                next_dlg_start = resolved_items[look_i].start_s
+                break
+
+        if (
+            item.duck_under_next
+            and idx + 1 < len(resolved_items)
+            and resolved_items[idx + 1].kind == "dialogue"
+            and resolved_items[idx + 1].spoken_text
+        ):
+            next_it = resolved_items[idx + 1]
+            en_prefix = _resolve_speaker_prefix(item, registry)
+            zh_prefix = _resolve_speaker_prefix(next_it, registry)
+            if next_it.start_s > item.start_s + 0.15:
+                srt_blocks.append(
+                    f"{sub_idx}\n"
+                    f"{_format_srt_ts(item.start_s)} --> {_format_srt_ts(next_it.start_s)}\n"
+                    f"{en_prefix}{_excerpt_opening_english(item.spoken_text)}\n"
+                )
+                sub_idx += 1
+            pair_end_s = max(item.end_s, next_it.end_s)
+            srt_blocks.append(
+                f"{sub_idx}\n"
+                f"{_format_srt_ts(next_it.start_s)} --> {_format_srt_ts(pair_end_s)}\n"
+                f"{zh_prefix}{next_it.spoken_text}\n"
+                f"EN: {item.spoken_text}\n"
+            )
+            sub_idx += 1
+            idx += 2
+            continue
+
+        srt_end_s = item.end_s
+        if next_dlg_start is not None and srt_end_s > next_dlg_start - 0.01:
+            srt_end_s = max(item.start_s + 0.15, next_dlg_start - 0.01)
+
+        speaker_prefix = _resolve_speaker_prefix(item, registry)
         srt_blocks.append(
             f"{sub_idx}\n"
-            f"{_format_srt_ts(item.start_s)} --> {_format_srt_ts(item.end_s)}\n"
+            f"{_format_srt_ts(item.start_s)} --> {_format_srt_ts(srt_end_s)}\n"
             f"{speaker_prefix}{item.spoken_text}\n"
         )
         sub_idx += 1
+        idx += 1
     srt_path.write_text("\n".join(srt_blocks), encoding="utf-8")
 
     manifest_data = {

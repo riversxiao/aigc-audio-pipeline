@@ -10,12 +10,21 @@ import re
 from typing import Any, Literal
 
 ALLOWED_V3_STABILITIES: tuple[float, ...] = (0.0, 0.5, 1.0)
-ALLOWED_ACOUSTIC_SPACES: tuple[str, ...] = ("dry", "mental_realm", "memory_echo", "vast_hall")
+ALLOWED_ACOUSTIC_SPACES: tuple[str, ...] = (
+    "dry",
+    "mental_realm",
+    "memory_echo",
+    "vast_hall",
+    "studio_warm",
+    "vintage_study",
+)
 ALLOWED_SFX_PLACEMENTS: tuple[str, ...] = ("sequential", "overlay_next")
+ALLOWED_LANGUAGE_CODES: tuple[str, ...] = ("zh", "en", "zh-en")
 
 _SSML_PATTERN = re.compile(r"<\s*/?\s*(speak|break|prosody|phoneme|emphasis|say-as)\b", re.IGNORECASE)
 _BRACKET_TAG_PATTERN = re.compile(r"\[([^\[\]]+)\]")
 _CJK_PATTERN = re.compile(r"[\u4e00-\u9fff]")
+_LATIN_LETTER_PATTERN = re.compile(r"[A-Za-z]")
 _ASCII_TAG_PATTERN = re.compile(r"^[a-z0-9\s,\-']+$")
 
 # Core fallback mapping when a multi-tag or rare tag gets read aloud on Attempt 1
@@ -30,6 +39,11 @@ _SIMPLE_TAG_FALLBACKS: dict[str, str] = {
     "fiercely": "angry",
     "coldly": "softly",
     "shouts": "shouting",
+    "wryly": "softly",
+    "folksy": "softly",
+    "conversational": "softly",
+    "earthy": "laughs",
+    "chuckles": "laughs",
 }
 
 
@@ -124,8 +138,16 @@ def validate_v3_dialogue_text(
 
     if not spoken:
         errors.append(f"[{item_label}] Spoken text is empty after stripping [audio tags].")
+    elif language_code not in ALLOWED_LANGUAGE_CODES:
+        errors.append(
+            f"[{item_label}] Unsupported language_code={language_code!r}; allowed={ALLOWED_LANGUAGE_CODES}."
+        )
     elif language_code == "zh" and not _CJK_PATTERN.search(spoken):
         errors.append(f"[{item_label}] Spoken text {spoken!r} contains no Chinese characters under language_code='zh'.")
+    elif language_code == "en" and not _LATIN_LETTER_PATTERN.search(spoken):
+        errors.append(f"[{item_label}] Spoken text {spoken!r} contains no English letters under language_code='en'.")
+    elif language_code == "zh-en" and not (_CJK_PATTERN.search(spoken) or _LATIN_LETTER_PATTERN.search(spoken)):
+        errors.append(f"[{item_label}] Spoken text {spoken!r} contains neither Chinese nor English characters.")
 
     return errors
 
@@ -153,6 +175,7 @@ class VoiceProfile:
     tier: Literal["narrator", "protagonist", "core_supporting", "antagonist", "recurring", "future_nested"] = "recurring"
     gender: Literal["male", "female", "neutral"] = "male"
     age_group: str = "young_adult"
+    language_code: str = "zh"
     vocal_register: str = ""
     persona_summary: str = ""
     accent_requirement: str = "大陆普通话戏剧配音（严禁港台/美式/澳洲/新加坡飘口音）"
@@ -194,6 +217,7 @@ class VoiceCastingRegistry:
     project_id: str
     project_title: str
     language_code: str = "zh"
+    domain: str = "xianxia"
     tts_model_id: str = "eleven_v3"
     sfx_model_id: str = "eleven_text_to_sound_v3"
     music_model_id: str = "music_v2_5"
@@ -216,6 +240,7 @@ class VoiceCastingRegistry:
             "project_id": self.project_id,
             "project_title": self.project_title,
             "language_code": self.language_code,
+            "domain": self.domain,
             "tts_model_id": self.tts_model_id,
             "sfx_model_id": self.sfx_model_id,
             "music_model_id": self.music_model_id,
@@ -240,6 +265,7 @@ class VoiceCastingRegistry:
             project_id=raw["project_id"],
             project_title=raw["project_title"],
             language_code=raw.get("language_code", "zh"),
+            domain=raw.get("domain", "xianxia"),
             tts_model_id=raw.get("tts_model_id", "eleven_v3"),
             sfx_model_id=raw.get("sfx_model_id", "eleven_text_to_sound_v3"),
             music_model_id=raw.get("music_model_id", "music_v2_5"),
@@ -270,11 +296,17 @@ class TimelineCue:
     # Dialogue fields
     role_id: str = ""
     speaker_name: str = ""
+    language_code: str = ""
     text: str = ""
     tts_text: str = ""
     stability: float = 0.5
     similarity_boost: float = 0.85
     acoustic_space: str = "dry"
+    # Documentary simultaneous-translation ducking (original English leads 3-4s then ducks under Chinese VO)
+    duck_under_next: bool = False
+    duck_lead_in_s: float = 3.5
+    duck_gain: float = 0.15
+    duck_tail_out_s: float = 0.80
     # SFX fields
     motif_id: str = ""
     sfx_prompt: str = ""
@@ -293,7 +325,12 @@ class EpisodeCueSheet:
     episode_id: str
     chapter_number: int
     title: str
-    mode: Literal["immersive_audiobook_drama", "condensed_radio_drama", "audition_pack"] = "immersive_audiobook_drama"
+    mode: Literal[
+        "immersive_audiobook_drama",
+        "condensed_radio_drama",
+        "podcast_roundtable",
+        "audition_pack",
+    ] = "immersive_audiobook_drama"
     source_chapter_file: str = ""
     head_pad_s: float = 0.30
     tail_pad_s: float = 1.20
@@ -308,7 +345,7 @@ class EpisodeCueSheet:
         if not self.cues:
             errors.append(f"[{self.episode_id}] Cue sheet contains 0 cues.")
 
-        for cue in self.cues:
+        for idx, cue in enumerate(self.cues):
             if cue.cue_id in seen_cue_ids:
                 errors.append(f"[{cue.cue_id}] Duplicate cue_id.")
             seen_cue_ids.add(cue.cue_id)
@@ -316,8 +353,8 @@ class EpisodeCueSheet:
             if self.mode != "audition_pack" and act_ids and cue.act_id not in act_ids:
                 errors.append(f"[{cue.cue_id}] Unknown act_id={cue.act_id!r} (known: {sorted(act_ids)}).")
 
-            if cue.gap_after_s < 0.0 or cue.gap_after_s > 10.0:
-                errors.append(f"[{cue.cue_id}] gap_after_s={cue.gap_after_s} out of range [0.0, 10.0].")
+            if cue.gap_after_s < -0.25 or cue.gap_after_s > 10.0:
+                errors.append(f"[{cue.cue_id}] gap_after_s={cue.gap_after_s} out of range [-0.25, 10.0].")
 
             if cue.kind == "dialogue":
                 if not cue.role_id:
@@ -327,7 +364,12 @@ class EpisodeCueSheet:
                         f"[{cue.cue_id}] Unknown acoustic_space={cue.acoustic_space!r}; "
                         f"allowed={ALLOWED_ACOUSTIC_SPACES}."
                     )
-                lang = registry.language_code if registry else "zh"
+                profile = registry.resolve_role(cue.role_id) if (registry is not None and cue.role_id) else None
+                lang = (
+                    cue.language_code
+                    or (profile.language_code if profile is not None else "")
+                    or (registry.language_code if registry is not None else "zh")
+                )
                 errors.extend(
                     validate_v3_dialogue_text(
                         cue.text,
@@ -345,8 +387,21 @@ class EpisodeCueSheet:
                             item_label=f"{cue.cue_id}.tts_text",
                         )
                     )
+                if cue.duck_under_next:
+                    if not (0.5 <= cue.duck_lead_in_s <= 15.0):
+                        errors.append(
+                            f"[{cue.cue_id}] duck_lead_in_s={cue.duck_lead_in_s} must be within [0.5, 15.0]."
+                        )
+                    if not (0.02 <= cue.duck_gain <= 0.60):
+                        errors.append(
+                            f"[{cue.cue_id}] duck_gain={cue.duck_gain} must be within [0.02, 0.60]."
+                        )
+                    if idx + 1 >= len(self.cues) or self.cues[idx + 1].kind != "dialogue":
+                        errors.append(
+                            f"[{cue.cue_id}] duck_under_next=True requires an immediately following dialogue cue "
+                            "for simultaneous voiceover interpretation."
+                        )
                 if registry is not None and cue.role_id:
-                    profile = registry.resolve_role(cue.role_id)
                     if profile is None:
                         errors.append(f"[{cue.cue_id}] Role {cue.role_id!r} not found in VoiceCastingRegistry.")
                     elif require_locked_voices and not profile.voice_id:
@@ -355,6 +410,8 @@ class EpisodeCueSheet:
                         )
 
             elif cue.kind == "sfx":
+                if cue.duck_under_next:
+                    errors.append(f"[{cue.cue_id}] duck_under_next is only valid on dialogue cues, not sfx.")
                 if cue.placement not in ALLOWED_SFX_PLACEMENTS:
                     errors.append(
                         f"[{cue.cue_id}] Invalid SFX placement={cue.placement!r}; allowed={ALLOWED_SFX_PLACEMENTS}."

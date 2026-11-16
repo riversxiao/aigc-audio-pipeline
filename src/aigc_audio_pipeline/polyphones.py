@@ -123,6 +123,58 @@ XIANXIA_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
 _LEADING_TAG_CITANG = re.compile(r"^(\s*(?:\[[^\[\]]+\]\s*)+)祠堂")
 
 
+# Modern finance, business & Buffett Shareholder Letters polyphone disambiguation.
+# Kept strictly separate from XIANXIA_POLYPHONE_MAP so terms like '重仓' (zhòng cāng)
+# vs '资产重组' (chóng zǔ) and '老行当' (háng dang) are pronounced with 100% accuracy.
+FINANCE_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    # Industry / profession (háng vs xíng)
+    ("老行当", "老航当"),
+    ("这行当", "这航当"),
+    ("干这一行", "干这一航"),
+    ("干哪一行", "干哪一航"),
+    ("外行人", "外航人"),
+    ("内行人", "内航人"),
+    ("同行们", "同航们"),
+    ("全行业", "全航业"),
+    ("夕阳行业", "夕阳航业"),
+    ("传统行业", "传统航业"),
+    ("餐饮行里", "餐饮航里"),
+    # Financial restructuring / multi-layer (chóng vs zhòng)
+    ("资产重组", "资产崇组"),
+    ("破产重组", "破产崇组"),
+    ("债务重组", "债务崇组"),
+    ("双重暴击", "双崇暴击"),
+    ("双重护城河", "双崇护城河"),
+    ("多重杠杆", "多崇杠杆"),
+    ("第一重防线", "第一崇防线"),
+    ("第二重防线", "第二崇防线"),
+    ("第三重防线", "第三崇防线"),
+    # Market adjustments (tiáo vs diào)
+    ("调仓换股", "条仓换股"),
+    ("调仓", "条仓"),
+    ("大幅回调", "大幅回条"),
+    ("市场回调", "市场回条"),
+    ("股价回调", "股价回条"),
+    ("利率下调", "利率下条"),
+    ("评级下调", "评级下条"),
+    ("下调预期", "下条预期"),
+    ("上调预期", "上条预期"),
+    # Accounting, idioms & colloquial expressions
+    ("摊薄收益", "摊博收益"),
+    ("每股摊薄", "每股摊博"),
+    ("摊薄", "摊博"),
+    ("否极泰来", "匹极泰来"),
+    ("勒紧裤腰带", "嘞紧裤腰带"),
+    # Smooth foreign name dot separators for TTS while keeping canonical '·' in SRT
+    ("伯克希尔·哈撒韦", "伯克希尔哈撒韦"),
+    ("沃伦·巴菲特", "沃伦巴菲特"),
+    ("查理·芒格", "查理芒格"),
+    ("本杰明·格雷厄姆", "本杰明格雷厄姆"),
+    ("阿吉特·贾恩", "阿吉特贾恩"),
+    ("雷曼·兄弟", "雷曼兄弟"),
+)
+
+
 def apply_xianxia_polyphone_overrides(text: str) -> str:
     """Return phonetic `tts_text` override if `text` contains error-prone polyphones; else return `text`."""
     if not text:
@@ -134,7 +186,27 @@ def apply_xianxia_polyphone_overrides(text: str) -> str:
     return out
 
 
-def compute_tts_text_override(canonical_tagged_text: str) -> str:
+def apply_finance_polyphone_overrides(text: str) -> str:
+    """Return phonetic `tts_text` override for modern finance/business Mandarin podcast lines."""
+    if not text:
+        return text
+    out = text
+    for canonical, phonetic in FINANCE_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
+    return out
+
+
+def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
+    """Apply domain-appropriate Mandarin polyphone overrides (`xianxia`, `finance_podcast`, or `none`)."""
+    if not text or domain == "none":
+        return text
+    if domain == "finance_podcast":
+        return apply_finance_polyphone_overrides(text)
+    return apply_xianxia_polyphone_overrides(text)
+
+
+def compute_tts_text_override(canonical_tagged_text: str, domain: str = "xianxia") -> str:
     """Return non-empty `tts_text` only when phonetic disambiguation differs from `canonical_tagged_text`."""
-    overridden = apply_xianxia_polyphone_overrides(canonical_tagged_text)
+    overridden = apply_domain_polyphone_overrides(canonical_tagged_text, domain=domain)
     return overridden if overridden != canonical_tagged_text else ""

@@ -159,18 +159,36 @@ def export_cue_sheet_markdown(
     registry: VoiceCastingRegistry | None = None,
 ) -> str:
     """Render an EpisodeCueSheet into a clean, human-readable Director & Cast Script (.md)."""
+    is_podcast = cue_sheet.mode == "podcast_roundtable"
+    header_suffix = "中英双语深度圆桌播客演出台本" if is_podcast else "广播剧 / 多人精品有声剧演出台本"
+    source_label = (
+        f"第 {cue_sheet.chapter_number} 期（原典档案：`{cue_sheet.source_chapter_file or 'N/A'}`）"
+        if is_podcast
+        else f"第 {cue_sheet.chapter_number} 章（源文件：`{cue_sheet.source_chapter_file or 'N/A'}`）"
+    )
+    bus_desc = (
+        "- **混音总线**：人声圆桌主轨（`-16 LUFS`，含巴菲特英文原声前 `3.5s` 独奏 → 余弦压混至 `0.15` 同传垫底）"
+        " + 前景独立声效母题轨（不随对白闪避） + 分幕纯器乐床（ACE-Step 1.5 XL，对白下极轻垫底）"
+        if is_podcast
+        else "- **混音总线**：人声主轨（`-16 LUFS`） + 前景独立音效轨（不随对白闪避） + 分幕纯音乐床（对白下闪避至 `0.11`，气口回升至 `0.34`）"
+    )
     out: list[str] = [
-        f"# {cue_sheet.episode_id} ·《{cue_sheet.title}》广播剧 / 多人精品有声剧演出台本",
+        f"# {cue_sheet.episode_id} ·《{cue_sheet.title}》{header_suffix}",
         "",
         f"- **模式**：`{cue_sheet.mode}`",
-        f"- **对应章节**：第 {cue_sheet.chapter_number} 章（源文件：`{cue_sheet.source_chapter_file or 'N/A'}`）",
+        f"- **对应章节**：{source_label}",
         f"- **时间轴规则**：自然语速完整保留（片头留白 `{cue_sheet.head_pad_s}s`，片尾收束 `{cue_sheet.tail_pad_s}s`，严禁按旧时长裁尾）",
-        "- **混音总线**：人声主轨（`-16 LUFS`） + 前景独立音效轨（不随对白闪避） + 分幕纯音乐床（对白下闪避至 `0.11`，气口回升至 `0.34`）",
+        bus_desc,
         "",
     ]
 
     if cue_sheet.acts:
-        out.append("## 一、 分幕配乐设计（ElevenLabs `music_v2_5` · `force_instrumental=true`）")
+        bgm_heading = (
+            "## 一、 分幕配乐设计（ACE-Step 1.5 XL · 纯器乐纪录片书房声场）"
+            if is_podcast
+            else "## 一、 分幕配乐设计（ElevenLabs `music_v2_5` · `force_instrumental=true`）"
+        )
+        out.append(bgm_heading)
         out.append("")
         out.append("| 幕次 | 幕名 | 音乐提示词（Prompt） | 参考时长 | 对白闪避 / 空隙增益 |")
         out.append("| :--- | :--- | :--- | :---: | :---: |")
@@ -210,9 +228,14 @@ def export_cue_sheet_markdown(
                     disp = f"{cue.speaker_name} / {prof.display_name}" if cue.speaker_name and cue.speaker_name != prof.display_name else prof.display_name
                     role_label = f"{disp} (`{cue.role_id}`)"
             space_badge = f" | 声场 `{cue.acoustic_space}`" if cue.acoustic_space != "dry" else ""
+            duck_badge = (
+                f" | **同传叠音：原声独奏 `{cue.duck_lead_in_s}s` → 压混 `{cue.duck_gain}`**"
+                if getattr(cue, "duck_under_next", False)
+                else ""
+            )
             out.append(
                 f"- 🎙️ **`[{cue.cue_id}]` {role_label}** "
-                f"（`stability={cue.stability}`{space_badge} | 句后气口 `{cue.gap_after_s}s`）  \n"
+                f"（`stability={cue.stability}`{space_badge}{duck_badge} | 句后气口 `{cue.gap_after_s}s`）  \n"
                 f"  > {cue.text}"
                 + (f"  \n  *导演备注：{cue.director_note}*" if cue.director_note else "")
             )

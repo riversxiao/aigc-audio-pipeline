@@ -561,8 +561,14 @@ def cmd_synth_dry_test(args: argparse.Namespace) -> int:
         wav = synth_dir / f"{cue.cue_id}.wav"
         if cue.kind == "dialogue":
             _, spoken = extract_tags_and_spoken_text(cue.text)
-            # Natural Mandarin dramatic cadence ~ 4.2 chars/sec
-            dur_s = max(0.8, min(18.0, len(spoken) / 4.2))
+            prof = registry.resolve_role(cue.role_id) if registry else None
+            eff_lang = cue.language_code or (prof.language_code if prof else "") or "zh"
+            if eff_lang == "en":
+                # Prime-age American English cadence ~ 2.65 words/sec
+                dur_s = max(1.2, min(36.0, len(spoken.split()) / 2.65))
+            else:
+                # Natural Mandarin dramatic/podcast cadence ~ 4.15 chars/sec
+                dur_s = max(0.8, min(36.0, len(spoken) / 4.15))
             freq = 185 + (idx % 5) * 35
             subprocess.run(
                 [
@@ -714,6 +720,7 @@ def cmd_run_queue(args: argparse.Namespace) -> int:
 def cmd_preview_drama3(args: argparse.Namespace) -> int:
     cue_sheet = EpisodeCueSheet.load(Path(args.cue_sheet))
     registry = VoiceCastingRegistry.load(Path(args.registry)) if args.registry else None
+    domain = registry.domain if registry is not None else "xianxia"
     items: list[dict[str, Any]] = []
     for cue in cue_sheet.cues:
         if cue.kind != "dialogue":
@@ -726,10 +733,10 @@ def cmd_preview_drama3(args: argparse.Namespace) -> int:
                 "speaker": prof.display_name if prof else cue.role_id,
                 "eleven_v3_text": cue.text,
                 "drama3_attempt1": translate_cue_to_drama3_input(
-                    cue, prof, attempt=1, use_phoneme_pins=args.phoneme_pins
+                    cue, prof, attempt=1, use_phoneme_pins=args.phoneme_pins, domain=domain
                 ),
                 "drama3_retry2": translate_cue_to_drama3_input(
-                    cue, prof, attempt=2, use_phoneme_pins=args.phoneme_pins
+                    cue, prof, attempt=2, use_phoneme_pins=args.phoneme_pins, domain=domain
                 ),
             }
         )
@@ -740,6 +747,7 @@ def cmd_preview_drama3(args: argparse.Namespace) -> int:
             {
                 "episode_id": cue_sheet.episode_id,
                 "title": cue_sheet.title,
+                "domain": domain,
                 "preview_count": len(items),
                 "cues": items,
             },
