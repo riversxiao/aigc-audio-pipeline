@@ -122,6 +122,9 @@ colab exec -s audio96 -f colab_96gb/launch_g4_zhujie_drama3.py
 
 # 3. 验收满意后，零 API 成本一键批量跑完 E002-E120 全本收官（双目录同步 + 跑完自动 runtime.unassign() 销毁实例零空转）
 echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E002-E120 --skip-existing --mirror-to-main-masters --auto-unassign" | colab exec -s audio96
+
+# 4. 手术级无损补录修复超长旁白（逐帧剥离保留 94% 完好对白 + <=105 字自然断句补录，约 25 分钟生成 _v002 全套母带）
+echo "!python3 '/content/drive/MyDrive/《诸界锁仙》长篇修仙小说工程/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3_满血本地推理管线/launch_g4_zhujie_drama3.py' --episodes E009,E011,E003-E120 --repair-truncated --skip-existing --mirror-to-main-masters --auto-unassign" | colab exec -s audio96
 ```
 
 完整部署与 Notebook 交互指南见：[`colab_96gb/README_Colab_96GB_Drama3.md`](colab_96gb/README_Colab_96GB_Drama3.md)。
