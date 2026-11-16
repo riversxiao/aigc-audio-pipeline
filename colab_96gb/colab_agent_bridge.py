@@ -268,7 +268,7 @@ def build_handler_class(secret_token: str, registry: JobRegistry) -> type[BaseHT
                 self.send_response(200)
                 self.send_header("Content-Type", "application/octet-stream")
                 self.send_header("Content-Length", str(size))
-                self.send_header("X-File-Name", target.name)
+                self.send_header("X-File-Name", urllib.parse.quote(target.name))
                 self.end_headers()
                 with open(target, "rb") as fin:
                     shutil.copyfileobj(fin, self.wfile, length=1024 * 1024)

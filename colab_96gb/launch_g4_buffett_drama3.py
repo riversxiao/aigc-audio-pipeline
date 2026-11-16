@@ -82,16 +82,20 @@ def sh(cmd: str, env: Optional[dict[str, str]] = None) -> str:
 
 
 def get_drive_token() -> Optional[str]:
-    """Retrieve OAuth token from `colab dfs mount` local metadata shim (127.0.0.1:8012) if active."""
-    try:
-        req = urllib.request.Request(
-            "http://127.0.0.1:8012/computeMetadata/v1/instance/service-accounts/default/token",
-            headers={"Metadata-Flavor": "Google"},
-        )
-        with urllib.request.urlopen(req, timeout=4) as resp:
-            return json.loads(resp.read().decode("utf-8"))["access_token"]
-    except Exception:
-        return None
+    """Retrieve OAuth token from Colab's local metadata shim (`172.28.0.1:8009` or `127.0.0.1:8012`) if active."""
+    for endpoint in (
+        "http://172.28.0.1:8009/computeMetadata/v1/instance/service-accounts/default/token",
+        "http://127.0.0.1:8012/computeMetadata/v1/instance/service-accounts/default/token",
+    ):
+        try:
+            req = urllib.request.Request(endpoint, headers={"Metadata-Flavor": "Google"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                tok = json.loads(resp.read().decode("utf-8")).get("access_token")
+                if tok:
+                    return str(tok)
+        except Exception:
+            continue
+    return None
 
 
 def drive_api_find_file_by_name(name: str, tok: str, *, parent_id: Optional[str] = None, mime_type: Optional[str] = None) -> Optional[str]:
