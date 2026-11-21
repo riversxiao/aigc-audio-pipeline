@@ -69,6 +69,13 @@ DRAMA3_TAG_MAP: dict[str, tuple[str, str]] = {
     "folksy": ("energetic, clear prime-age Midwestern storyteller cadence", ""),
     "earthy": ("hearty, down-to-earth street-smart entrepreneur tone", ""),
     "seriously": ("grounded, sober and earnest gravity", ""),
+    # Supernatural folklore & cosmic horror radio-drama delivery tags
+    "eerie": ("eerie, ghostly, bone-chilling undertone", ""),
+    "terrified": ("panting in sheer terror, voice cracking with dread", ""),
+    "seductive": ("silky, bewitching, velvet-soft allure with hidden menace", "soft"),
+    "maniacal": ("unhinged, manic trembling intensity on the brink of madness", ""),
+    "solemn": ("grave, solemn, heavy cinematic stillness", "slow"),
+    "haunting": ("hollow, haunting unearthly whisper", "whisper"),
 }
 
 # Paralinguistic point events kept inline in Drama 3 square brackets
@@ -276,7 +283,14 @@ def translate_cue_to_drama3_input(
                 elif cue.acoustic_space == "memory_echo" and not style_briefs:
                     style_briefs.append("distant, solemn memory voice")
                 elif not style_briefs and role_tier == "narrator":
-                    style_briefs.append("steady, cinematic Xianxia narration")
+                    if domain == "liaozhai_horror":
+                        style_briefs.append("eerie, midnight classical Chinese folklore suspense narration")
+                    elif domain == "cosmic_horror":
+                        style_briefs.append("chilling, restrained 1920s investigative cosmic horror narration")
+                    elif domain == "hayek_economics":
+                        style_briefs.append("warm, lucid 1944 historical intellectual drama narration")
+                    else:
+                        style_briefs.append("steady, cinematic Xianxia narration")
 
         prefix_items: list[str] = []
         if style_briefs:

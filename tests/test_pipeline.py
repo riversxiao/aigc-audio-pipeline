@@ -1222,6 +1222,96 @@ class AudioPipelineTests(unittest.TestCase):
         )
         self.assertTrue(pct_qa.passed)
 
+    def test_anthology_three_shows_validation_polyphones_and_studio_guardrails(self) -> None:
+        """Verify Liaozhai, Cthulhu, and Hayek anthology registries, 21 cue sheets, polyphones, and G4 studio guardrails."""
+        import importlib.util
+        import json
+
+        from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
+        from aigc_audio_pipeline.polyphones import compute_tts_text_override
+
+        repo_root = Path(__file__).resolve().parents[1]
+        zhujie_cast = json.loads(
+            (repo_root / "projects/zhujie_suoxian/00_声音选角档案与进度台账/voice_cast_drama3.json").read_text(encoding="utf-8")
+        )["characters"]
+
+        # 1. Domain polyphone disambiguation keeps canonical text clean while fixing error-prone readings
+        self.assertEqual(
+            compute_tts_text_override("三更夜访兰若寺，屏住呼吸。", domain="liaozhai_horror"),
+            "三羹夜访兰惹寺，丙住呼吸。",
+        )
+        self.assertEqual(
+            compute_tts_text_override("弗朗西斯·瑟斯顿屏息望向船舷。", domain="cosmic_horror"),
+            "弗朗西斯瑟斯顿丙息望向船咸。",
+        )
+        self.assertEqual(
+            compute_tts_text_override("弗里德里希·哈耶克与约翰·梅纳德·凯恩斯谈各行各业。", domain="hayek_economics"),
+            "弗里德里希哈耶克与约翰梅纳德凯恩斯谈各航各业。",
+        )
+
+        # 2. Validate every registry, anchor mapping, and all 7 cue sheets across all 3 anthology shows
+        shows = [
+            ("liaozhai_midnight", "liaozhai_horror", 7),
+            ("cthulhu_archives", "cosmic_horror", 7),
+            ("hayek_1944", "hayek_economics", 7),
+        ]
+        for proj_name, expected_domain, expected_count in shows:
+            proj_dir = repo_root / "projects" / proj_name
+            reg = VoiceCastingRegistry.load(proj_dir / "00_节目圣经与选角档案/voice_casting_registry.json")
+            self.assertEqual(reg.domain, expected_domain)
+
+            anchor_cfg = json.loads((proj_dir / "00_节目圣经与选角档案/anchor_sources.json").read_text(encoding="utf-8"))
+            self.assertEqual(set(anchor_cfg["role_mappings"].keys()), set(reg.roles.keys()))
+            for r_id, mapping in anchor_cfg["role_mappings"].items():
+                if mapping["source_bundle"] == "zhujie_suoxian":
+                    self.assertIn(mapping["source_role_id"], zhujie_cast, f"{proj_name}.{r_id} missing in zhujie cast")
+                elif mapping["source_bundle"] == "repo_buffett_real_human":
+                    wav_p = (
+                        repo_root
+                        / "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors"
+                        / f"{mapping['source_role_id']}.wav"
+                    )
+                    self.assertTrue(wav_p.is_file(), f"Missing real-human anchor {wav_p}")
+
+            scripts_dir = proj_dir / "02_分集广播剧台本"
+            jsons = sorted([*scripts_dir.glob("AUDITION*.json"), *scripts_dir.glob("E*.json")])
+            self.assertEqual(len(jsons), expected_count)
+            for jp in jsons:
+                cs = EpisodeCueSheet.load(jp)
+                self.assertEqual(cs.validate(reg, require_locked_voices=True), [], f"Errors in {jp.name}")
+
+        # 3. Verify horror/intellectual Drama 3 tag translation & domain-aware narrator styles
+        c_liao = TimelineCue(cue_id="t1", act_id="a1", kind="dialogue", role_id="narrator", text="三更雨落兰若寺。", stability=0.5)
+        d3_liao = translate_cue_to_drama3_input(c_liao, VoiceProfile(role_id="narrator", display_name="旁白", tier="narrator"), domain="liaozhai_horror")
+        self.assertIn("folklore suspense", d3_liao)
+        self.assertIn("兰惹寺", d3_liao)
+
+        c_cth = TimelineCue(cue_id="t2", act_id="a1", kind="dialogue", role_id="eldritch_whisper", text="[haunting] [whispers] 拉莱耶在呼唤。", stability=0.0)
+        d3_cth = translate_cue_to_drama3_input(c_cth, VoiceProfile(role_id="eldritch_whisper", display_name="低语", tier="antagonist"), domain="cosmic_horror")
+        self.assertIn("<whisper>", d3_cth)
+
+        # 4. Verify universal anthology studio BGM isolation & QA leak detection on new horror tags
+        spec = importlib.util.spec_from_file_location(
+            "run_anthology_96gb_studio",
+            repo_root / "colab_96gb/run_anthology_96gb_studio.py",
+        )
+        assert spec and spec.loader
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        cthulhu_bgm = mod.enrich_anthology_bgm_prompt("Sparse cold cello drone", bgm_style="cosmic_horror")
+        self.assertIn("no vocals", cthulhu_bgm.lower())
+        self.assertNotIn("traditional chinese", cthulhu_bgm.lower())
+
+        leak_qa = evaluate_dialogue_qa(
+            tagged_prompt="[haunting] 拉莱耶在呼唤。",
+            asr_text="haunting 拉莱耶在呼唤",
+            duration_s=2.0,
+            peak_dbfs=-10.0,
+        )
+        self.assertFalse(leak_qa.passed)
+        self.assertIn("haunting", leak_qa.leaked_tags)
+
 
 if __name__ == "__main__":
     unittest.main()

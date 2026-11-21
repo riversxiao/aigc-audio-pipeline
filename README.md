@@ -8,6 +8,11 @@
 > - 十三项核心优化点与实战复盘：[`docs/OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md)
 > - Colab 96GB 本地满血开源三件套推理套件：[`colab_96gb/README_Colab_96GB_Drama3.md`](colab_96gb/README_Colab_96GB_Drama3.md)
 > - 全本实战工程包（《诸界锁仙》第 01–120 章大结局全集）：[`projects/zhujie_suoxian/`](projects/zhujie_suoxian/)
+> - 财经双语圆桌工程包（《穿越周期的信》巴菲特致股东信）：[`projects/buffett_letters/`](projects/buffett_letters/)
+> - 零 API 成本精品广播剧矩阵（`colab_96gb/Anthology_96GB_Drama3_Studio.ipynb` 一键连跑）：
+>   - 《聊斋志异·午夜悬疑广播剧场》（第一季 6 集 + 试听）：[`projects/liaozhai_midnight/`](projects/liaozhai_midnight/)
+>   - 《克苏鲁神话·不可名状声音档案》（第一季 6 卷 + 试听）：[`projects/cthulhu_archives/`](projects/cthulhu_archives/)
+>   - 《1944剑桥夜话：〈通往奴役之路〉思想剧场》（第一季 6 集 + 试听）：[`projects/hayek_1944/`](projects/hayek_1944/)
 
 ---
 

@@ -54,6 +54,12 @@ COMMON_TAG_WORDS: frozenset[str] = frozenset(
         "earthy",
         "seriously",
         "chuckles",
+        "eerie",
+        "terrified",
+        "seductive",
+        "maniacal",
+        "solemn",
+        "haunting",
     }
 )
 

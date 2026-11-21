@@ -1,0 +1,85 @@
+{
+  "project_id": "cthulhu_archives",
+  "project_title": "《克苏鲁神话·不可名状声音档案》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "archivist_narrator": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (40岁沉稳儒雅学者)"
+    },
+    "narrator_deep": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_玄苍电影叙事"
+    },
+    "female_archivist": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁知性清亮女声)"
+    },
+    "inspector_veteran": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁浑厚接地气中年男)"
+    },
+    "young_investigator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_冷静理智青年"
+    },
+    "panicked_witness": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "male_disciple_b",
+      "source_voice_name": "Reuse: 诸界锁仙_青年男修乙 (惊恐撕裂爆发)"
+    },
+    "dean_armitage": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_醇厚威严长者低音"
+    },
+    "mad_elder": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "chu_xiazi",
+      "source_voice_name": "Reuse: 诸界锁仙_褚瞎子_枯瘦渗人老疯子"
+    },
+    "dying_sailor": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "fu_bo",
+      "source_voice_name": "Reuse: 诸界锁仙_福伯_苍老沙哑气短老者"
+    },
+    "cultist_buzzing": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "chiyang_laozu",
+      "source_voice_name": "Reuse: 诸界锁仙_赤阳老祖_嘶哑枯朽刮骨喉音"
+    },
+    "sinister_stranger": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "zhao_kui",
+      "source_voice_name": "Reuse: 诸界锁仙_赵魁_阴鸷低哑危险声线"
+    },
+    "eldritch_whisper": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "eternal_night_whisper",
+      "source_voice_name": "Reuse: 诸界锁仙_永夜诡影_贴耳幽冷女声"
+    },
+    "cosmic_monolith": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "ancient_construct_echo",
+      "source_voice_name": "Reuse: 诸界锁仙_古碑残响_冰冷非人金属低音"
+    },
+    "outer_god_echo": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "tai_yi",
+      "source_voice_name": "Reuse: 诸界锁仙_太一_宏大非人俯视神明低音"
+    }
+  }
+}
