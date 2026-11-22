@@ -420,12 +420,55 @@ def apply_hayek_economics_polyphone_overrides(text: str) -> str:
     return out
 
 
+# 1776 Scottish Enlightenment / Wealth of Nations economics drama polyphone & Western name smoothing.
+WEALTH_OF_NATIONS_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    ("老行当", "老航当"),
+    ("这行当", "这航当"),
+    ("各行各业", "各航各业"),
+    ("行会", "航会"),
+    ("同业行会", "同业航会"),
+    ("同行们", "同航们"),
+    ("同行", "同航"),
+    ("内行人", "内航人"),
+    ("外行人", "外航人"),
+    ("银行行长", "银行航长"),
+    ("调节", "条节"),
+    ("调控", "条控"),
+    ("调配", "条配"),
+    ("重重关卡", "崇崇关卡"),
+    ("重重壁垒", "崇崇壁垒"),
+    ("重重", "崇崇"),
+    ("船舷", "船咸"),
+    ("埋怨", "蛮怨"),
+    ("屏息", "丙息"),
+    ("背负", "杯负"),
+    ("单薄", "单博"),
+    ("压榨", "押榨"),
+    ("亚当·斯密", "亚当斯密"),
+    ("大卫·休谟", "大卫休谟"),
+    ("詹姆斯·瓦特", "詹姆斯瓦特"),
+    ("本杰明·富兰克林", "本杰明富兰克林"),
+    ("埃德蒙·伯克", "埃德蒙伯克"),
+)
+
+
 def apply_monte_cristo_polyphone_overrides(text: str) -> str:
     """Return phonetic `tts_text` override for 19th-century Monte Cristo revenge drama lines."""
     if not text:
         return text
     out = text
     for canonical, phonetic in MONTE_CRISTO_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
+    return out
+
+
+def apply_wealth_of_nations_polyphone_overrides(text: str) -> str:
+    """Return phonetic `tts_text` override for 1776 Wealth of Nations commercial drama lines."""
+    if not text:
+        return text
+    out = text
+    for canonical, phonetic in WEALTH_OF_NATIONS_POLYPHONE_MAP:
         if canonical in out:
             out = out.replace(canonical, phonetic)
     return out
@@ -445,6 +488,8 @@ def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
         return apply_hayek_economics_polyphone_overrides(text)
     if domain == "monte_cristo_drama":
         return apply_monte_cristo_polyphone_overrides(text)
+    if domain == "wealth_of_nations":
+        return apply_wealth_of_nations_polyphone_overrides(text)
     return apply_xianxia_polyphone_overrides(text)
 
 

@@ -84,6 +84,12 @@ ANTHOLOGY_PROJECTS: dict[str, dict[str, str]] = {
         "drive_show_folder": "《基督山伯爵》伊夫堡复仇广播剧",
         "bgm_style": "monte_cristo_drama",
     },
+    "wealth_of_nations": {
+        "title": "《1776爱丁堡夜话：〈国富论〉商业思想剧场》",
+        "project_rel": "projects/wealth_of_nations",
+        "drive_show_folder": "《1776爱丁堡夜话》国富论商业思想剧场",
+        "bgm_style": "wealth_of_nations",
+    },
 }
 
 

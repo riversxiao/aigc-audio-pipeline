@@ -528,6 +528,7 @@ _WHISPER_PROMPTS: dict[str, str] = {
     "cosmic_horror": "以下是简体中文克苏鲁神话广播剧台词：克苏鲁、拉莱耶、密斯卡托尼克大学、印斯茅斯、深潜者、阿卡姆、星之彩、暗夜呢喃、敦威治、修格斯、疯狂山脉。",
     "hayek_economics": "以下是简体中文经济学历史广播剧台词：哈耶克、凯恩斯、通往奴役之路、剑桥大学、红绿灯、法治、价格信号、安全网、布雷顿森林。",
     "monte_cristo_drama": "以下是简体中文基督山伯爵广播剧台词：爱德蒙唐泰斯、基督山伯爵、伊夫堡、马赛港、法老号、梅尔塞苔丝、法利亚神父、维尔福、费尔南、莫尔塞夫、唐格拉尔、卡德鲁斯、摩莱尔、海黛、瓦朗蒂娜、等待和希望。",
+    "wealth_of_nations": "以下是简体中文国富论商业思想广播剧台词：亚当斯密、大卫休谟、詹姆斯瓦特、爱丁堡、格拉斯哥、扣针厂、分工、看不见的手、重商主义、东印度公司、自然价格、市场价格、守夜人、道德情操论。",
     "xianxia": "以下是普通话简体中文仙侠有声剧对白，请使用简体中文输出。",
 }
 
@@ -612,6 +613,11 @@ def enrich_anthology_bgm_prompt(prompt: str, *, bgm_style: str) -> str:
             extras.append("19th-century European romantic orchestral gothic chamber strings and solo cello")
         if "no modern beat" not in lower and "no drums" not in lower:
             extras.append("no modern pop beat, no synth trap")
+    elif bgm_style == "wealth_of_nations":
+        if "chamber" not in lower and "harpsichord" not in lower and "cello" not in lower and "guitar" not in lower:
+            extras.append("18th-century Scottish Enlightenment warm baroque chamber strings, gentle harpsichord and acoustic cello")
+        if "no drums" not in lower and "no modern beat" not in lower:
+            extras.append("no modern drums, no pop beat")
     if "no singing" not in lower:
         extras.append("purely instrumental, no vocals, no singing")
     return ", ".join([base, *extras]) if extras else base
@@ -624,6 +630,7 @@ def canonical_anthology_stem(cue_sheet: EpisodeCueSheet, *, domain: str) -> str:
         "cosmic_horror": "克苏鲁声音档案母带",
         "hayek_economics": "1944剑桥夜话思想剧母带",
         "monte_cristo_drama": "基督山伯爵广播剧母带",
+        "wealth_of_nations": "国富论思想剧母带",
     }
     label = suffix_map.get(domain, "Drama3广播剧母带")
     if cue_sheet.mode == "audition_pack":

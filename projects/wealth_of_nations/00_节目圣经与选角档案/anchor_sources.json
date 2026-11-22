@@ -1,0 +1,55 @@
+{
+  "project_id": "wealth_of_nations",
+  "project_title": "《1776爱丁堡夜话：〈国富论〉商业思想剧场》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_电影历史男中音"
+    },
+    "adam_smith": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (40岁温润通透真人学者)"
+    },
+    "david_hume": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_醇厚豁达苏格兰大哲学家"
+    },
+    "host_su": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁知性清亮真人女记者)"
+    },
+    "boss_macaulay": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁接地气实干作坊掌柜)"
+    },
+    "james_watt": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_清亮执着青年工程师瓦特"
+    },
+    "merchant_lord": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_温润傲慢东印度商董与垄断议员"
+    },
+    "apprentice_tom": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "male_disciple_a",
+      "source_voice_name": "Reuse: 诸界锁仙_青年男修甲_鲜活扣针厂学徒与水手"
+    }
+  }
+}
