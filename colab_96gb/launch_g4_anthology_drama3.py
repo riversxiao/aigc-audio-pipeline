@@ -647,6 +647,7 @@ def main() -> int:
     parser.add_argument("--skip-existing", action="store_true")
     parser.add_argument("--auto-unassign", "--auto-shutdown", dest="auto_unassign", action="store_true")
     parser.add_argument("--refresh-envs", action="store_true")
+    parser.add_argument("--keep-drama-alive", action="store_true", help="批次完成后保留 Drama 3 常驻服务以便下一阶段免冷启动复用")
     parser.add_argument("--offline-dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -686,7 +687,7 @@ def main() -> int:
             raise RuntimeError(f"❌ 模型预取失败: {bg_errors[0]}") from bg_errors[0]
         print(f"⚡ 96GB G4 底层环境与模型权重就绪 ({time.time() - t_boot:.1f}s)", flush=True)
 
-    for pkey in selected_keys:
+    for idx_p, pkey in enumerate(selected_keys):
         cfg = ANTHOLOGY_PROJECTS[pkey]
         project_dir = REPO_ROOT / cfg["project_rel"]
         local_studio = WORK_BASE / f"{pkey}_studio"
@@ -772,6 +773,8 @@ def main() -> int:
             cmd.append("--force-int4")
         if args.skip_existing:
             cmd.append("--skip-existing")
+        if args.keep_drama_alive or idx_p < len(selected_keys) - 1:
+            cmd.append("--keep-drama-alive")
 
         synced_markers: set[str] = set()
         for attempt in range(1, 4):

@@ -380,7 +380,7 @@ class Drama3ServerClient:
                 "--vocoder.gpu_memory_fraction",
                 "0.08",
                 "--preprocessing.total_reserve_bytes",
-                "4GiB",
+                "8GiB",
             ]
         if self.co_resident_96g:
             return [
@@ -389,7 +389,7 @@ class Drama3ServerClient:
                 "--vocoder.gpu_memory_fraction",
                 "0.08",
                 "--preprocessing.total_reserve_bytes",
-                "4GiB",
+                "8GiB",
             ]
         return [
             "--tts_engine.gpu_memory_fraction",
@@ -397,7 +397,7 @@ class Drama3ServerClient:
             "--vocoder.gpu_memory_fraction",
             "0.12",
             "--preprocessing.total_reserve_bytes",
-            "3GiB",
+            "5GiB",
         ]
 
     def _supports_reference_sampling_flag(self) -> bool:
@@ -430,9 +430,17 @@ class Drama3ServerClient:
             print("✨ [Drama 3] 已开启 Reference Sampling + RAS 高表现力广播剧采样", flush=True)
         env = os.environ.copy()
         env["TORCHDYNAMO_DISABLE"] = "1"
+        env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
         env["PATH"] = f"{Path(self.sgl_bin).resolve().parent}:/usr/local/cuda/bin:{env.get('PATH', '')}"
         self._log_fh = self.log_path.open("a", encoding="utf-8")
-        self.proc = subprocess.Popen(cmd, stdout=self._log_fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, env=env)
+        self.proc = subprocess.Popen(
+            cmd,
+            stdout=self._log_fh,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+            env=env,
+            start_new_session=True,
+        )
         t0 = time.time()
         tick = 0
         while time.time() - t0 < timeout_s:
@@ -820,6 +828,7 @@ def main() -> int:
     parser.add_argument("--disable-ras", action="store_true")
     parser.add_argument("--skip-asr-qa", action="store_true")
     parser.add_argument("--skip-existing", action="store_true")
+    parser.add_argument("--keep-drama-alive", action="store_true")
     parser.add_argument("--offline-dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -1013,8 +1022,10 @@ def main() -> int:
                 flush=True,
             )
     finally:
-        if drama_client is not None:
+        if drama_client is not None and not args.keep_drama_alive:
             drama_client.close()
+        elif drama_client is not None and args.keep_drama_alive:
+            print(f"♻️ [Drama 3] --keep-drama-alive 已开启，保持服务常驻 {drama_client.base_url} 供下一批秒级复用", flush=True)
         if moss_worker is not None:
             moss_worker.close()
         if acestep_worker is not None:
