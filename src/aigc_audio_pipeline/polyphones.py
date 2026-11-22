@@ -463,12 +463,97 @@ def apply_monte_cristo_polyphone_overrides(text: str) -> str:
     return out
 
 
+# 1980 Chicago / Free to Choose (Friedman) economics drama polyphone & Western name smoothing.
+FREE_TO_CHOOSE_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    ("老行当", "老航当"),
+    ("这行当", "这航当"),
+    ("各行各业", "各航各业"),
+    ("银行行长", "银行航长"),
+    ("央行行长", "央行航长"),
+    ("同行们", "同航们"),
+    ("同行", "同航"),
+    ("内行人", "内航人"),
+    ("外行人", "外航人"),
+    ("调节", "条节"),
+    ("调控", "条控"),
+    ("调配", "条配"),
+    ("调整", "条整"),
+    ("重重关卡", "崇崇关卡"),
+    ("重重壁垒", "崇崇壁垒"),
+    ("重重审批", "崇崇审批"),
+    ("重重", "崇崇"),
+    ("埋怨", "蛮怨"),
+    ("屏息", "丙息"),
+    ("背负", "杯负"),
+    ("单薄", "单博"),
+    ("米尔顿·弗里德曼", "米尔顿弗里德曼"),
+    ("罗丝·弗里德曼", "罗丝弗里德曼"),
+    ("保罗·沃尔克", "保罗沃尔克"),
+    ("亚当·斯密", "亚当斯密"),
+    ("弗里德里希·哈耶克", "弗里德里希哈耶克"),
+    ("约翰·梅纳德·凯恩斯", "约翰梅纳德凯恩斯"),
+)
+
+# 1936 Cambridge / Keynes General Theory macroeconomics drama polyphone & Western name smoothing.
+KEYNES_1936_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    ("老行当", "老航当"),
+    ("这行当", "这航当"),
+    ("各行各业", "各航各业"),
+    ("银行行长", "银行航长"),
+    ("央行行长", "央行航长"),
+    ("同行们", "同航们"),
+    ("同行", "同航"),
+    ("内行人", "内航人"),
+    ("外行人", "外航人"),
+    ("调节", "条节"),
+    ("调控", "条控"),
+    ("调配", "条配"),
+    ("调整", "条整"),
+    ("重重迷雾", "崇崇迷雾"),
+    ("重重危机", "崇崇危机"),
+    ("重重", "崇崇"),
+    ("埋怨", "蛮怨"),
+    ("屏息", "丙息"),
+    ("背负", "杯负"),
+    ("单薄", "单博"),
+    ("约翰·梅纳德·凯恩斯", "约翰梅纳德凯恩斯"),
+    ("梅纳德·凯恩斯", "梅纳德凯恩斯"),
+    ("阿瑟·庇古", "阿瑟庇古"),
+    ("理查德·卡恩", "理查德卡恩"),
+    ("莉迪亚·洛波科娃", "莉迪亚洛波科娃"),
+    ("弗里德里希·哈耶克", "弗里德里希哈耶克"),
+    ("富兰克林·罗斯福", "富兰克林罗斯福"),
+)
+
+
 def apply_wealth_of_nations_polyphone_overrides(text: str) -> str:
     """Return phonetic `tts_text` override for 1776 Wealth of Nations commercial drama lines."""
     if not text:
         return text
     out = text
     for canonical, phonetic in WEALTH_OF_NATIONS_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
+    return out
+
+
+def apply_free_to_choose_polyphone_overrides(text: str) -> str:
+    """Return phonetic `tts_text` override for 1980 Chicago Free to Choose economics drama lines."""
+    if not text:
+        return text
+    out = text
+    for canonical, phonetic in FREE_TO_CHOOSE_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
+    return out
+
+
+def apply_keynes_1936_polyphone_overrides(text: str) -> str:
+    """Return phonetic `tts_text` override for 1936 Cambridge Keynes General Theory drama lines."""
+    if not text:
+        return text
+    out = text
+    for canonical, phonetic in KEYNES_1936_POLYPHONE_MAP:
         if canonical in out:
             out = out.replace(canonical, phonetic)
     return out
@@ -490,6 +575,10 @@ def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
         return apply_monte_cristo_polyphone_overrides(text)
     if domain == "wealth_of_nations":
         return apply_wealth_of_nations_polyphone_overrides(text)
+    if domain == "free_to_choose":
+        return apply_free_to_choose_polyphone_overrides(text)
+    if domain == "keynes_1936":
+        return apply_keynes_1936_polyphone_overrides(text)
     return apply_xianxia_polyphone_overrides(text)
 
 

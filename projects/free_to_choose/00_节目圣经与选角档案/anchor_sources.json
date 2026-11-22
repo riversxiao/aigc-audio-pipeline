@@ -1,0 +1,55 @@
+{
+  "project_id": "free_to_choose",
+  "project_title": "《1980芝加哥夜话：〈自由选择〉商业思想剧场》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "milton_friedman": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (温润敏捷真人学者男中音·米尔顿·弗里德曼)"
+    },
+    "host_lin": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁知性清亮真人驻美财经女记者·林晚晴)"
+    },
+    "boss_fang": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁接地气芝加哥小印刷厂兼餐馆华人老板·老方)"
+    },
+    "rose_friedman": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "hongxiu_louzhu",
+      "source_voice_name": "Reuse: 诸界锁仙_红袖楼主_温雅犀利知性女学者·罗丝·弗里德曼"
+    },
+    "regulator_vance": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_体面锐利华盛顿联邦监管专员·万斯"
+    },
+    "teacher_chen": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "su_qinghan",
+      "source_voice_name": "Reuse: 诸界锁仙_苏清寒_清冽诚恳芝加哥公立学校教师兼家长·陈老师"
+    },
+    "young_alex": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_清亮锐气港芝双城创业青年·阿历克斯"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇人文纪录片历史旁白"
+    }
+  }
+}

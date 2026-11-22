@@ -90,6 +90,18 @@ ANTHOLOGY_PROJECTS: dict[str, dict[str, str]] = {
         "drive_show_folder": "《1776爱丁堡夜话》国富论商业思想剧场",
         "bgm_style": "wealth_of_nations",
     },
+    "free_to_choose": {
+        "title": "《1980芝加哥夜话：〈自由选择〉商业思想剧场》",
+        "project_rel": "projects/free_to_choose",
+        "drive_show_folder": "《1980芝加哥夜话》自由选择商业思想剧场",
+        "bgm_style": "free_to_choose",
+    },
+    "keynes_1936": {
+        "title": "《1936剑桥迷雾：〈就业、利息和货币通论〉宏观思想剧场》",
+        "project_rel": "projects/keynes_1936",
+        "drive_show_folder": "《1936剑桥迷雾》凯恩斯通论宏观思想剧场",
+        "bgm_style": "keynes_1936",
+    },
 }
 
 
@@ -651,8 +663,7 @@ def main() -> int:
     parser.add_argument(
         "--project",
         required=True,
-        choices=[*ANTHOLOGY_PROJECTS.keys(), "all"],
-        help="选择要渲染的项目：liaozhai_midnight / cthulhu_archives / hayek_1944 / all（三部连跑）",
+        help="选择要渲染的项目（支持单个 key、逗号分隔多部连跑、wave1 或 all）",
     )
     parser.add_argument("--episodes", default="AUDITION,E001-E006", help="如 AUDITION,E001 或 AUDITION,E001-E006")
     parser.add_argument("--profile", choices=["fp8", "fast"], default="fp8")
@@ -663,7 +674,20 @@ def main() -> int:
     parser.add_argument("--offline-dry-run", action="store_true")
     args = parser.parse_args()
 
-    selected_keys = list(ANTHOLOGY_PROJECTS.keys()) if args.project == "all" else [args.project]
+    wave_aliases = {
+        "wave1": ["wealth_of_nations", "free_to_choose", "keynes_1936"],
+        "all": list(ANTHOLOGY_PROJECTS.keys()),
+    }
+    raw_proj = args.project.strip()
+    if raw_proj in wave_aliases:
+        selected_keys = wave_aliases[raw_proj]
+    else:
+        selected_keys = [p.strip() for p in raw_proj.split(",") if p.strip()]
+        unknown = [p for p in selected_keys if p not in ANTHOLOGY_PROJECTS]
+        if not selected_keys or unknown:
+            raise SystemExit(
+                f"Unknown project(s): {unknown}. Valid keys: {sorted(ANTHOLOGY_PROJECTS.keys())}, wave1, all"
+            )
     t_boot = time.time()
 
     print("=" * 80, flush=True)

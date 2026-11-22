@@ -293,6 +293,10 @@ def translate_cue_to_drama3_input(
                         style_briefs.append("sweeping, cinematic 19th-century European gothic revenge drama narration")
                     elif domain == "wealth_of_nations":
                         style_briefs.append("warm, witty, lucid 18th-century Scottish Enlightenment historical drama narration")
+                    elif domain == "free_to_choose":
+                        style_briefs.append("crisp, warm, incisive 1980 Chicago documentary intellectual drama narration")
+                    elif domain == "keynes_1936":
+                        style_briefs.append("reflective, lucid 1936 Cambridge interwar historical drama narration")
                     else:
                         style_briefs.append("steady, cinematic Xianxia narration")
 

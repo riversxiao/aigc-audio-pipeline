@@ -1223,7 +1223,7 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertTrue(pct_qa.passed)
 
     def test_anthology_three_shows_validation_polyphones_and_studio_guardrails(self) -> None:
-        """Verify Liaozhai, Cthulhu, Hayek, Monte Cristo, and Wealth of Nations registries, 35 cue sheets, polyphones, and G4 studio guardrails."""
+        """Verify all 7 anthology registries (49 cue sheets), polyphones, narrator briefs, and G4 studio guardrails."""
         import importlib.util
         import json
 
@@ -1256,14 +1256,24 @@ class AudioPipelineTests(unittest.TestCase):
             compute_tts_text_override("亚当·斯密与詹姆斯·瓦特痛批格拉斯哥行会与同行密谋。", domain="wealth_of_nations"),
             "亚当斯密与詹姆斯瓦特痛批格拉斯哥航会与同航密谋。",
         )
+        self.assertEqual(
+            compute_tts_text_override("米尔顿·弗里德曼谈各行各业与央行行长调控。", domain="free_to_choose"),
+            "米尔顿弗里德曼谈各航各业与央行航长条控。",
+        )
+        self.assertEqual(
+            compute_tts_text_override("约翰·梅纳德·凯恩斯与阿瑟·庇古激辩重重危机。", domain="keynes_1936"),
+            "约翰梅纳德凯恩斯与阿瑟庇古激辩崇崇危机。",
+        )
 
-        # 2. Validate every registry, anchor mapping, and all 7 cue sheets across all 5 anthology shows (35 cue sheets)
+        # 2. Validate every registry, anchor mapping, and all 7 cue sheets across all 7 anthology shows (49 cue sheets)
         shows = [
             ("liaozhai_midnight", "liaozhai_horror", 7),
             ("cthulhu_archives", "cosmic_horror", 7),
             ("hayek_1944", "hayek_economics", 7),
             ("monte_cristo", "monte_cristo_drama", 7),
             ("wealth_of_nations", "wealth_of_nations", 7),
+            ("free_to_choose", "free_to_choose", 7),
+            ("keynes_1936", "keynes_1936", 7),
         ]
         for proj_name, expected_domain, expected_count in shows:
             proj_dir = repo_root / "projects" / proj_name
@@ -1290,7 +1300,7 @@ class AudioPipelineTests(unittest.TestCase):
                 cs = EpisodeCueSheet.load(jp)
                 self.assertEqual(cs.validate(reg, require_locked_voices=True), [], f"Errors in {jp.name}")
 
-        # 3. Verify horror/intellectual/revenge/enlightenment Drama 3 tag translation & domain-aware narrator styles
+        # 3. Verify horror/intellectual/revenge/enlightenment/chicago/cambridge Drama 3 tag translation & narrator styles
         c_liao = TimelineCue(cue_id="t1", act_id="a1", kind="dialogue", role_id="narrator", text="三更雨落兰若寺。", stability=0.5)
         d3_liao = translate_cue_to_drama3_input(c_liao, VoiceProfile(role_id="narrator", display_name="旁白", tier="narrator"), domain="liaozhai_horror")
         self.assertIn("folklore suspense", d3_liao)
@@ -1309,6 +1319,16 @@ class AudioPipelineTests(unittest.TestCase):
         d3_wn = translate_cue_to_drama3_input(c_wn, VoiceProfile(role_id="narrator", display_name="历史旁白", tier="narrator"), domain="wealth_of_nations")
         self.assertIn("Scottish Enlightenment", d3_wn)
         self.assertIn("亚当斯密在格拉斯哥拜访老航当", d3_wn)
+
+        c_fc = TimelineCue(cue_id="t5", act_id="a1", kind="dialogue", role_id="narrator", text="米尔顿·弗里德曼谈各行各业。", stability=0.5)
+        d3_fc = translate_cue_to_drama3_input(c_fc, VoiceProfile(role_id="narrator", display_name="历史旁白", tier="narrator"), domain="free_to_choose")
+        self.assertIn("1980 Chicago", d3_fc)
+        self.assertIn("米尔顿弗里德曼谈各航各业", d3_fc)
+
+        c_kn = TimelineCue(cue_id="t6", act_id="a1", kind="dialogue", role_id="narrator", text="约翰·梅纳德·凯恩斯谈重重危机。", stability=0.5)
+        d3_kn = translate_cue_to_drama3_input(c_kn, VoiceProfile(role_id="narrator", display_name="历史旁白", tier="narrator"), domain="keynes_1936")
+        self.assertIn("1936 Cambridge", d3_kn)
+        self.assertIn("约翰梅纳德凯恩斯谈崇崇危机", d3_kn)
 
         # 4. Verify universal anthology studio BGM isolation & QA leak detection on new horror tags
         spec = importlib.util.spec_from_file_location(
@@ -1332,6 +1352,16 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertIn("no vocals", wn_bgm.lower())
         self.assertIn("harpsichord", wn_bgm.lower())
         self.assertNotIn("traditional chinese", wn_bgm.lower())
+
+        fc_bgm = mod.enrich_anthology_bgm_prompt("1980 Chicago evening study reflection", bgm_style="free_to_choose")
+        self.assertIn("no vocals", fc_bgm.lower())
+        self.assertIn("chicago", fc_bgm.lower())
+        self.assertNotIn("traditional chinese", fc_bgm.lower())
+
+        kn_bgm = mod.enrich_anthology_bgm_prompt("1936 foggy King's College dusk", bgm_style="keynes_1936")
+        self.assertIn("no vocals", kn_bgm.lower())
+        self.assertIn("cambridge", kn_bgm.lower())
+        self.assertNotIn("traditional chinese", kn_bgm.lower())
 
         leak_qa = evaluate_dialogue_qa(
             tagged_prompt="[haunting] 拉莱耶在呼唤。",

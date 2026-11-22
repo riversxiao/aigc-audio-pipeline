@@ -529,6 +529,8 @@ _WHISPER_PROMPTS: dict[str, str] = {
     "hayek_economics": "以下是简体中文经济学历史广播剧台词：哈耶克、凯恩斯、通往奴役之路、剑桥大学、红绿灯、法治、价格信号、安全网、布雷顿森林。",
     "monte_cristo_drama": "以下是简体中文基督山伯爵广播剧台词：爱德蒙唐泰斯、基督山伯爵、伊夫堡、马赛港、法老号、梅尔塞苔丝、法利亚神父、维尔福、费尔南、莫尔塞夫、唐格拉尔、卡德鲁斯、摩莱尔、海黛、瓦朗蒂娜、等待和希望。",
     "wealth_of_nations": "以下是简体中文国富论商业思想广播剧台词：亚当斯密、大卫休谟、詹姆斯瓦特、爱丁堡、格拉斯哥、扣针厂、分工、看不见的手、重商主义、东印度公司、自然价格、市场价格、守夜人、道德情操论。",
+    "free_to_choose": "以下是简体中文自由选择商业思想广播剧台词：米尔顿弗里德曼、罗丝弗里德曼、芝加哥、铅笔的故事、价格信号、四种花钱的人、大萧条、美联储、职业牌照、教育券、负所得税、通货膨胀、货币现象。",
+    "keynes_1936": "以下是简体中文凯恩斯通论宏观思想广播剧台词：约翰梅纳德凯恩斯、庇古教授、剑桥大学、大萧条、有效需求、非自愿失业、节俭悖论、乘数效应、选美比赛、动物精神、流动性偏好、流动性陷阱、财政刺激、布雷顿森林。",
     "xianxia": "以下是普通话简体中文仙侠有声剧对白，请使用简体中文输出。",
 }
 
@@ -618,6 +620,16 @@ def enrich_anthology_bgm_prompt(prompt: str, *, bgm_style: str) -> str:
             extras.append("18th-century Scottish Enlightenment warm baroque chamber strings, gentle harpsichord and acoustic cello")
         if "no drums" not in lower and "no modern beat" not in lower:
             extras.append("no modern drums, no pop beat")
+    elif bgm_style == "free_to_choose":
+        if "jazz" not in lower and "piano" not in lower and "bass" not in lower and "acoustic" not in lower:
+            extras.append("1980 Chicago warm late-night documentary acoustic felt piano, upright double bass and mellow strings")
+        if "no loud drums" not in lower and "no modern beat" not in lower:
+            extras.append("no loud drums, no modern synth trap")
+    elif bgm_style == "keynes_1936":
+        if "cello" not in lower and "piano" not in lower and "strings" not in lower and "chamber" not in lower:
+            extras.append("1936 interwar Cambridge reflective chamber strings, deep solo cello and muted upright piano")
+        if "no drums" not in lower and "no modern beat" not in lower:
+            extras.append("no modern drums, no pop beat")
     if "no singing" not in lower:
         extras.append("purely instrumental, no vocals, no singing")
     return ", ".join([base, *extras]) if extras else base
@@ -631,6 +643,8 @@ def canonical_anthology_stem(cue_sheet: EpisodeCueSheet, *, domain: str) -> str:
         "hayek_economics": "1944剑桥夜话思想剧母带",
         "monte_cristo_drama": "基督山伯爵广播剧母带",
         "wealth_of_nations": "国富论思想剧母带",
+        "free_to_choose": "自由选择思想剧母带",
+        "keynes_1936": "凯恩斯通论思想剧母带",
     }
     label = suffix_map.get(domain, "Drama3广播剧母带")
     if cue_sheet.mode == "audition_pack":
