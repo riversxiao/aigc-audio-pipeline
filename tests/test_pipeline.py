@@ -1248,12 +1248,17 @@ class AudioPipelineTests(unittest.TestCase):
             compute_tts_text_override("弗里德里希·哈耶克与约翰·梅纳德·凯恩斯谈各行各业。", domain="hayek_economics"),
             "弗里德里希哈耶克与约翰梅纳德凯恩斯谈各航各业。",
         )
+        self.assertEqual(
+            compute_tts_text_override("爱德蒙·唐泰斯屏息倚在船舷，押解前往伊夫堡。", domain="monte_cristo_drama"),
+            "爱德蒙唐泰斯丙息倚在船咸，押借前往伊夫堡。",
+        )
 
-        # 2. Validate every registry, anchor mapping, and all 7 cue sheets across all 3 anthology shows
+        # 2. Validate every registry, anchor mapping, and all 7 cue sheets across all 4 anthology shows
         shows = [
             ("liaozhai_midnight", "liaozhai_horror", 7),
             ("cthulhu_archives", "cosmic_horror", 7),
             ("hayek_1944", "hayek_economics", 7),
+            ("monte_cristo", "monte_cristo_drama", 7),
         ]
         for proj_name, expected_domain, expected_count in shows:
             proj_dir = repo_root / "projects" / proj_name
@@ -1280,7 +1285,7 @@ class AudioPipelineTests(unittest.TestCase):
                 cs = EpisodeCueSheet.load(jp)
                 self.assertEqual(cs.validate(reg, require_locked_voices=True), [], f"Errors in {jp.name}")
 
-        # 3. Verify horror/intellectual Drama 3 tag translation & domain-aware narrator styles
+        # 3. Verify horror/intellectual/revenge Drama 3 tag translation & domain-aware narrator styles
         c_liao = TimelineCue(cue_id="t1", act_id="a1", kind="dialogue", role_id="narrator", text="三更雨落兰若寺。", stability=0.5)
         d3_liao = translate_cue_to_drama3_input(c_liao, VoiceProfile(role_id="narrator", display_name="旁白", tier="narrator"), domain="liaozhai_horror")
         self.assertIn("folklore suspense", d3_liao)
@@ -1289,6 +1294,11 @@ class AudioPipelineTests(unittest.TestCase):
         c_cth = TimelineCue(cue_id="t2", act_id="a1", kind="dialogue", role_id="eldritch_whisper", text="[haunting] [whispers] 拉莱耶在呼唤。", stability=0.0)
         d3_cth = translate_cue_to_drama3_input(c_cth, VoiceProfile(role_id="eldritch_whisper", display_name="低语", tier="antagonist"), domain="cosmic_horror")
         self.assertIn("<whisper>", d3_cth)
+
+        c_mc = TimelineCue(cue_id="t3", act_id="a1", kind="dialogue", role_id="narrator", text="爱德蒙·唐泰斯屏息站在船舷。", stability=0.5)
+        d3_mc = translate_cue_to_drama3_input(c_mc, VoiceProfile(role_id="narrator", display_name="史诗旁白", tier="narrator"), domain="monte_cristo_drama")
+        self.assertIn("gothic revenge drama", d3_mc)
+        self.assertIn("爱德蒙唐泰斯丙息站在船咸", d3_mc)
 
         # 4. Verify universal anthology studio BGM isolation & QA leak detection on new horror tags
         spec = importlib.util.spec_from_file_location(
@@ -1302,6 +1312,11 @@ class AudioPipelineTests(unittest.TestCase):
         cthulhu_bgm = mod.enrich_anthology_bgm_prompt("Sparse cold cello drone", bgm_style="cosmic_horror")
         self.assertIn("no vocals", cthulhu_bgm.lower())
         self.assertNotIn("traditional chinese", cthulhu_bgm.lower())
+
+        mc_bgm = mod.enrich_anthology_bgm_prompt("Mediterranean cliff twilight suspense", bgm_style="monte_cristo_drama")
+        self.assertIn("no vocals", mc_bgm.lower())
+        self.assertIn("orchestral", mc_bgm.lower())
+        self.assertNotIn("traditional chinese", mc_bgm.lower())
 
         leak_qa = evaluate_dialogue_qa(
             tagged_prompt="[haunting] 拉莱耶在呼唤。",

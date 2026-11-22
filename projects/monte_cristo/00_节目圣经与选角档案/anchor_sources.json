@@ -1,0 +1,85 @@
+{
+  "project_id": "monte_cristo",
+  "project_title": "《基督山伯爵·伊夫堡复仇广播剧》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_电影史诗男中音"
+    },
+    "dantes_young": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_清亮坚毅18岁青年音"
+    },
+    "monte_cristo": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (40岁沉稳优雅贵族男中音，与青年唐泰斯形成14年蜕变反差)"
+    },
+    "abbe_faria": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "shou_mu_ren",
+      "source_voice_name": "Reuse: 诸界锁仙_守墓老人_苍茫慈悲睿智长者"
+    },
+    "mercedes": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "su_qinghan",
+      "source_voice_name": "Reuse: 诸界锁仙_苏清寒_清冽深情贵族女主"
+    },
+    "haydee": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "a_mang",
+      "source_voice_name": "Reuse: 诸界锁仙_阿盲_清澈坚韧少女公主音"
+    },
+    "villefort": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_温润虚伪后期癫狂法政精英"
+    },
+    "fernand": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "li_cang",
+      "source_voice_name": "Reuse: 诸界锁仙_厉苍_铁血冷酷暴戾军阀"
+    },
+    "danglars": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "snobbish_steward_npc",
+      "source_voice_name": "Reuse: 诸界锁仙_世家管事_油滑贪婪银行家"
+    },
+    "caderousse": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁粗粝接地气市井裁缝)"
+    },
+    "morrel": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_醇厚重情义长者船东"
+    },
+    "albert_max": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "male_disciple_a",
+      "source_voice_name": "Reuse: 诸界锁仙_青年男修甲_热血直率贵族青年"
+    },
+    "paris_villain": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "hongxiu_louzhu",
+      "source_voice_name": "Reuse: 诸界锁仙_红袖楼主_华贵蛇蝎毒妇贵妇音"
+    },
+    "jailer_bandit": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "zhao_kui",
+      "source_voice_name": "Reuse: 诸界锁仙_赵魁_阴鸷冷酷狱卒/万帕/贝内代托"
+    }
+  }
+}

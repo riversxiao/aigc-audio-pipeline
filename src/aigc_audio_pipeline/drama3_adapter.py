@@ -289,6 +289,8 @@ def translate_cue_to_drama3_input(
                         style_briefs.append("chilling, restrained 1920s investigative cosmic horror narration")
                     elif domain == "hayek_economics":
                         style_briefs.append("warm, lucid 1944 historical intellectual drama narration")
+                    elif domain == "monte_cristo_drama":
+                        style_briefs.append("sweeping, cinematic 19th-century European gothic revenge drama narration")
                     else:
                         style_briefs.append("steady, cinematic Xianxia narration")
 

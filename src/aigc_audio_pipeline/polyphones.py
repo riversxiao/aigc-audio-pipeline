@@ -311,6 +311,60 @@ HAYEK_ECONOMICS_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
 )
 
 
+# 19th-century European gothic revenge drama (The Count of Monte Cristo) polyphone & French/Italian name smoothing.
+# Removes typographic interpunct '·' only in tts_text for smooth Mandarin speech while preserving canonical '·' in .srt.
+MONTE_CRISTO_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    # Maritime, prison, legal, financial & dramatic polyphones
+    ("屏息凝神", "丙息凝神"),
+    ("屏住呼吸", "丙住呼吸"),
+    ("屏息", "丙息"),
+    ("船舷", "船咸"),
+    ("舷窗", "咸窗"),
+    ("压舱", "押舱"),
+    ("押解", "押借"),
+    ("调包", "掉包"),
+    ("调换", "掉换"),
+    ("重重封锁", "崇崇封锁"),
+    ("重重铁门", "崇崇铁门"),
+    ("重重暗道", "崇崇暗道"),
+    ("重重迷雾", "崇崇迷雾"),
+    ("重重", "崇崇"),
+    ("血泊", "血坡"),
+    ("颤栗", "占栗"),
+    ("战栗", "占栗"),
+    ("憎恶", "增雾"),
+    ("埋怨", "蛮怨"),
+    ("模样", "磨样"),
+    ("背负", "杯负"),
+    ("背起", "杯起"),
+    ("背着", "杯着"),
+    ("单薄", "单博"),
+    ("老行当", "老航当"),
+    ("银行行长", "银行航长"),
+    ("行贿", "形贿"),
+    ("行踪", "形踪"),
+    ("一行人", "一形人"),
+    ("着魔", "招魔"),
+    ("着陆", "桌陆"),
+    ("降临", "酱临"),
+    ("躯壳", "躯咳"),
+    ("龟裂", "均裂"),
+    # Smooth French/Italian interpunct names for TTS fluency (canonical '·' kept in .srt)
+    ("爱德蒙·唐泰斯", "爱德蒙唐泰斯"),
+    ("费尔南·蒙代戈", "费尔南蒙代戈"),
+    ("热拉尔·德·维尔福", "热拉尔德维尔福"),
+    ("皮埃尔·摩莱尔", "皮埃尔摩莱尔"),
+    ("马克西米利安·莫雷尔", "马克西米利安莫雷尔"),
+    ("阿尔贝·德·莫尔塞夫", "阿尔贝德莫尔塞夫"),
+    ("加斯帕尔·卡德鲁斯", "加斯帕尔卡德鲁斯"),
+    ("路易吉·万帕", "路易吉万帕"),
+    ("阿贝·法利亚", "阿贝法利亚"),
+    ("阿里·帕夏", "阿里帕夏"),
+    ("弗朗茨·德皮奈", "弗朗茨德皮奈"),
+    ("水手·辛巴达", "水手辛巴达"),
+)
+
+
 def apply_xianxia_polyphone_overrides(text: str) -> str:
     """Return phonetic `tts_text` override if `text` contains error-prone polyphones; else return `text`."""
     if not text:
@@ -366,6 +420,17 @@ def apply_hayek_economics_polyphone_overrides(text: str) -> str:
     return out
 
 
+def apply_monte_cristo_polyphone_overrides(text: str) -> str:
+    """Return phonetic `tts_text` override for 19th-century Monte Cristo revenge drama lines."""
+    if not text:
+        return text
+    out = text
+    for canonical, phonetic in MONTE_CRISTO_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
+    return out
+
+
 def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
     """Apply domain-appropriate Mandarin polyphone overrides."""
     if not text or domain == "none":
@@ -378,6 +443,8 @@ def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
         return apply_cosmic_horror_polyphone_overrides(text)
     if domain == "hayek_economics":
         return apply_hayek_economics_polyphone_overrides(text)
+    if domain == "monte_cristo_drama":
+        return apply_monte_cristo_polyphone_overrides(text)
     return apply_xianxia_polyphone_overrides(text)
 
 

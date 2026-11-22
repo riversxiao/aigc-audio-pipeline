@@ -78,6 +78,12 @@ ANTHOLOGY_PROJECTS: dict[str, dict[str, str]] = {
         "drive_show_folder": "《1944剑桥夜话》哈耶克思想剧场",
         "bgm_style": "hayek_economics",
     },
+    "monte_cristo": {
+        "title": "《基督山伯爵·伊夫堡复仇广播剧》",
+        "project_rel": "projects/monte_cristo",
+        "drive_show_folder": "《基督山伯爵》伊夫堡复仇广播剧",
+        "bgm_style": "monte_cristo_drama",
+    },
 }
 
 
