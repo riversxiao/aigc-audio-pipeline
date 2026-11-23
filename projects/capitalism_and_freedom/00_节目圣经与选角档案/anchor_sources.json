@@ -1,0 +1,55 @@
+{
+  "project_id": "capitalism_and_freedom",
+  "project_title": "《1962芝加哥激辩：〈资本主义与自由〉》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "prof_friedman": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (50岁敏捷风趣真人学者男中音·米尔顿·弗里德曼)"
+    },
+    "researcher_qiao": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (31岁清亮犀利真人制度女研究员·乔知微)"
+    },
+    "barber_han": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (47岁直爽幽默芝加哥理发修表手艺匠人·老韩)"
+    },
+    "advisor_keene": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_46岁逻辑严密华盛顿凯恩斯派白宫政策顾问·基恩"
+    },
+    "banker_aldrich": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_63岁沉稳威严资深前美联储与金本位银行家·奥尔德里奇行长"
+    },
+    "grad_samson": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_24岁锋利直率芝加哥大学经济学研究生辩手·萨姆森"
+    },
+    "mother_claire": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "jiang_qinghuang",
+      "source_voice_name": "Reuse: 诸界锁仙_姜清凰_35岁外柔内刚芝加哥南区制衣厂单亲母亲兼家长代表·克莱尔"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇克制1962芝加哥纪实历史旁白"
+    }
+  }
+}

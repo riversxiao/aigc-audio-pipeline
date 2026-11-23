@@ -1223,12 +1223,12 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertTrue(pct_qa.passed)
 
     def test_anthology_three_shows_validation_polyphones_and_studio_guardrails(self) -> None:
-        """Verify all 7 anthology registries (49 cue sheets), polyphones, narrator briefs, and G4 studio guardrails."""
+        """Verify all 28 anthology registries (196 cue sheets), polyphones, narrator briefs, wave aliases & G4 guardrails."""
         import importlib.util
         import json
 
         from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
-        from aigc_audio_pipeline.polyphones import compute_tts_text_override
+        from aigc_audio_pipeline.polyphones import ECON_FINANCE_DRAMA_DOMAINS, compute_tts_text_override
 
         repo_root = Path(__file__).resolve().parents[1]
         zhujie_cast = json.loads(
@@ -1264,17 +1264,48 @@ class AudioPipelineTests(unittest.TestCase):
             compute_tts_text_override("约翰·梅纳德·凯恩斯与阿瑟·庇古激辩重重危机。", domain="keynes_1936"),
             "约翰梅纳德凯恩斯与阿瑟庇古激辩崇崇危机。",
         )
+        for econ_domain in sorted(ECON_FINANCE_DRAMA_DOMAINS):
+            self.assertEqual(
+                compute_tts_text_override("约翰·劳与央行行长激辩各行各业重重危机。", domain=econ_domain),
+                "约翰劳与央行航长激辩各航各业崇崇危机。",
+                f"Polyphone normalization failed for {econ_domain}",
+            )
 
-        # 2. Validate every registry, anchor mapping, and all 7 cue sheets across all 7 anthology shows (49 cue sheets)
+        # 2. Validate every registry, anchor mapping, 1:1 covers, and all 7 cue sheets across ALL 28 anthology shows (196 cue sheets!)
+        econ_24_shows = [
+            "wealth_of_nations",
+            "free_to_choose",
+            "keynes_1936",
+            "extraordinary_delusions",
+            "bastiat_unseen",
+            "one_lesson_econ",
+            "basic_economics",
+            "freakonomics_theater",
+            "leisure_class_1899",
+            "schumpeter_1911",
+            "moral_sentiments_1759",
+            "why_nations_fail",
+            "stock_operator_1923",
+            "intelligent_investor",
+            "random_walk_wallstreet",
+            "behavioral_econ_traps",
+            "psychology_of_money",
+            "black_swan_antifragile",
+            "big_short_2008",
+            "lords_of_finance_1929",
+            "ascent_of_money",
+            "capitalism_and_freedom",
+            "game_theory_strategy",
+            "debt_cycle_machine",
+        ]
         shows = [
             ("liaozhai_midnight", "liaozhai_horror", 7),
             ("cthulhu_archives", "cosmic_horror", 7),
             ("hayek_1944", "hayek_economics", 7),
             ("monte_cristo", "monte_cristo_drama", 7),
-            ("wealth_of_nations", "wealth_of_nations", 7),
-            ("free_to_choose", "free_to_choose", 7),
-            ("keynes_1936", "keynes_1936", 7),
+            *[(slug, slug, 7) for slug in econ_24_shows],
         ]
+        total_validated_sheets = 0
         for proj_name, expected_domain, expected_count in shows:
             proj_dir = repo_root / "projects" / proj_name
             reg = VoiceCastingRegistry.load(proj_dir / "00_节目圣经与选角档案/voice_casting_registry.json")
@@ -1295,12 +1326,19 @@ class AudioPipelineTests(unittest.TestCase):
 
             scripts_dir = proj_dir / "02_分集广播剧台本"
             jsons = sorted([*scripts_dir.glob("AUDITION*.json"), *scripts_dir.glob("E*.json")])
-            self.assertEqual(len(jsons), expected_count)
+            self.assertEqual(len(jsons), expected_count, f"Expected {expected_count} scripts in {proj_name}")
             for jp in jsons:
                 cs = EpisodeCueSheet.load(jp)
-                self.assertEqual(cs.validate(reg, require_locked_voices=True), [], f"Errors in {jp.name}")
+                self.assertEqual(cs.validate(reg, require_locked_voices=True), [], f"Errors in {proj_name}/{jp.name}")
+                total_validated_sheets += 1
 
-        # 3. Verify horror/intellectual/revenge/enlightenment/chicago/cambridge Drama 3 tag translation & narrator styles
+            if proj_name in econ_24_shows:
+                covers = sorted((proj_dir / "03_喜马拉雅分发与爆款包装方案").glob("*.jpg"))
+                self.assertGreaterEqual(len(covers), 2, f"Missing 1:1 clean/titled covers for {proj_name}")
+
+        self.assertEqual(total_validated_sheets, 28 * 7)
+
+        # 3. Verify Drama 3 tag translation & narrator briefs across core and all 24 econ/finance domains
         c_liao = TimelineCue(cue_id="t1", act_id="a1", kind="dialogue", role_id="narrator", text="三更雨落兰若寺。", stability=0.5)
         d3_liao = translate_cue_to_drama3_input(c_liao, VoiceProfile(role_id="narrator", display_name="旁白", tier="narrator"), domain="liaozhai_horror")
         self.assertIn("folklore suspense", d3_liao)
@@ -1330,7 +1368,13 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertIn("1936 Cambridge", d3_kn)
         self.assertIn("约翰梅纳德凯恩斯谈崇崇危机", d3_kn)
 
-        # 4. Verify universal anthology studio BGM isolation & QA leak detection on new horror tags
+        for econ_domain in econ_24_shows[3:]:
+            c_ec = TimelineCue(cue_id=f"t_{econ_domain}", act_id="a1", kind="dialogue", role_id="narrator", text="央行行长谈各行各业。", stability=0.5)
+            d3_ec = translate_cue_to_drama3_input(c_ec, VoiceProfile(role_id="narrator", display_name="历史旁白", tier="narrator"), domain=econ_domain)
+            self.assertIn("央行航长谈各航各业", d3_ec, f"Drama 3 narrator polyphone missing for {econ_domain}")
+            self.assertNotIn("xianxia", d3_ec.lower(), f"Xianxia leak in {econ_domain} narrator brief")
+
+        # 4. Verify universal anthology studio BGM isolation, G4 wave aliases & QA leak detection
         spec = importlib.util.spec_from_file_location(
             "run_anthology_96gb_studio",
             repo_root / "colab_96gb/run_anthology_96gb_studio.py",
@@ -1348,20 +1392,24 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertIn("orchestral", mc_bgm.lower())
         self.assertNotIn("traditional chinese", mc_bgm.lower())
 
-        wn_bgm = mod.enrich_anthology_bgm_prompt("1776 Edinburgh tavern candlelight reflection", bgm_style="wealth_of_nations")
-        self.assertIn("no vocals", wn_bgm.lower())
-        self.assertIn("harpsichord", wn_bgm.lower())
-        self.assertNotIn("traditional chinese", wn_bgm.lower())
+        for econ_slug in econ_24_shows:
+            ebgm = mod.enrich_anthology_bgm_prompt("Atmospheric scene reflection", bgm_style=econ_slug)
+            self.assertIn("no vocals", ebgm.lower(), f"Missing no-vocals guardrail for {econ_slug}")
+            self.assertNotIn("traditional chinese", ebgm.lower(), f"Xianxia BGM leak for {econ_slug}")
+            self.assertIn(econ_slug, mod._WHISPER_PROMPTS, f"Missing Whisper prompt for {econ_slug}")
 
-        fc_bgm = mod.enrich_anthology_bgm_prompt("1980 Chicago evening study reflection", bgm_style="free_to_choose")
-        self.assertIn("no vocals", fc_bgm.lower())
-        self.assertIn("chicago", fc_bgm.lower())
-        self.assertNotIn("traditional chinese", fc_bgm.lower())
-
-        kn_bgm = mod.enrich_anthology_bgm_prompt("1936 foggy King's College dusk", bgm_style="keynes_1936")
-        self.assertIn("no vocals", kn_bgm.lower())
-        self.assertIn("cambridge", kn_bgm.lower())
-        self.assertNotIn("traditional chinese", kn_bgm.lower())
+        launch_spec = importlib.util.spec_from_file_location(
+            "launch_g4_anthology_drama3",
+            repo_root / "colab_96gb/launch_g4_anthology_drama3.py",
+        )
+        assert launch_spec and launch_spec.loader
+        launch_mod = importlib.util.module_from_spec(launch_spec)
+        launch_spec.loader.exec_module(launch_mod)
+        resolved_all_econ = launch_mod.resolve_project_keys("all_econ24")
+        self.assertEqual(len(resolved_all_econ), 24)
+        for wave_i in range(1, 9):
+            self.assertEqual(len(launch_mod.resolve_project_keys(f"wave{wave_i}")), 3)
+        self.assertEqual(len(launch_mod.resolve_project_keys("wave1,wave2")), 6)
 
         leak_qa = evaluate_dialogue_qa(
             tagged_prompt="[haunting] 拉莱耶在呼唤。",
@@ -1372,9 +1420,239 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertFalse(leak_qa.passed)
         self.assertIn("haunting", leak_qa.leaked_tags)
 
+    def test_hotline_acoustic_spaces_polyphones_and_target_resolver(self) -> None:
+        import importlib.util
+        import tempfile
+
+        from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
+        from aigc_audio_pipeline.mixer import condition_dialogue_clip
+        from aigc_audio_pipeline.polyphones import apply_domain_polyphone_overrides
+
+        # 1. Modern hotline polyphones & Western interpunct smoothing
+        raw = "彼得·希夫认为，干咱们这行面对大幅回调和官方调解，别光看同行调侃。"
+        out = apply_domain_polyphone_overrides(raw, domain="hotline_roundtable")
+        self.assertIn("彼得希夫", out)
+        self.assertIn("干咱们这航", out)
+        self.assertIn("回条", out)
+        self.assertIn("条解", out)
+        self.assertIn("同航", out)
+        self.assertIn("条侃", out)
+
+        # 2. Drama 3 translation: zero-announcer mode for roundtable/express, rich cinematic mode for hotline_drama
+        host_prof = VoiceProfile(
+            role_id="host_zhiwei",
+            display_name="许知微",
+            voice_id="anchor_host",
+            status="locked",
+        )
+        elder_prof = VoiceProfile(
+            role_id="female_elder",
+            display_name="孟素华",
+            gender="female",
+            age_group="old",
+            voice_id="anchor_elder",
+            status="locked",
+        )
+        rt_cue = TimelineCue(
+            cue_id="t01_c1",
+            act_id="act1",
+            kind="dialogue",
+            role_id="host_zhiwei",
+            text="[curious] 怀远，这波回调到底谁在卖？",
+            stability=0.5,
+            acoustic_space="studio_warm",
+        )
+        d3_rt = translate_cue_to_drama3_input(rt_cue, host_prof, attempt=1, domain="hotline_roundtable")
+        self.assertNotIn("podcast host tone", d3_rt)
+        self.assertIn("回条", d3_rt)
+
+        drama_elder_cue = TimelineCue(
+            cue_id="d01_c5",
+            act_id="act2",
+            kind="dialogue",
+            role_id="female_elder",
+            speaker_name="孟素华",
+            text="年轻人，你把我们老同事的脸做成提线木偶，问过任何人吗？",
+            stability=0.5,
+            acoustic_space="dry",
+        )
+        d3_elder = translate_cue_to_drama3_input(drama_elder_cue, elder_prof, attempt=1, domain="hotline_drama")
+        self.assertIn("elderly Chinese woman", d3_elder)
+        self.assertIn("<slow>", d3_elder)
+
+        # 3. Validate & condition phone_call and livestream_mic acoustic spaces via FFmpeg
+        reg = VoiceCastingRegistry(
+            project_id="hotline_test",
+            project_title="热点测试",
+            domain="hotline",
+            roles={"host_zhiwei": host_prof, "female_elder": elder_prof},
+        )
+        sheet = EpisodeCueSheet(
+            episode_id="D01",
+            chapter_number=1,
+            title="一秒借来的脸",
+            mode="condensed_radio_drama",
+            acts=[ActMusicSpec(act_id="act1", title="第一幕", bgm_prompt="sparse felt piano")],
+            cues=[
+                TimelineCue(
+                    cue_id="c_phone",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="host_zhiwei",
+                    speaker_name="周燃",
+                    text="[smug] 喂，哪位？谈广告直接报预算。",
+                    stability=0.0,
+                    acoustic_space="phone_call",
+                ),
+                TimelineCue(
+                    cue_id="c_live",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="female_elder",
+                    speaker_name="老K",
+                    text="[indignant] 规矩不能坏，快拿水来！",
+                    stability=0.0,
+                    acoustic_space="livestream_mic",
+                ),
+            ],
+        )
+        self.assertEqual(sheet.validate(reg, require_locked_voices=True), [])
+
+        with tempfile.TemporaryDirectory(prefix="test_hotline_spaces_") as td:
+            tmp = Path(td)
+            src_wav = tmp / "src.wav"
+            subprocess.run(
+                [
+                    "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                    "-f", "lavfi", "-i", "sine=frequency=320:duration=1.8:sample_rate=48000",
+                    "-ac", "2", "-c:a", "pcm_s16le", str(src_wav),
+                ],
+                check=True,
+            )
+            for sp in ("phone_call", "livestream_mic"):
+                cond = condition_dialogue_clip(src_wav, tmp / f"cond_{sp}.wav", acoustic_space=sp)
+                self.assertTrue(cond.is_file() and cond.stat().st_size > 10000)
+
+            # 4. Prefix-agnostic resolve_targets (ALL, T01-T02, D01)
+            repo_root = Path(__file__).resolve().parents[1]
+            spec = importlib.util.spec_from_file_location(
+                "run_anthology_96gb_studio",
+                repo_root / "colab_96gb/run_anthology_96gb_studio.py",
+            )
+            assert spec and spec.loader
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
+            cs_dir = tmp / "cue_sheets"
+            cs_dir.mkdir()
+            for nm in ("T01_anthropic.json", "T02_gold.json", "D01_face.json", "D02_light.json"):
+                (cs_dir / nm).write_text("{}", encoding="utf-8")
+            self.assertEqual([k for k, _ in mod.resolve_targets("T01-T02,D01", cs_dir, tmp)], ["T01", "T02", "D01"])
+            self.assertEqual([k for k, _ in mod.resolve_targets("ALL", cs_dir, tmp)], ["D01", "D02", "T01", "T02"])
+            self.assertIn("no vocals", mod.enrich_anthology_bgm_prompt("Warm night debate", bgm_style="hotline_roundtable").lower())
+
+    def test_hotline_chatroom_natural_speech_and_dry_mid_act(self) -> None:
+        import tempfile
+        import wave
+        from array import array
+
+        from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
+        from aigc_audio_pipeline.mixer import _compute_chatroom_pan_map, condition_dialogue_clip, master_episode_three_bus
+
+        # 1. Hotline chatroom strips theatrical stage-direction tags while keeping genuine point laughs/sighs
+        guest_prof = VoiceProfile(
+            role_id="guest_laozhou",
+            display_name="老周",
+            voice_id="anchor_laozhou",
+            status="locked",
+        )
+        over_tagged = TimelineCue(
+            cue_id="t01_c2",
+            act_id="act1",
+            kind="dialogue",
+            role_id="guest_laozhou",
+            text="[emphatic] [skeptical] 等会儿，这数你没多看一个零吧？",
+            stability=0.0,
+            acoustic_space="chatroom_table",
+        )
+        d3_clean = translate_cue_to_drama3_input(over_tagged, guest_prof, attempt=1, domain="hotline_roundtable")
+        self.assertEqual(d3_clean, "等会儿，这数你没多看一个零吧？")
+
+        chuckle_cue = TimelineCue(
+            cue_id="t01_c3",
+            act_id="act2",
+            kind="dialogue",
+            role_id="guest_laozhou",
+            text="[chuckles] 不是吧，真走错门了？",
+            stability=0.0,
+            acoustic_space="chatroom_table",
+        )
+        d3_laugh = translate_cue_to_drama3_input(chuckle_cue, guest_prof, attempt=1, domain="hotline_express")
+        self.assertEqual(d3_laugh, "[light chuckle] 不是吧，真走错门了？")
+
+        # 2. Dry silent middle chatroom act keeps Bus C silent during ACT2 & applies subtle stereo seating pan
+        host_prof = VoiceProfile(role_id="host_zhiwei", display_name="许知微", voice_id="a_host", status="locked")
+        sheet = EpisodeCueSheet(
+            episode_id="T99",
+            chapter_number=99,
+            title="聊天室干声与立体声落座测试",
+            mode="podcast_roundtable",
+            acts=[
+                ActMusicSpec(act_id="act1", title="开场", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.04, bgm_gain_gap=0.16),
+                ActMusicSpec(act_id="act2", title="干声深聊", bgm_prompt="", bgm_gain_speech=0.0, bgm_gain_gap=0.0),
+                ActMusicSpec(act_id="act3", title="收尾", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.045, bgm_gain_gap=0.18),
+            ],
+            cues=[
+                TimelineCue(cue_id="c1", act_id="act1", kind="dialogue", role_id="host_zhiwei", text="开场寒暄一句。", acoustic_space="chatroom_table", gap_after_s=0.12),
+                TimelineCue(cue_id="c2", act_id="act2", kind="dialogue", role_id="guest_laozhou", text="中段干声纯聊一段。", acoustic_space="chatroom_table", gap_after_s=0.12),
+                TimelineCue(cue_id="c3", act_id="act2", kind="dialogue", role_id="host_zhiwei", text="中段继续追问一句。", acoustic_space="chatroom_table", gap_after_s=0.12),
+                TimelineCue(cue_id="c4", act_id="act3", kind="dialogue", role_id="guest_laozhou", text="尾声收个口。", acoustic_space="chatroom_table", gap_after_s=0.15),
+            ],
+        )
+        pan_map = _compute_chatroom_pan_map(sheet)
+        self.assertEqual(set(pan_map.keys()), {"host_zhiwei", "guest_laozhou"})
+        self.assertLess(pan_map["host_zhiwei"] * pan_map["guest_laozhou"], 0.0)
+
+        with tempfile.TemporaryDirectory(prefix="test_chatroom_mix_") as td:
+            tmp = Path(td)
+            dlg_wav = tmp / "dlg.wav"
+            bgm_wav = tmp / "bgm.wav"
+            subprocess.run(
+                ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "sine=frequency=280:duration=2.0:sample_rate=48000", "-ac", "2", "-c:a", "pcm_s16le", str(dlg_wav)],
+                check=True,
+            )
+            subprocess.run(
+                ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "sine=frequency=180:duration=6.0:sample_rate=48000", "-ac", "2", "-c:a", "pcm_s16le", str(bgm_wav)],
+                check=True,
+            )
+            cond_z = condition_dialogue_clip(dlg_wav, tmp / "laozhou_cond.wav", acoustic_space="chatroom_table", role_id="guest_laozhou", stereo_pan=0.20)
+            self.assertTrue(cond_z.is_file() and cond_z.stat().st_size > 10000)
+
+            res = master_episode_three_bus(
+                cue_sheet=sheet,
+                cue_audio_map={"c1": dlg_wav, "c2": dlg_wav, "c3": dlg_wav, "c4": dlg_wav},
+                act_bgm_map={"act1": bgm_wav, "act3": bgm_wav},
+                output_dir=tmp / "out",
+                clean_work_dir=False,
+            )
+            manifest = json.loads(res["manifest_json"].read_text(encoding="utf-8"))
+            bgm_bus = Path(manifest["buses"]["bgm_ducked_bus"])
+            # Midpoint of ACT2 (between c2 start + 0.5s and c3 end - 0.8s) must be 100% digital zero in Bus C!
+            c2_item = next(it for it in manifest["timeline"] if it["cue_id"] == "c2")
+            c3_item = next(it for it in manifest["timeline"] if it["cue_id"] == "c3")
+            probe_st = int((c2_item["start_s"] + 0.5) * 48000) * 2
+            probe_en = int((c3_item["end_s"] - 0.8) * 48000) * 2
+            with wave.open(str(bgm_bus), "rb") as wf:
+                arr = array("h")
+                arr.frombytes(wf.readframes(wf.getnframes()))
+            mid_slice = arr[probe_st:probe_en]
+            self.assertGreater(len(mid_slice), 1000)
+            self.assertEqual(max(abs(x) for x in mid_slice), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

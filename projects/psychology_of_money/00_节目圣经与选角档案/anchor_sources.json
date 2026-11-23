@@ -1,0 +1,55 @@
+{
+  "project_id": "psychology_of_money",
+  "project_title": "《财富长跑课：〈金钱心理学〉普通人致富剧》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "chronicler_gu": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (温润通透真人炉边财经观察家男中音·顾知远)"
+    },
+    "host_shen": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (33岁清亮务实真人家庭会计师女声·沈念安)"
+    },
+    "uncle_qiao": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (67岁朴实烟火气退休水电维修工兼定投长辈·乔师傅)"
+    },
+    "banker_lu": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_磁沉锋芒前顶流投行爆仓精英·陆明轩"
+    },
+    "young_chen": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_清朗焦躁渴望暴富的大厂程序员青年·陈小川"
+    },
+    "cafe_owner_su": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "hongxiu_louzhu",
+      "source_voice_name": "Reuse: 诸界锁仙_红袖楼主_温雅松弛慢火书屋壁炉咖啡馆主理人·苏岚"
+    },
+    "fund_veteran_zhou": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "fu_bo",
+      "source_voice_name": "Reuse: 诸界锁仙_福伯_沧桑坦荡二十年隐退公募老基金经理·老周"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇温暖炉边人文财富讲述旁白"
+    }
+  }
+}
