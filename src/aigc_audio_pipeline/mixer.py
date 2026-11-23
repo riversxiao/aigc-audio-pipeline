@@ -91,6 +91,12 @@ def condition_dialogue_clip(
     elif acoustic_space == "vintage_study":
         # Prime-age Omaha / PBS studio close-mic warmth (crisp articulation, zero analog tape hiss or echo)
         filters.append("equalizer=f=220:t=q:w=1.2:g=0.9,lowpass=f=9600")
+    elif acoustic_space == "phone_call":
+        # Realistic mobile/telephone handset voice channel for phone confrontations & remote call-ins
+        filters.append("highpass=f=320,lowpass=f=3200,acompressor=threshold=-20dB:ratio=3.5:attack=5:release=60")
+    elif acoustic_space == "livestream_mic":
+        # Crisp modern streaming/voice-chat condenser presence (slightly compressed, intimate forward mids)
+        filters.append("highpass=f=100,equalizer=f=2800:t=q:w=1.3:g=1.8,acompressor=threshold=-18dB:ratio=2.4:attack=8:release=80")
 
     if dur >= 1.4:
         # EBU R128 / podcast-drama broadcast loudness target (-16 LUFS) for consistent actor levels

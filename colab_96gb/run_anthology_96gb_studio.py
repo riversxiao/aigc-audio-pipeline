@@ -552,6 +552,10 @@ _WHISPER_PROMPTS: dict[str, str] = {
     "capitalism_and_freedom": "以下是简体中文资本主义与自由广播剧台词：芝加哥学派、经济自由、货币增长规则、浮动汇率、职业许可垄断、负所得税、教育券、反垄断、财政约束。",
     "game_theory_strategy": "以下是简体中文策略思维与博弈论广播剧台词：囚徒困境、纳什均衡、破釜沉舟、可信威胁、先发优势、价格战、赢家诅咒、倒推法、信号传递、合作博弈。",
     "debt_cycle_machine": "以下是简体中文大债务危机周期剧场台词：信贷扩张、短期债务周期、长期债务周期、去杠杆、和谐去杠杆、央行降息、印钞货币化、通缩萧条、通胀泡沫、经济机器。",
+    "hotline": "以下是简体中文现代热点新闻圆桌与都市广播剧台词，请使用标准简体中文输出。",
+    "hotline_roundtable": "以下是简体中文现代商业科技财经热点圆桌播客对谈，请使用标准简体中文输出。",
+    "hotline_express": "以下是简体中文现代热点快评播客节目，请使用标准简体中文输出。",
+    "hotline_drama": "以下是简体中文现代都市社会热点广播剧对白，请使用标准简体中文输出。",
     "xianxia": "以下是普通话简体中文仙侠有声剧对白，请使用简体中文输出。",
 }
 
@@ -634,6 +638,10 @@ _ECON_FINANCE_BGM_PRESETS: dict[str, str] = {
     "capitalism_and_freedom": "1962 Chicago late-night intellectual acoustic jazz piano, warm upright bass and mellow strings, no loud drums",
     "game_theory_strategy": "clever crisp minimalist chamber strings, rhythmic pizzicato cello and sharp felt piano, no heavy pop drums",
     "debt_cycle_machine": "steady cyclical macro documentary minimalist piano arpeggio, warm cello and subtle string swell, no pop drums",
+    "hotline": "warm modern investigative newsroom acoustic felt piano, subtle upright bass and clean chamber strings, no loud drums, no ancient Chinese instruments",
+    "hotline_roundtable": "warm late-night modern financial podcast acoustic felt piano, mellow upright bass and soft fingerstyle guitar, crisp studio intimacy, no loud drums",
+    "hotline_express": "crisp modern investigative news documentary minimalist piano pulse, light pizzicato strings and subtle upright bass, no loud pop drums",
+    "hotline_drama": "cinematic modern urban social drama chamber cello, sparse late-night felt piano and restrained string tension, no EDM beat, no ancient instruments",
 }
 
 
@@ -717,6 +725,10 @@ def canonical_anthology_stem(cue_sheet: EpisodeCueSheet, *, domain: str) -> str:
         "capitalism_and_freedom": "资本主义自由母带",
         "game_theory_strategy": "博弈论策略剧母带",
         "debt_cycle_machine": "债务大周期剧母带",
+        "hotline": "热点第一线母带",
+        "hotline_roundtable": "热点圆桌母带",
+        "hotline_express": "热点快评母带",
+        "hotline_drama": "热点剧场母带",
     }
     label = suffix_map.get(domain, "Drama3广播剧母带")
     if cue_sheet.mode == "audition_pack":
@@ -726,34 +738,65 @@ def canonical_anthology_stem(cue_sheet: EpisodeCueSheet, *, domain: str) -> str:
 
 def resolve_targets(spec: str, cue_sheets_dir: Path, auditions_dir: Path) -> list[tuple[str, Path]]:
     ep_files: dict[str, Path] = {}
-    for p in sorted(cue_sheets_dir.glob("E*.json")):
-        m = re.match(r"^(E\d{3})(?:_|\.|$)", p.name)
+    ordered_non_audition: list[tuple[str, Path]] = []
+    for p in sorted(cue_sheets_dir.glob("*.json")):
+        if p.name.upper().startswith("AUDITION"):
+            continue
+        m = re.match(r"^([A-Za-z]+\d{1,4})(?:_|\.|$)", p.name)
         if m:
-            ep_files[m.group(1)] = p
+            eid = m.group(1).upper()
+            ep_files[eid] = p
+            ordered_non_audition.append((eid, p))
 
     targets: list[tuple[str, Path]] = []
+    seen_ids: set[str] = set()
+
+    def _add(label: str, path: Path) -> None:
+        if label not in seen_ids:
+            seen_ids.add(label)
+            targets.append((label, path))
+
     for token in [t.strip() for t in spec.split(",") if t.strip()]:
         upper = token.upper()
+        if upper == "ALL":
+            for eid, p in ordered_non_audition:
+                _add(eid, p)
+            continue
         if upper.startswith("AUDITION"):
             cands = sorted([*auditions_dir.glob("AUDITION*.json"), *cue_sheets_dir.glob("AUDITION*.json")])
             if not cands:
                 raise FileNotFoundError(f"未在 {auditions_dir} 找到试听台本 JSON")
-            targets.append((cands[0].stem.split("_")[0] + "_AUDITION", cands[0]))
+            _add(cands[0].stem.split("_")[0] + "_AUDITION", cands[0])
             continue
-        m_range = re.match(r"^E?(\d{1,3})\s*-\s*E?(\d{1,3})$", upper)
+        # Range with optional prefix: E001-E006, 1-6, T01-T10, D01-D02
+        m_range = re.match(r"^([A-Z]*)(\d{1,4})\s*-\s*([A-Z]*)(\d{1,4})$", upper)
         if m_range:
-            for n in range(int(m_range.group(1)), int(m_range.group(2)) + 1):
-                eid = f"E{n:03d}"
-                if eid not in ep_files:
-                    raise FileNotFoundError(f"未找到 {eid} 台本 ({cue_sheets_dir})")
-                targets.append((eid, ep_files[eid]))
+            pref_a = m_range.group(1) or "E"
+            pref_b = m_range.group(3) or pref_a
+            if pref_a != pref_b:
+                raise ValueError(f"无法跨前缀展开 --episodes 范围: {token!r}")
+            width = max(len(m_range.group(2)), len(m_range.group(4)), 3 if pref_a == "E" else 2)
+            for n in range(int(m_range.group(2)), int(m_range.group(4)) + 1):
+                cands_id = [f"{pref_a}{n:0{width}d}", f"{pref_a}{n:03d}", f"{pref_a}{n:02d}", f"{pref_a}{n}"]
+                hit = next((cid for cid in cands_id if cid in ep_files), None)
+                if hit is None:
+                    raise FileNotFoundError(f"未找到 {cands_id[0]} 台本 ({cue_sheets_dir})")
+                _add(hit, ep_files[hit])
             continue
-        m_single = re.match(r"^E?(\d{1,3})$", upper)
+        # Single episode id: E001, 1, T01, D02
+        m_single = re.match(r"^([A-Z]*)(\d{1,4})$", upper)
         if m_single:
-            eid = f"E{int(m_single.group(1)):03d}"
-            if eid not in ep_files:
-                raise FileNotFoundError(f"未找到 {eid} 台本 ({cue_sheets_dir})")
-            targets.append((eid, ep_files[eid]))
+            pref = m_single.group(1) or "E"
+            num = int(m_single.group(2))
+            width = max(len(m_single.group(2)), 3 if pref == "E" else 2)
+            cands_id = [f"{pref}{num:0{width}d}", f"{pref}{num:03d}", f"{pref}{num:02d}", f"{pref}{num}"]
+            hit = next((cid for cid in cands_id if cid in ep_files), None)
+            if hit is None:
+                raise FileNotFoundError(f"未找到 {cands_id[0]} 台本 ({cue_sheets_dir})")
+            _add(hit, ep_files[hit])
+            continue
+        if upper in ep_files:
+            _add(upper, ep_files[upper])
             continue
         raise ValueError(f"无法解析 --episodes 参数: {token!r}")
     return targets
@@ -984,9 +1027,20 @@ def main() -> int:
                     continue
 
             t_ep = time.time()
+            ep_domain = domain
+            ep_bgm_style = bgm_style
+            if domain == "hotline":
+                if cue_sheet.mode == "podcast_roundtable":
+                    ep_domain = "hotline_roundtable"
+                elif cue_sheet.mode == "express_commentary":
+                    ep_domain = "hotline_express"
+                else:
+                    ep_domain = "hotline_drama"
+                if not args.bgm_style or args.bgm_style == "hotline":
+                    ep_bgm_style = ep_domain
             dialogue_cues = [c for c in cue_sheet.cues if c.kind == "dialogue"]
             sfx_cues = [c for c in cue_sheet.cues if c.kind == "sfx"]
-            print(f"\n▶️  开始合成 [{label}] 《{cue_sheet.title}》 (对白 {len(dialogue_cues)} | 拟音 {len(sfx_cues)} | 配乐 {len(cue_sheet.acts)} 幕)", flush=True)
+            print(f"\n▶️  开始合成 [{label}] 《{cue_sheet.title}》 (domain={ep_domain} | 对白 {len(dialogue_cues)} | 拟音 {len(sfx_cues)} | 配乐 {len(cue_sheet.acts)} 幕)", flush=True)
 
             cue_audio_map: dict[str, Path] = {}
             cue_meta_map: dict[str, dict[str, Any]] = {}
@@ -1012,7 +1066,7 @@ def main() -> int:
                     offline_dry_run=args.offline_dry_run,
                     drama_client=drama_client,
                     whisper_qa=whisper_qa,
-                    domain=domain,
+                    domain=ep_domain,
                 )
                 cue_audio_map[cue.cue_id] = wav_p
                 cue_meta_map[cue.cue_id] = meta_d
@@ -1053,7 +1107,7 @@ def main() -> int:
             # 3. Per-Act Instrumental BGM (ACE-Step 1.5 XL + SHA-256 Cache)
             for act_spec in cue_sheet.acts:
                 target_dur = 75.0 if float(act_spec.bgm_duration_s or 75.0) >= 60.0 else 48.0
-                bgm_prompt = enrich_anthology_bgm_prompt(act_spec.bgm_prompt, bgm_style=bgm_style)
+                bgm_prompt = enrich_anthology_bgm_prompt(act_spec.bgm_prompt, bgm_style=ep_bgm_style)
                 bgm_key = _sha24({"prompt": bgm_prompt, "vocal_language": "unknown", "dur": round(target_dur, 1)})
                 bgm_wav = cache_dir / "acestep_bgm" / f"{bgm_key}.wav"
                 if args.offline_dry_run:
@@ -1081,7 +1135,7 @@ def main() -> int:
                 acestep_worker.close()
 
             # 4. 3-Bus -16 LUFS Mastering + SRT + Atomic .done
-            stem_prefix = canonical_anthology_stem(cue_sheet, domain=domain)
+            stem_prefix = canonical_anthology_stem(cue_sheet, domain=ep_domain)
             master_res = master_episode_three_bus(
                 cue_sheet=cue_sheet,
                 cue_audio_map=cue_audio_map,

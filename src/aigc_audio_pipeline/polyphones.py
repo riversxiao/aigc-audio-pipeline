@@ -642,12 +642,101 @@ def apply_econ_finance_drama_polyphone_overrides(text: str) -> str:
     return out
 
 
+HOTLINE_DOMAINS: frozenset[str] = frozenset({
+    "hotline",
+    "hotline_roundtable",
+    "hotline_express",
+    "hotline_drama",
+})
+
+HOTLINE_NEWS_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    # Finance, business, legal, tech & daily news Mandarin polyphones (strictly preserves Pinyin + tone)
+    ("这行当", "这航当"),
+    ("老行当", "老航当"),
+    ("各行各业", "各航各业"),
+    ("干咱们这行", "干咱们这航"),
+    ("干这行", "干这航"),
+    ("干这一行", "干这一航"),
+    ("银行行长", "银行航长"),
+    ("央行行长", "央行航长"),
+    ("同行们", "同航们"),
+    ("同行", "同航"),
+    ("内行人", "内航人"),
+    ("外行人", "外航人"),
+    ("行规", "航规"),
+    ("行话", "航话"),
+    ("调解", "条解"),
+    ("调查", "掉查"),
+    ("回调", "回条"),
+    ("下调", "下条"),
+    ("上调", "上条"),
+    ("调整", "条整"),
+    ("调控", "条控"),
+    ("调节", "条节"),
+    ("调仓", "条仓"),
+    ("调侃", "条侃"),
+    ("资产重组", "资产崇组"),
+    ("债务重组", "债务崇组"),
+    ("重播", "崇播"),
+    ("重演", "崇演"),
+    ("重新", "崇新"),
+    ("重申", "崇申"),
+    ("重重", "崇崇"),
+    ("一重", "一崇"),
+    ("双重", "双崇"),
+    ("多重", "多崇"),
+    ("背负", "杯负"),
+    ("背锅", "杯锅"),
+    ("屏息", "丙息"),
+    ("单薄", "单博"),
+    ("薄利", "博利"),
+    ("摊薄", "摊博"),
+    ("削弱", "靴弱"),
+    ("削减", "靴减"),
+    ("血泊", "血坡"),
+    ("主角", "主决"),
+    ("配角", "配决"),
+    ("角色", "决色"),
+    ("埋怨", "蛮怨"),
+    ("着手", "灼手"),
+    ("降价", "酱价"),
+    ("暴降", "暴酱"),
+    ("骤降", "骤酱"),
+    ("传记", "篆记"),
+    ("谣传", "谣船"),
+    ("网传", "网船"),
+    ("相传", "相船"),
+    ("涨价", "掌价"),
+    ("暴涨", "暴掌"),
+    ("追涨", "追掌"),
+    ("长远", "常远"),
+    ("生长", "生掌"),
+    ("增长", "增掌"),
+)
+
+
+def apply_hotline_polyphone_overrides(text: str) -> str:
+    """Return phonetic `tts_text` override for modern daily hotline commentary & urban drama domains."""
+    if not text:
+        return text
+    out = text
+    for canonical, phonetic in HOTLINE_NEWS_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
+    # Smooth transliterated Western name interpuncts (e.g. 彼得·希夫 -> 彼得希夫) while keeping canonical · in .srt
+    out = _INTERPUNCT_NAME_RE.sub(r"\1\2", out)
+    out = _INTERPUNCT_NAME_RE.sub(r"\1\2", out)
+    return out
+
+
 def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
     """Apply domain-appropriate Mandarin polyphone overrides."""
     if not text or domain == "none":
         return text
     if domain == "finance_podcast":
         return apply_finance_polyphone_overrides(text)
+    if domain in HOTLINE_DOMAINS:
+        return apply_hotline_polyphone_overrides(text)
     if domain == "liaozhai_horror":
         return apply_liaozhai_polyphone_overrides(text)
     if domain == "cosmic_horror":

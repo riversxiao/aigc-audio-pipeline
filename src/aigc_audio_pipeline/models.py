@@ -17,6 +17,8 @@ ALLOWED_ACOUSTIC_SPACES: tuple[str, ...] = (
     "vast_hall",
     "studio_warm",
     "vintage_study",
+    "phone_call",
+    "livestream_mic",
 )
 ALLOWED_SFX_PLACEMENTS: tuple[str, ...] = ("sequential", "overlay_next")
 ALLOWED_LANGUAGE_CODES: tuple[str, ...] = ("zh", "en", "zh-en")
@@ -44,6 +46,21 @@ _SIMPLE_TAG_FALLBACKS: dict[str, str] = {
     "conversational": "softly",
     "earthy": "laughs",
     "chuckles": "laughs",
+    "pushback": "dramatic tone",
+    "ironic": "softly",
+    "skeptical": "softly",
+    "urgent": "dramatic tone",
+    "emphatic": "dramatic tone",
+    "amused": "laughs",
+    "somber": "softly",
+    "indignant": "angry",
+    "weary": "sighs",
+    "tender": "softly",
+    "nervous": "softly",
+    "smug": "laughs",
+    "shocked": "dramatic tone",
+    "composed": "softly",
+    "sardonic": "coldly",
 }
 
 
@@ -330,6 +347,7 @@ class EpisodeCueSheet:
         "immersive_audiobook_drama",
         "condensed_radio_drama",
         "podcast_roundtable",
+        "express_commentary",
         "audition_pack",
     ] = "immersive_audiobook_drama"
     source_chapter_file: str = ""

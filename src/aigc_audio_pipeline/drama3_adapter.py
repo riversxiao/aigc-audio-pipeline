@@ -76,6 +76,21 @@ DRAMA3_TAG_MAP: dict[str, tuple[str, str]] = {
     "maniacal": ("unhinged, manic trembling intensity on the brink of madness", ""),
     "solemn": ("grave, solemn, heavy cinematic stillness", "slow"),
     "haunting": ("hollow, haunting unearthly whisper", "whisper"),
+    # Modern news hotline roundtable, commentary & urban social drama tags
+    "ironic": ("dry, pointed ironic undertone", ""),
+    "skeptical": ("sharp, skeptical questioning tone", ""),
+    "urgent": ("urgent, tight breaking-news energy", ""),
+    "emphatic": ("firm, emphatic clarity on key point", ""),
+    "amused": ("light, amused wry delivery", ""),
+    "somber": ("quiet, somber, heavy emotional weight", "slow"),
+    "indignant": ("heated, righteous indignation", "forceful"),
+    "weary": ("exhausted, hollow, worn-down quiet resignation", "soft"),
+    "tender": ("gentle, compassionate, intimate warmth", "soft"),
+    "nervous": ("hesitant, tight nervous breath", ""),
+    "smug": ("brazen, self-satisfied smug arrogance", ""),
+    "shocked": ("stunned, caught-off-guard disbelief", ""),
+    "composed": ("steady, dignified, restrained composure", ""),
+    "sardonic": ("biting, cynical sardonic edge", ""),
 }
 
 # Paralinguistic point events kept inline in Drama 3 square brackets
@@ -162,8 +177,9 @@ def strip_drama3_markup(drama3_text: str) -> str:
     return re.sub(r"\s+", " ", no_brackets).strip()
 
 
-# Subtle non-announcer micro-cues for Chinese finance_podcast (conversational/curious/warmly/earthy/seriously
-# intentionally map to "" so the real-human podcast reference WAV drives 100% natural, unforced prosody!)
+# Subtle non-announcer micro-cues for Chinese finance_podcast & hotline talk/roundtable
+# (conversational/curious/warmly/earthy/seriously intentionally map to "" so the real-human studio
+# reference WAV drives 100% natural, unforced conversational prosody!)
 FINANCE_PODCAST_ZH_MICRO_MAP: dict[str, tuple[str, str]] = {
     "softly": ("", "soft"),
     "whispers": ("压低声音", "whisper"),
@@ -171,6 +187,13 @@ FINANCE_PODCAST_ZH_MICRO_MAP: dict[str, tuple[str, str]] = {
     "pushback": ("语气微顿、敏锐追问", ""),
     "wryly": ("带着一丝冷幽默", ""),
     "sarcastic": ("略带反讽", ""),
+    "ironic": ("略带反讽", ""),
+    "skeptical": ("带着几分质疑追问", ""),
+    "urgent": ("语速紧凑、切入重点", ""),
+    "emphatic": ("吐字加重、点出关键", ""),
+    "amused": ("带着笑意调侃", ""),
+    "somber": ("语气放缓、沉静克制", "slow"),
+    "indignant": ("语气发沉、带着不平", ""),
 }
 
 
@@ -214,7 +237,14 @@ _ECON_FINANCE_NARRATOR_BRIEFS: dict[str, str] = {
     "capitalism_and_freedom": "crisp, articulate 1962 Chicago public-policy debate narration",
     "game_theory_strategy": "clever, brisk strategic game-theory thriller narration",
     "debt_cycle_machine": "clear, steady macro-cycle analytical documentary drama narration",
+    "hotline_drama": "cinematic, grounded modern urban investigative radio drama narration, restrained and vivid",
 }
+
+_NATURAL_ZH_PODCAST_DOMAINS: frozenset[str] = frozenset({
+    "finance_podcast",
+    "hotline_roundtable",
+    "hotline_express",
+})
 
 
 def translate_cue_to_drama3_input(
@@ -230,13 +260,14 @@ def translate_cue_to_drama3_input(
     - `attempt == 1`: Full multi-segment natural-language acting directions (`[...]`), paralinguistic
       point events (`[sighs]`, `[sharp inhale]`), and paired prosody spans (`<whisper>…</whisper>`,
       `<forceful>…</forceful>`, `<slow>…</slow>`), plus domain-aware polyphone disambiguation.
-      In `finance_podcast` mode for Chinese hosts/guests, avoids artificial "podcast host tone" prefixes
-      so real-human studio reference anchors preserve genuine conversational breath and cadence.
-    - `attempt == 2`: Simplified single leading emotion bracket (or clean text for `finance_podcast`) for retry.
+      In `finance_podcast` / `hotline_roundtable` / `hotline_express` mode for Chinese hosts/guests,
+      avoids artificial "podcast host tone" prefixes so real-human studio reference anchors preserve
+      genuine conversational breath and cadence.
+    - `attempt == 2`: Simplified single leading emotion bracket (or clean text for natural zh podcasts) for retry.
     - `attempt >= 3`: Zero-tag plain phonetic text (guaranteed 0% tag-reading fallback).
     """
     lang = cue.language_code or (profile.language_code if profile is not None else "") or "zh"
-    is_zh_podcast = (domain == "finance_podcast") and (lang != "en")
+    is_zh_podcast = (domain in _NATURAL_ZH_PODCAST_DOMAINS) and (lang != "en")
     source_tagged = cue.tts_text if (cue.tts_text and not use_phoneme_pins) else cue.text
     phonetic_tagged = _apply_drama3_phonetics(
         source_tagged,
@@ -301,12 +332,15 @@ def translate_cue_to_drama3_input(
         if seg_idx == 0:
             if lang == "en" and not style_briefs and cue.role_id.startswith("buffett"):
                 style_briefs.append("clear, brisk prime-age Midwestern investor voice, warm and folksy")
-            elif domain != "finance_podcast":
+            elif domain not in _NATURAL_ZH_PODCAST_DOMAINS:
                 if cue.stability == 1.0 and not style_briefs:
-                    style_briefs.append("solemn, ancient monotone resonance")
+                    style_briefs.append("solemn, measured broadcast gravity" if domain == "hotline_drama" else "solemn, ancient monotone resonance")
                     xml_span = xml_span or "slow"
                 elif cue.acoustic_space == "memory_echo" and not style_briefs:
                     style_briefs.append("distant, solemn memory voice")
+                elif domain == "hotline_drama" and cue.role_id == "female_elder" and not style_briefs:
+                    style_briefs.append("dignified, weathered elderly Chinese woman, warm measured cadence")
+                    xml_span = xml_span or "slow"
                 elif not style_briefs and role_tier == "narrator":
                     if domain == "liaozhai_horror":
                         style_briefs.append("eerie, midnight classical Chinese folklore suspense narration")

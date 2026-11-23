@@ -1420,9 +1420,141 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertFalse(leak_qa.passed)
         self.assertIn("haunting", leak_qa.leaked_tags)
 
+    def test_hotline_acoustic_spaces_polyphones_and_target_resolver(self) -> None:
+        import importlib.util
+        import tempfile
+
+        from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
+        from aigc_audio_pipeline.mixer import condition_dialogue_clip
+        from aigc_audio_pipeline.polyphones import apply_domain_polyphone_overrides
+
+        # 1. Modern hotline polyphones & Western interpunct smoothing
+        raw = "彼得·希夫认为，干咱们这行面对大幅回调和官方调解，别光看同行调侃。"
+        out = apply_domain_polyphone_overrides(raw, domain="hotline_roundtable")
+        self.assertIn("彼得希夫", out)
+        self.assertIn("干咱们这航", out)
+        self.assertIn("回条", out)
+        self.assertIn("条解", out)
+        self.assertIn("同航", out)
+        self.assertIn("条侃", out)
+
+        # 2. Drama 3 translation: zero-announcer mode for roundtable/express, rich cinematic mode for hotline_drama
+        host_prof = VoiceProfile(
+            role_id="host_zhiwei",
+            display_name="许知微",
+            voice_id="anchor_host",
+            status="locked",
+        )
+        elder_prof = VoiceProfile(
+            role_id="female_elder",
+            display_name="孟素华",
+            gender="female",
+            age_group="old",
+            voice_id="anchor_elder",
+            status="locked",
+        )
+        rt_cue = TimelineCue(
+            cue_id="t01_c1",
+            act_id="act1",
+            kind="dialogue",
+            role_id="host_zhiwei",
+            text="[curious] 怀远，这波回调到底谁在卖？",
+            stability=0.5,
+            acoustic_space="studio_warm",
+        )
+        d3_rt = translate_cue_to_drama3_input(rt_cue, host_prof, attempt=1, domain="hotline_roundtable")
+        self.assertNotIn("podcast host tone", d3_rt)
+        self.assertIn("回条", d3_rt)
+
+        drama_elder_cue = TimelineCue(
+            cue_id="d01_c5",
+            act_id="act2",
+            kind="dialogue",
+            role_id="female_elder",
+            speaker_name="孟素华",
+            text="年轻人，你把我们老同事的脸做成提线木偶，问过任何人吗？",
+            stability=0.5,
+            acoustic_space="dry",
+        )
+        d3_elder = translate_cue_to_drama3_input(drama_elder_cue, elder_prof, attempt=1, domain="hotline_drama")
+        self.assertIn("elderly Chinese woman", d3_elder)
+        self.assertIn("<slow>", d3_elder)
+
+        # 3. Validate & condition phone_call and livestream_mic acoustic spaces via FFmpeg
+        reg = VoiceCastingRegistry(
+            project_id="hotline_test",
+            project_title="热点测试",
+            domain="hotline",
+            roles={"host_zhiwei": host_prof, "female_elder": elder_prof},
+        )
+        sheet = EpisodeCueSheet(
+            episode_id="D01",
+            chapter_number=1,
+            title="一秒借来的脸",
+            mode="condensed_radio_drama",
+            acts=[ActMusicSpec(act_id="act1", title="第一幕", bgm_prompt="sparse felt piano")],
+            cues=[
+                TimelineCue(
+                    cue_id="c_phone",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="host_zhiwei",
+                    speaker_name="周燃",
+                    text="[smug] 喂，哪位？谈广告直接报预算。",
+                    stability=0.0,
+                    acoustic_space="phone_call",
+                ),
+                TimelineCue(
+                    cue_id="c_live",
+                    act_id="act1",
+                    kind="dialogue",
+                    role_id="female_elder",
+                    speaker_name="老K",
+                    text="[indignant] 规矩不能坏，快拿水来！",
+                    stability=0.0,
+                    acoustic_space="livestream_mic",
+                ),
+            ],
+        )
+        self.assertEqual(sheet.validate(reg, require_locked_voices=True), [])
+
+        with tempfile.TemporaryDirectory(prefix="test_hotline_spaces_") as td:
+            tmp = Path(td)
+            src_wav = tmp / "src.wav"
+            subprocess.run(
+                [
+                    "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                    "-f", "lavfi", "-i", "sine=frequency=320:duration=1.8:sample_rate=48000",
+                    "-ac", "2", "-c:a", "pcm_s16le", str(src_wav),
+                ],
+                check=True,
+            )
+            for sp in ("phone_call", "livestream_mic"):
+                cond = condition_dialogue_clip(src_wav, tmp / f"cond_{sp}.wav", acoustic_space=sp)
+                self.assertTrue(cond.is_file() and cond.stat().st_size > 10000)
+
+            # 4. Prefix-agnostic resolve_targets (ALL, T01-T02, D01)
+            repo_root = Path(__file__).resolve().parents[1]
+            spec = importlib.util.spec_from_file_location(
+                "run_anthology_96gb_studio",
+                repo_root / "colab_96gb/run_anthology_96gb_studio.py",
+            )
+            assert spec and spec.loader
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
+            cs_dir = tmp / "cue_sheets"
+            cs_dir.mkdir()
+            for nm in ("T01_anthropic.json", "T02_gold.json", "D01_face.json", "D02_light.json"):
+                (cs_dir / nm).write_text("{}", encoding="utf-8")
+            self.assertEqual([k for k, _ in mod.resolve_targets("T01-T02,D01", cs_dir, tmp)], ["T01", "T02", "D01"])
+            self.assertEqual([k for k, _ in mod.resolve_targets("ALL", cs_dir, tmp)], ["D01", "D02", "T01", "T02"])
+            self.assertIn("no vocals", mod.enrich_anthology_bgm_prompt("Warm night debate", bgm_style="hotline_roundtable").lower())
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 
