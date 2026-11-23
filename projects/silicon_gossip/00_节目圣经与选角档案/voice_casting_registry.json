@@ -1,0 +1,283 @@
+{
+  "project_id": "silicon_gossip",
+  "project_title": "《商战大瓜英语局》— 真实硅谷/华尔街名场面轻英语广播剧场",
+  "language_code": "zh-en",
+  "domain": "hotline_roundtable",
+  "tts_model_id": "fishaudio/drama-3",
+  "sfx_model_id": "OpenMOSS-Team/MOSS-SoundEffect-v2.0",
+  "music_model_id": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+  "asr_model_id": "faster-whisper-small-int8",
+  "updated_at": "2026-11-23T23:24:24Z",
+  "drive_audio_root_id": "",
+  "roles": {
+    "host_xiaowei": {
+      "role_id": "host_xiaowei",
+      "display_name": "小微",
+      "aliases": [
+        "主机小微",
+        "主理人小微"
+      ],
+      "tier": "protagonist",
+      "gender": "female",
+      "age_group": "young_adult",
+      "language_code": "zh-en",
+      "accent_code": "zh_en_bilingual_us",
+      "vocal_register": "清亮灵动、语速明快、带笑意的现代小宇宙女主播，英文短句自然地道不装腔",
+      "persona_summary": "硅谷商业八卦主讲人，节奏极快、一针见血，专把高深商业英语拆成听完就能用的大白话狠句。",
+      "accent_requirement": "标准现代大陆普通话聊天口吻（零播音腔）+ 地道清晰美式英文短句",
+      "status": "locked",
+      "voice_id": "drama3_anchor_host_xiaowei",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Reuse: host_zhiwei (OpenMOSS Apache-2.0)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.82,
+      "signature_tags": [
+        "[conversational]",
+        "[curious]",
+        "[chuckles]",
+        "[amused]"
+      ],
+      "forbidden_habits": [
+        "严禁晚会播音腔",
+        "严禁照本宣科英文老师腔"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1
+      ],
+      "audition_line": "[conversational] 估值八百六十亿美元的老板，居然在一个十五分钟视频会里被自己公司开除了。",
+      "audition_history": []
+    },
+    "guest_laozhou": {
+      "role_id": "guest_laozhou",
+      "display_name": "大周",
+      "aliases": [
+        "搭档大周",
+        "老周",
+        "host_dazhou"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "zh-en",
+      "accent_code": "zh_mainland_sz",
+      "vocal_register": "爽朗接地气、自带笑声和人间烟火气的现代男捧哏，擅长神吐槽与打工人嘴替",
+      "persona_summary": "普通打工人和创业者的超级嘴替，听到老外拐弯抹角就忍不住拆台爆笑，专把硅谷宫斗翻译成咱们日常上班场景。",
+      "accent_requirement": "接地气、带生活烟火气的标准大陆普通话聊天口吻",
+      "status": "locked",
+      "voice_id": "drama3_anchor_guest_laozhou",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Reuse: guest_laozhou (Mainland studio)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.8,
+      "signature_tags": [
+        "[earthy]",
+        "[chuckles]",
+        "[shocked]",
+        "[amused]"
+      ],
+      "forbidden_habits": [
+        "严禁书面语念稿感",
+        "严禁端着装精英"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1
+      ],
+      "audition_line": "[chuckles] 好家伙，我投了一百三十亿美元当榜一大哥，你把主播封号了提前一分钟才通知我？",
+      "audition_history": []
+    },
+    "sam_altman": {
+      "role_id": "sam_altman",
+      "display_name": "Sam Altman",
+      "aliases": [
+        "奥特曼",
+        "Sam"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "young_adult",
+      "language_code": "en",
+      "accent_code": "us_silicon_valley",
+      "vocal_register": "Crisp, fast, confident Silicon Valley founder American male voice, sharp reaction under ambush",
+      "persona_summary": "OpenAI CEO Sam Altman in the November 2023 coup — caught off guard on Friday, icy comeback by Wednesday.",
+      "accent_requirement": "Standard Silicon Valley General American English (crisp, natural executive cadence)",
+      "status": "locked",
+      "voice_id": "drama3_anchor_sam_altman",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio: Meta Expresso ex01 (48kHz Silicon Valley US Male)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[shocked]",
+        "[firmly]",
+        "[confident]",
+        "[blunt]"
+      ],
+      "forbidden_habits": [
+        "No ESL slow textbook reading",
+        "No robotic flatness"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1
+      ],
+      "audition_line": "[shocked] Wait—are you firing me right now?",
+      "audition_history": []
+    },
+    "board_ilya": {
+      "role_id": "board_ilya",
+      "display_name": "Board Rep (Ilya)",
+      "aliases": [
+        "董事会代表",
+        "Ilya"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "en",
+      "accent_code": "uk_london_rp",
+      "vocal_register": "Icy-polite, clipped, razor-calm British/European intellectual male baritone, chilling corporate formality",
+      "persona_summary": "OpenAI board representative reading the polite yet ruthless firing notice over Google Meet.",
+      "accent_requirement": "Crisp, restrained London RP / European intellectual English",
+      "status": "locked",
+      "voice_id": "drama3_anchor_board_ilya",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Reuse: alistair_finch (OpenSLR-83 southern_male)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[coldly]",
+        "[icy polite]",
+        "[measured]"
+      ],
+      "forbidden_habits": [
+        "No shouting or cartoonish villainy"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1
+      ],
+      "audition_line": "[coldly] Sam, you haven't been consistently candid.",
+      "audition_history": []
+    },
+    "satya_nadella": {
+      "role_id": "satya_nadella",
+      "display_name": "Satya Nadella",
+      "aliases": [
+        "纳德拉",
+        "微软CEO"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "en",
+      "accent_code": "intl_indian_exec",
+      "vocal_register": "Commanding, articulate educated Indian-American tech CEO baritone, razor-sharp executive authority",
+      "persona_summary": "Microsoft CEO Satya Nadella — furious at being blindsided on a $13B stake, executing a midnight counter-strike.",
+      "accent_requirement": "Authentic, crystal-clear educated Indian-American executive English (zero caricature)",
+      "status": "locked",
+      "voice_id": "drama3_anchor_satya_nadella",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Reuse: rajiv_menon (47.8dB Indian business podcaster)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[angry]",
+        "[firmly]",
+        "[blunt]"
+      ],
+      "forbidden_habits": [
+        "No exaggerated accent caricature"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1
+      ],
+      "audition_line": "[angry] We were completely blindsided.",
+      "audition_history": []
+    },
+    "exec_female": {
+      "role_id": "exec_female",
+      "display_name": "OpenAI Exec",
+      "aliases": [
+        "高管代表",
+        "女高管"
+      ],
+      "tier": "recurring",
+      "gender": "female",
+      "age_group": "young_adult",
+      "language_code": "en",
+      "accent_code": "us_silicon_valley",
+      "vocal_register": "Sharp, fast, high-energy Silicon Valley female tech executive American English",
+      "persona_summary": "Senior OpenAI executive / employee revolt spokesperson confronting the board with 700 signatures.",
+      "accent_requirement": "Crisp Silicon Valley General American Female English",
+      "status": "locked",
+      "voice_id": "drama3_anchor_exec_female",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Reuse: victoria_vance (Expresso ex02 48kHz studio)",
+      "default_stability": 0.0,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[urgent]",
+        "[firmly]",
+        "[blunt]"
+      ],
+      "forbidden_habits": [
+        "No slow textbook cadence"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1
+      ],
+      "audition_line": "[firmly] Seven hundred people signed. We have the leverage.",
+      "audition_history": []
+    }
+  },
+  "sonic_motifs": {
+    "gmeet_join_chime": {
+      "motif_id": "gmeet_join_chime",
+      "name": "Google Meet 视频会进房提示音",
+      "description": "清脆利落的现代视频会议软件进房叮咚声（瞬间把听众拉进 2023 年周五中午的鸿门宴）",
+      "sfx_prompt": "Crisp clean two-tone modern video conference call join chime followed by a subtle laptop microphone unmute click, pure foley, no human voice",
+      "duration_seconds": 1.6,
+      "prompt_influence": 0.65,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "record_scratch_freeze": {
+      "motif_id": "record_scratch_freeze",
+      "name": "综艺定格切换叮咚提示音",
+      "description": "明快干脆的现代播客/脱口秀定格转场提示音（短剧狠话甩完立刻切回双主播爆笑拆台）",
+      "sfx_prompt": "Snappy clean modern broadcast transition pop chime with subtle percussive rim click, crisp podcast sting, pure foley, no human voice",
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "midnight_phone_buzz": {
+      "motif_id": "midnight_phone_buzz",
+      "name": "凌晨手机狂震与接通声",
+      "description": "木质床头柜上手机疯狂连续震动两下后接通免提电话的真实拟音（纳德拉半夜被惊醒名场面）",
+      "sfx_prompt": "Smartphone vibrating urgently twice on a wooden nightstand in a quiet bedroom followed by a crisp call pickup beep, pure foley, no human voice",
+      "duration_seconds": 2.2,
+      "prompt_influence": 0.65,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "tweet_post_and_buzz": {
+      "motif_id": "tweet_post_and_buzz",
+      "name": "键盘狂敲与办公室骚动欢呼",
+      "description": "机械键盘急速敲击接清脆发送提示音与隐约办公区鼓掌沸腾声（700 员工逼宫与奥特曼杀回总部）",
+      "sfx_prompt": "Fast brisk laptop typing burst ending in a crisp message sent whoosh followed by brief upbeat office applause in a bright modern glass headquarters, pure foley, no human voice",
+      "duration_seconds": 2.4,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    }
+  }
+}
