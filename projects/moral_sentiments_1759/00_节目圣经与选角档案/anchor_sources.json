@@ -1,0 +1,55 @@
+{
+  "project_id": "moral_sentiments_1759",
+  "project_title": "《1759格拉斯哥灯火：〈道德情操论〉商业温度》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_温暖人文纪录片历史男中音"
+    },
+    "adam_smith": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (36岁温润通透格拉斯哥道德哲学教授)"
+    },
+    "host_su": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁知性清亮真人财经人文女记者)"
+    },
+    "carpenter_mac": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁厚道实在格拉斯哥老木匠师傅)"
+    },
+    "david_hume": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_醇厚风趣犀利苏格兰哲学挚友休谟"
+    },
+    "lord_craven": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_傲慢虚荣苏格兰贵族克雷文勋爵"
+    },
+    "student_andrew": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_22岁穷苦却极有骨气的格拉斯哥大学青年安德鲁"
+    },
+    "mrs_margaret": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "su_qinghan",
+      "source_voice_name": "Reuse: 诸界锁仙_苏清寒_38岁温柔明理的格拉斯哥女房东玛格丽特"
+    }
+  }
+}

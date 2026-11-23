@@ -1,0 +1,55 @@
+{
+  "project_id": "why_nations_fail",
+  "project_title": "《国运的开关：〈为什么国家会失败〉制度史剧》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "prof_shen": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (50岁温润锐利真人学者男中音·制度经济史学者沈观澜)"
+    },
+    "host_su": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁知性清亮真人环球人文财经女记者·苏晚舟)"
+    },
+    "boss_lin": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁跑遍拉美与欧洲做外贸的真人实业老板·老林)"
+    },
+    "lord_monopoly": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_55岁体面冷峻垄断权贵代表与皇家特许大臣"
+    },
+    "historian_wei": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_64岁博古通今精通地理与气候假说的历史辩手魏老先生"
+    },
+    "inventor_william": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_28岁1589年发明织袜机却被女王拒批专利的年轻匠人威廉"
+    },
+    "merchant_elena": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "jiang_qinghuang",
+      "source_voice_name": "Reuse: 诸界锁仙_姜清凰_36岁精明果敢的威尼斯年轻女商船合伙人埃琳娜"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇厚重的大历史纪录片旁白男中音"
+    }
+  }
+}
