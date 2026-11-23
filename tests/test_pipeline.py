@@ -1223,12 +1223,12 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertTrue(pct_qa.passed)
 
     def test_anthology_three_shows_validation_polyphones_and_studio_guardrails(self) -> None:
-        """Verify all 7 anthology registries (49 cue sheets), polyphones, narrator briefs, and G4 studio guardrails."""
+        """Verify all 28 anthology registries (196 cue sheets), polyphones, narrator briefs, wave aliases & G4 guardrails."""
         import importlib.util
         import json
 
         from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
-        from aigc_audio_pipeline.polyphones import compute_tts_text_override
+        from aigc_audio_pipeline.polyphones import ECON_FINANCE_DRAMA_DOMAINS, compute_tts_text_override
 
         repo_root = Path(__file__).resolve().parents[1]
         zhujie_cast = json.loads(
@@ -1264,17 +1264,48 @@ class AudioPipelineTests(unittest.TestCase):
             compute_tts_text_override("约翰·梅纳德·凯恩斯与阿瑟·庇古激辩重重危机。", domain="keynes_1936"),
             "约翰梅纳德凯恩斯与阿瑟庇古激辩崇崇危机。",
         )
+        for econ_domain in sorted(ECON_FINANCE_DRAMA_DOMAINS):
+            self.assertEqual(
+                compute_tts_text_override("约翰·劳与央行行长激辩各行各业重重危机。", domain=econ_domain),
+                "约翰劳与央行航长激辩各航各业崇崇危机。",
+                f"Polyphone normalization failed for {econ_domain}",
+            )
 
-        # 2. Validate every registry, anchor mapping, and all 7 cue sheets across all 7 anthology shows (49 cue sheets)
+        # 2. Validate every registry, anchor mapping, 1:1 covers, and all 7 cue sheets across ALL 28 anthology shows (196 cue sheets!)
+        econ_24_shows = [
+            "wealth_of_nations",
+            "free_to_choose",
+            "keynes_1936",
+            "extraordinary_delusions",
+            "bastiat_unseen",
+            "one_lesson_econ",
+            "basic_economics",
+            "freakonomics_theater",
+            "leisure_class_1899",
+            "schumpeter_1911",
+            "moral_sentiments_1759",
+            "why_nations_fail",
+            "stock_operator_1923",
+            "intelligent_investor",
+            "random_walk_wallstreet",
+            "behavioral_econ_traps",
+            "psychology_of_money",
+            "black_swan_antifragile",
+            "big_short_2008",
+            "lords_of_finance_1929",
+            "ascent_of_money",
+            "capitalism_and_freedom",
+            "game_theory_strategy",
+            "debt_cycle_machine",
+        ]
         shows = [
             ("liaozhai_midnight", "liaozhai_horror", 7),
             ("cthulhu_archives", "cosmic_horror", 7),
             ("hayek_1944", "hayek_economics", 7),
             ("monte_cristo", "monte_cristo_drama", 7),
-            ("wealth_of_nations", "wealth_of_nations", 7),
-            ("free_to_choose", "free_to_choose", 7),
-            ("keynes_1936", "keynes_1936", 7),
+            *[(slug, slug, 7) for slug in econ_24_shows],
         ]
+        total_validated_sheets = 0
         for proj_name, expected_domain, expected_count in shows:
             proj_dir = repo_root / "projects" / proj_name
             reg = VoiceCastingRegistry.load(proj_dir / "00_节目圣经与选角档案/voice_casting_registry.json")
@@ -1295,12 +1326,19 @@ class AudioPipelineTests(unittest.TestCase):
 
             scripts_dir = proj_dir / "02_分集广播剧台本"
             jsons = sorted([*scripts_dir.glob("AUDITION*.json"), *scripts_dir.glob("E*.json")])
-            self.assertEqual(len(jsons), expected_count)
+            self.assertEqual(len(jsons), expected_count, f"Expected {expected_count} scripts in {proj_name}")
             for jp in jsons:
                 cs = EpisodeCueSheet.load(jp)
-                self.assertEqual(cs.validate(reg, require_locked_voices=True), [], f"Errors in {jp.name}")
+                self.assertEqual(cs.validate(reg, require_locked_voices=True), [], f"Errors in {proj_name}/{jp.name}")
+                total_validated_sheets += 1
 
-        # 3. Verify horror/intellectual/revenge/enlightenment/chicago/cambridge Drama 3 tag translation & narrator styles
+            if proj_name in econ_24_shows:
+                covers = sorted((proj_dir / "03_喜马拉雅分发与爆款包装方案").glob("*.jpg"))
+                self.assertGreaterEqual(len(covers), 2, f"Missing 1:1 clean/titled covers for {proj_name}")
+
+        self.assertEqual(total_validated_sheets, 28 * 7)
+
+        # 3. Verify Drama 3 tag translation & narrator briefs across core and all 24 econ/finance domains
         c_liao = TimelineCue(cue_id="t1", act_id="a1", kind="dialogue", role_id="narrator", text="三更雨落兰若寺。", stability=0.5)
         d3_liao = translate_cue_to_drama3_input(c_liao, VoiceProfile(role_id="narrator", display_name="旁白", tier="narrator"), domain="liaozhai_horror")
         self.assertIn("folklore suspense", d3_liao)
@@ -1330,7 +1368,13 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertIn("1936 Cambridge", d3_kn)
         self.assertIn("约翰梅纳德凯恩斯谈崇崇危机", d3_kn)
 
-        # 4. Verify universal anthology studio BGM isolation & QA leak detection on new horror tags
+        for econ_domain in econ_24_shows[3:]:
+            c_ec = TimelineCue(cue_id=f"t_{econ_domain}", act_id="a1", kind="dialogue", role_id="narrator", text="央行行长谈各行各业。", stability=0.5)
+            d3_ec = translate_cue_to_drama3_input(c_ec, VoiceProfile(role_id="narrator", display_name="历史旁白", tier="narrator"), domain=econ_domain)
+            self.assertIn("央行航长谈各航各业", d3_ec, f"Drama 3 narrator polyphone missing for {econ_domain}")
+            self.assertNotIn("xianxia", d3_ec.lower(), f"Xianxia leak in {econ_domain} narrator brief")
+
+        # 4. Verify universal anthology studio BGM isolation, G4 wave aliases & QA leak detection
         spec = importlib.util.spec_from_file_location(
             "run_anthology_96gb_studio",
             repo_root / "colab_96gb/run_anthology_96gb_studio.py",
@@ -1348,20 +1392,24 @@ class AudioPipelineTests(unittest.TestCase):
         self.assertIn("orchestral", mc_bgm.lower())
         self.assertNotIn("traditional chinese", mc_bgm.lower())
 
-        wn_bgm = mod.enrich_anthology_bgm_prompt("1776 Edinburgh tavern candlelight reflection", bgm_style="wealth_of_nations")
-        self.assertIn("no vocals", wn_bgm.lower())
-        self.assertIn("harpsichord", wn_bgm.lower())
-        self.assertNotIn("traditional chinese", wn_bgm.lower())
+        for econ_slug in econ_24_shows:
+            ebgm = mod.enrich_anthology_bgm_prompt("Atmospheric scene reflection", bgm_style=econ_slug)
+            self.assertIn("no vocals", ebgm.lower(), f"Missing no-vocals guardrail for {econ_slug}")
+            self.assertNotIn("traditional chinese", ebgm.lower(), f"Xianxia BGM leak for {econ_slug}")
+            self.assertIn(econ_slug, mod._WHISPER_PROMPTS, f"Missing Whisper prompt for {econ_slug}")
 
-        fc_bgm = mod.enrich_anthology_bgm_prompt("1980 Chicago evening study reflection", bgm_style="free_to_choose")
-        self.assertIn("no vocals", fc_bgm.lower())
-        self.assertIn("chicago", fc_bgm.lower())
-        self.assertNotIn("traditional chinese", fc_bgm.lower())
-
-        kn_bgm = mod.enrich_anthology_bgm_prompt("1936 foggy King's College dusk", bgm_style="keynes_1936")
-        self.assertIn("no vocals", kn_bgm.lower())
-        self.assertIn("cambridge", kn_bgm.lower())
-        self.assertNotIn("traditional chinese", kn_bgm.lower())
+        launch_spec = importlib.util.spec_from_file_location(
+            "launch_g4_anthology_drama3",
+            repo_root / "colab_96gb/launch_g4_anthology_drama3.py",
+        )
+        assert launch_spec and launch_spec.loader
+        launch_mod = importlib.util.module_from_spec(launch_spec)
+        launch_spec.loader.exec_module(launch_mod)
+        resolved_all_econ = launch_mod.resolve_project_keys("all_econ24")
+        self.assertEqual(len(resolved_all_econ), 24)
+        for wave_i in range(1, 9):
+            self.assertEqual(len(launch_mod.resolve_project_keys(f"wave{wave_i}")), 3)
+        self.assertEqual(len(launch_mod.resolve_project_keys("wave1,wave2")), 6)
 
         leak_qa = evaluate_dialogue_qa(
             tagged_prompt="[haunting] 拉莱耶在呼唤。",

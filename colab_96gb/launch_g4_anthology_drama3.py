@@ -791,12 +791,56 @@ def release_colab_runtime() -> None:
         print(f"ℹ️ 已写入 .colab_auto_unassign 交由 Notebook 释放实例 ({exc})。", flush=True)
 
 
+WAVE_ALIASES: dict[str, list[str]] = {
+    "wave1": ["wealth_of_nations", "free_to_choose", "keynes_1936"],
+    "wave2": ["extraordinary_delusions", "bastiat_unseen", "one_lesson_econ"],
+    "wave3": ["basic_economics", "freakonomics_theater", "leisure_class_1899"],
+    "wave4": ["schumpeter_1911", "moral_sentiments_1759", "why_nations_fail"],
+    "wave5": ["stock_operator_1923", "intelligent_investor", "random_walk_wallstreet"],
+    "wave6": ["behavioral_econ_traps", "psychology_of_money", "black_swan_antifragile"],
+    "wave7": ["big_short_2008", "lords_of_finance_1929", "ascent_of_money"],
+    "wave8": ["capitalism_and_freedom", "game_theory_strategy", "debt_cycle_machine"],
+    "all_econ24": [
+        "wealth_of_nations", "free_to_choose", "keynes_1936",
+        "extraordinary_delusions", "bastiat_unseen", "one_lesson_econ",
+        "basic_economics", "freakonomics_theater", "leisure_class_1899",
+        "schumpeter_1911", "moral_sentiments_1759", "why_nations_fail",
+        "stock_operator_1923", "intelligent_investor", "random_walk_wallstreet",
+        "behavioral_econ_traps", "psychology_of_money", "black_swan_antifragile",
+        "big_short_2008", "lords_of_finance_1929", "ascent_of_money",
+        "capitalism_and_freedom", "game_theory_strategy", "debt_cycle_machine",
+    ],
+    "all": list(ANTHOLOGY_PROJECTS.keys()),
+}
+
+
+def resolve_project_keys(raw_proj: str) -> list[str]:
+    tokens = [p.strip() for p in raw_proj.strip().split(",") if p.strip()]
+    selected: list[str] = []
+    unknown: list[str] = []
+    for tok in tokens:
+        if tok in WAVE_ALIASES:
+            for k in WAVE_ALIASES[tok]:
+                if k not in selected:
+                    selected.append(k)
+        elif tok in ANTHOLOGY_PROJECTS:
+            if tok not in selected:
+                selected.append(tok)
+        else:
+            unknown.append(tok)
+    if not selected or unknown:
+        raise SystemExit(
+            f"Unknown project(s): {unknown}. Valid keys: {sorted(ANTHOLOGY_PROJECTS.keys())}, wave1..wave8, all_econ24, all"
+        )
+    return selected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="通用精品广播剧矩阵 · Colab 96GB G4 零 API 成本一键冷启动与归档器")
     parser.add_argument(
         "--project",
         required=True,
-        help="选择要渲染的项目（支持单个 key、逗号分隔多部连跑、wave1 或 all）",
+        help="选择要渲染的项目（支持单个 key、逗号分隔多部连跑、wave1..wave8、all_econ24 或 all）",
     )
     parser.add_argument("--episodes", default="AUDITION,E001-E006", help="如 AUDITION,E001 或 AUDITION,E001-E006")
     parser.add_argument("--profile", choices=["fp8", "fast"], default="fp8")
@@ -807,37 +851,7 @@ def main() -> int:
     parser.add_argument("--offline-dry-run", action="store_true")
     args = parser.parse_args()
 
-    wave_aliases = {
-        "wave1": ["wealth_of_nations", "free_to_choose", "keynes_1936"],
-        "wave2": ["extraordinary_delusions", "bastiat_unseen", "one_lesson_econ"],
-        "wave3": ["basic_economics", "freakonomics_theater", "leisure_class_1899"],
-        "wave4": ["schumpeter_1911", "moral_sentiments_1759", "why_nations_fail"],
-        "wave5": ["stock_operator_1923", "intelligent_investor", "random_walk_wallstreet"],
-        "wave6": ["behavioral_econ_traps", "psychology_of_money", "black_swan_antifragile"],
-        "wave7": ["big_short_2008", "lords_of_finance_1929", "ascent_of_money"],
-        "wave8": ["capitalism_and_freedom", "game_theory_strategy", "debt_cycle_machine"],
-        "all_econ24": [
-            "wealth_of_nations", "free_to_choose", "keynes_1936",
-            "extraordinary_delusions", "bastiat_unseen", "one_lesson_econ",
-            "basic_economics", "freakonomics_theater", "leisure_class_1899",
-            "schumpeter_1911", "moral_sentiments_1759", "why_nations_fail",
-            "stock_operator_1923", "intelligent_investor", "random_walk_wallstreet",
-            "behavioral_econ_traps", "psychology_of_money", "black_swan_antifragile",
-            "big_short_2008", "lords_of_finance_1929", "ascent_of_money",
-            "capitalism_and_freedom", "game_theory_strategy", "debt_cycle_machine",
-        ],
-        "all": list(ANTHOLOGY_PROJECTS.keys()),
-    }
-    raw_proj = args.project.strip()
-    if raw_proj in wave_aliases:
-        selected_keys = wave_aliases[raw_proj]
-    else:
-        selected_keys = [p.strip() for p in raw_proj.split(",") if p.strip()]
-        unknown = [p for p in selected_keys if p not in ANTHOLOGY_PROJECTS]
-        if not selected_keys or unknown:
-            raise SystemExit(
-                f"Unknown project(s): {unknown}. Valid keys: {sorted(ANTHOLOGY_PROJECTS.keys())}, wave1, all"
-            )
+    selected_keys = resolve_project_keys(args.project)
     t_boot = time.time()
 
     print("=" * 80, flush=True)
