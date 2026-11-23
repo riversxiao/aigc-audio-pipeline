@@ -1,0 +1,55 @@
+{
+  "project_id": "ascent_of_money",
+  "project_title": "《金钱的崛起：从美第奇银行到现代华尔街》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "historian_shen": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (温润敏捷金融史学者男中音·沈知行)"
+    },
+    "archivist_lin": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (31岁清亮知性金融档案馆女策展人·林清晏)"
+    },
+    "homeowner_zhou": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (46岁接地气小微企业主兼房贷家长·老周)"
+    },
+    "medici_banker": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_沉稳锐利佛罗伦萨美第奇总账房·老乔瓦尼"
+    },
+    "amsterdam_captain": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_清朗张扬一六零二阿姆斯特丹远洋船长·汉斯船长"
+    },
+    "scottish_pastor": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "fu_bo",
+      "source_voice_name": "Reuse: 诸界锁仙_福伯_苍劲慈悲爱丁堡精算数学先驱·华莱士牧师"
+    },
+    "bond_broker_clara": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "hongxiu_louzhu",
+      "source_voice_name": "Reuse: 诸界锁仙_红袖楼主_从容犀利威尼斯伦敦资深女债商·克拉拉女士"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇史诗欧洲金融纪录片历史旁白"
+    }
+  }
+}
