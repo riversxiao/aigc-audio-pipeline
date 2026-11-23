@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 import json
+import math
 import re
 from typing import Any, Literal
 
@@ -17,9 +18,14 @@ ALLOWED_ACOUSTIC_SPACES: tuple[str, ...] = (
     "vast_hall",
     "studio_warm",
     "vintage_study",
+    "inner_monologue",
+    "boardroom",
+    "phone_call",
 )
 ALLOWED_SFX_PLACEMENTS: tuple[str, ...] = ("sequential", "overlay_next")
 ALLOWED_LANGUAGE_CODES: tuple[str, ...] = ("zh", "en", "zh-en")
+MIN_PLAYBACK_RATE: float = 0.65
+MAX_PLAYBACK_RATE: float = 1.35
 
 _SSML_PATTERN = re.compile(r"<\s*/?\s*(speak|break|prosody|phoneme|emphasis|say-as)\b", re.IGNORECASE)
 _BRACKET_TAG_PATTERN = re.compile(r"\[([^\[\]]+)\]")
@@ -101,7 +107,12 @@ def validate_v3_dialogue_text(
         errors.append(f"[{item_label}] Text cannot be empty.")
         return errors
 
-    if stability not in ALLOWED_V3_STABILITIES:
+    if (
+        isinstance(stability, bool)
+        or not isinstance(stability, (int, float))
+        or not math.isfinite(stability)
+        or stability not in ALLOWED_V3_STABILITIES
+    ):
         errors.append(
             f"[{item_label}] Invalid eleven_v3 stability={stability!r}. "
             f"Only discrete values {ALLOWED_V3_STABILITIES} (0.0 Creative, 0.5 Natural, 1.0 Robust) are allowed."
@@ -177,6 +188,7 @@ class VoiceProfile:
     gender: Literal["male", "female", "neutral"] = "male"
     age_group: str = "young_adult"
     language_code: str = "zh"
+    accent_code: str = ""
     vocal_register: str = ""
     persona_summary: str = ""
     accent_requirement: str = "大陆普通话戏剧配音（严禁港台/美式/澳洲/新加坡飘口音）"
@@ -192,6 +204,9 @@ class VoiceProfile:
     appearance_chapters: list[int] = field(default_factory=list)
     audition_line: str = ""
     audition_history: list[AuditionRecord] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VoiceProfile:
@@ -258,8 +273,7 @@ class VoiceCastingRegistry:
         path.write_text(json.dumps(self.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     @classmethod
-    def load(cls, path: Path) -> VoiceCastingRegistry:
-        raw = json.loads(path.read_text(encoding="utf-8"))
+    def from_dict(cls, raw: dict[str, Any]) -> VoiceCastingRegistry:
         roles = {k: VoiceProfile.from_dict(v) for k, v in raw.get("roles", {}).items()}
         motifs = {k: SonicMotif(**v) for k, v in raw.get("sonic_motifs", {}).items()}
         return cls(
@@ -276,6 +290,10 @@ class VoiceCastingRegistry:
             roles=roles,
             sonic_motifs=motifs,
         )
+
+    @classmethod
+    def load(cls, path: Path) -> VoiceCastingRegistry:
+        return cls.from_dict(json.loads(path.read_text(encoding="utf-8")))
 
 
 @dataclass
@@ -303,6 +321,8 @@ class TimelineCue:
     stability: float = 0.5
     similarity_boost: float = 0.85
     acoustic_space: str = "dry"
+    playback_rate: float = 1.0
+    subtitle_translation: str = ""
     # Documentary simultaneous-translation ducking (original English leads 3-4s then ducks under Chinese VO)
     duck_under_next: bool = False
     duck_lead_in_s: float = 3.5
@@ -331,6 +351,7 @@ class EpisodeCueSheet:
         "condensed_radio_drama",
         "podcast_roundtable",
         "audition_pack",
+        "bilingual_business_drama",
     ] = "immersive_audiobook_drama"
     source_chapter_file: str = ""
     head_pad_s: float = 0.30
@@ -354,8 +375,33 @@ class EpisodeCueSheet:
             if self.mode != "audition_pack" and act_ids and cue.act_id not in act_ids:
                 errors.append(f"[{cue.cue_id}] Unknown act_id={cue.act_id!r} (known: {sorted(act_ids)}).")
 
-            if cue.gap_after_s < -0.25 or cue.gap_after_s > 10.0:
-                errors.append(f"[{cue.cue_id}] gap_after_s={cue.gap_after_s} out of range [-0.25, 10.0].")
+            gap = cue.gap_after_s
+            if (
+                isinstance(gap, bool)
+                or not isinstance(gap, (int, float))
+                or not math.isfinite(gap)
+                or float(gap) < -0.25
+                or float(gap) > 10.0
+            ):
+                errors.append(f"[{cue.cue_id}] gap_after_s={gap!r} out of range [-0.25, 10.0].")
+
+            rate = cue.playback_rate
+            if (
+                isinstance(rate, bool)
+                or not isinstance(rate, (int, float))
+                or not math.isfinite(rate)
+                or not (MIN_PLAYBACK_RATE <= float(rate) <= MAX_PLAYBACK_RATE)
+            ):
+                errors.append(
+                    f"[{cue.cue_id}] playback_rate={rate!r} must be a finite number within "
+                    f"[{MIN_PLAYBACK_RATE}, {MAX_PLAYBACK_RATE}]."
+                )
+
+            if not isinstance(cue.subtitle_translation, str):
+                errors.append(
+                    f"[{cue.cue_id}] subtitle_translation must be a string, "
+                    f"got {type(cue.subtitle_translation).__name__}."
+                )
 
             if cue.kind == "dialogue":
                 if not cue.role_id:
@@ -389,18 +435,35 @@ class EpisodeCueSheet:
                         )
                     )
                 if cue.duck_under_next:
-                    if not (0.5 <= cue.duck_lead_in_s <= 15.0):
+                    lead_in = cue.duck_lead_in_s
+                    if (
+                        isinstance(lead_in, bool)
+                        or not isinstance(lead_in, (int, float))
+                        or not math.isfinite(lead_in)
+                        or not (0.5 <= float(lead_in) <= 15.0)
+                    ):
                         errors.append(
-                            f"[{cue.cue_id}] duck_lead_in_s={cue.duck_lead_in_s} must be within [0.5, 15.0]."
+                            f"[{cue.cue_id}] duck_lead_in_s={lead_in!r} must be a finite number within [0.5, 15.0]."
                         )
-                    if not (0.02 <= cue.duck_gain <= 0.60):
+                    gain = cue.duck_gain
+                    if (
+                        isinstance(gain, bool)
+                        or not isinstance(gain, (int, float))
+                        or not math.isfinite(gain)
+                        or not (0.02 <= float(gain) <= 0.60)
+                    ):
                         errors.append(
-                            f"[{cue.cue_id}] duck_gain={cue.duck_gain} must be within [0.02, 0.60]."
+                            f"[{cue.cue_id}] duck_gain={gain!r} must be a finite number within [0.02, 0.60]."
                         )
                     if idx + 1 >= len(self.cues) or self.cues[idx + 1].kind != "dialogue":
                         errors.append(
                             f"[{cue.cue_id}] duck_under_next=True requires an immediately following dialogue cue "
                             "for simultaneous voiceover interpretation."
+                        )
+                    elif self.cues[idx + 1].duck_under_next:
+                        errors.append(
+                            f"[{cue.cue_id}] Chained duck_under_next=True cues are not supported "
+                            f"(next cue {self.cues[idx + 1].cue_id!r} also has duck_under_next=True)."
                         )
                 if registry is not None and cue.role_id:
                     if profile is None:
@@ -422,9 +485,15 @@ class EpisodeCueSheet:
                 if registry is not None and cue.motif_id and not cue.sfx_prompt:
                     if cue.motif_id not in registry.sonic_motifs:
                         errors.append(f"[{cue.cue_id}] motif_id={cue.motif_id!r} not found in registry.sonic_motifs.")
-                if not (0.5 <= cue.duration_seconds <= 30.0):
+                dur = cue.duration_seconds
+                if (
+                    isinstance(dur, bool)
+                    or not isinstance(dur, (int, float))
+                    or not math.isfinite(dur)
+                    or not (0.5 <= float(dur) <= 30.0)
+                ):
                     errors.append(
-                        f"[{cue.cue_id}] SFX duration_seconds={cue.duration_seconds} must be within [0.5, 30.0]."
+                        f"[{cue.cue_id}] SFX duration_seconds={dur!r} must be a finite number within [0.5, 30.0]."
                     )
             else:
                 errors.append(f"[{cue.cue_id}] Unknown cue kind={cue.kind!r}.")
@@ -449,8 +518,7 @@ class EpisodeCueSheet:
         path.write_text(json.dumps(self.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     @classmethod
-    def load(cls, path: Path) -> EpisodeCueSheet:
-        raw = json.loads(path.read_text(encoding="utf-8"))
+    def from_dict(cls, raw: dict[str, Any]) -> EpisodeCueSheet:
         acts = [ActMusicSpec(**a) for a in raw.get("acts", [])]
         cues = [TimelineCue(**c) for c in raw.get("cues", [])]
         return cls(
@@ -464,3 +532,7 @@ class EpisodeCueSheet:
             acts=acts,
             cues=cues,
         )
+
+    @classmethod
+    def load(cls, path: Path) -> EpisodeCueSheet:
+        return cls.from_dict(json.loads(path.read_text(encoding="utf-8")))

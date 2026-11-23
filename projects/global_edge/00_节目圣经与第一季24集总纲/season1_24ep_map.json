@@ -1,0 +1,2073 @@
+{
+  "project_id": "global_edge",
+  "project_title": "《跨境底牌：硅深暗战》 / Global Edge",
+  "season": 1,
+  "total_episodes": 24,
+  "total_mapped_clips": 100,
+  "season_core_us_uk_en_pct": 96.0,
+  "international_guest_en_pct": 4.0,
+  "corpus_source_file": "projects/global_edge/01_视频号语料与商业词库/corpus_100_structured.json",
+  "lexicon_source_file": "projects/global_edge/01_视频号语料与商业词库/executive_lexicon.json",
+  "arcs": [
+    {
+      "arc_number": 1,
+      "arc_title": "第一弧：硅谷估值与算力账单突围",
+      "arc_title_en": "Arc I: Beachhead & Series C Siege",
+      "episode_ids": [
+        "E001",
+        "E002",
+        "E003",
+        "E004",
+        "E005",
+        "E006"
+      ],
+      "clip_count": 26,
+      "core_us_uk_en_pct": 100.0
+    },
+    {
+      "arc_number": 2,
+      "arc_title": "第二弧：欧美大渠道压价与伦敦旗舰血战",
+      "arc_title_en": "Arc II: London Luxury, Product Soul & Compliance Firestorm",
+      "episode_ids": [
+        "E007",
+        "E008",
+        "E009",
+        "E010",
+        "E011",
+        "E012"
+      ],
+      "clip_count": 25,
+      "core_us_uk_en_pct": 95.0
+    },
+    {
+      "arc_number": 3,
+      "arc_title": "第三弧：关税风暴、东南亚备产与合规围剿",
+      "arc_title_en": "Arc III: Tariff Shock, Silicon Chokehold & SE Asia Chess",
+      "episode_ids": [
+        "E013",
+        "E014",
+        "E015",
+        "E016",
+        "E017",
+        "E018"
+      ],
+      "clip_count": 24,
+      "core_us_uk_en_pct": 89.0
+    },
+    {
+      "arc_number": 4,
+      "arc_title": "第四弧：董事会宫斗、宏观退潮与全球上市终局",
+      "arc_title_en": "Arc IV: Macro Storm, Short Attack & Pre-IPO Endgame",
+      "episode_ids": [
+        "E019",
+        "E020",
+        "E021",
+        "E022",
+        "E023",
+        "E024"
+      ],
+      "clip_count": 25,
+      "core_us_uk_en_pct": 100.0
+    }
+  ],
+  "episodes": [
+    {
+      "episode_id": "E001",
+      "arc_number": 1,
+      "arc_title": "第一弧：硅谷估值与算力账单突围",
+      "title_zh": "八千万幽灵账单",
+      "title_en": "The $80M Phantom",
+      "logline_zh": "C 轮过桥融资与伦敦旗舰渠道签约前夜，沙丘路合伙人 Victoria 甩出审计底稿里的“8000 万美元账面巨亏”企图腰斩估值，伦敦大买手 Alistair 紧接着拿云端 Token 账单砍货架毛利。林沉必须在 48 小时内击穿会计幻影、算清单位吞吐成本，保住 NovaEdge Glass 的生死现金流。",
+      "primary_clip_ids": [
+        "02_BIZ_Anthropic",
+        "012_AI",
+        "039_BIZ",
+        "090_USC",
+        "059_FIN"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音 + 伦敦 RP 英音（林沉 zh_en_bilingual_us、Victoria us_silicon_valley、Alistair uk_london_rp、Claire us_nyc；私下深圳复盘为周默 zh_mainland_sz，零客串口音）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "phantom number",
+          "source_type": "corpus",
+          "clip_id": "02_BIZ_Anthropic",
+          "lexicon_id": "LEX_025",
+          "chinglish_trap": "a fake and unreal accounting paper number",
+          "executive_subtext_zh": "财务反杀金句：一针戳破由会计准则而非经营失血造成的账面巨亏——“那是个幽灵数字，不是公司真烧掉了钱”。"
+        },
+        {
+          "phrase_en": "not a cash loss",
+          "source_type": "corpus",
+          "clip_id": "02_BIZ_Anthropic",
+          "lexicon_id": "LEX_026",
+          "chinglish_trap": "we did not actually lose real bank cash / appeared inside our profit and loss report",
+          "executive_subtext_zh": "CFO 在融资谈判室的护城河底线：清晰切割“非现金会计重估”与“经营性现金失血”，阻止 VC 借账面亏损砍估值。（联用搭档：flowed through into the income statement——地道华尔街/四大会计动词搭配：精准描述资产负债表项目（如可转债公允价值变动）如何传导进利润表，瞬间建立CFO级专业压迫感。）",
+          "companion_phrase_en": "flowed through into the income statement",
+          "companion_lexicon_id": "LEX_027"
+        },
+        {
+          "phrase_en": "capital-efficient",
+          "source_type": "corpus",
+          "clip_id": "02_BIZ_Anthropic",
+          "lexicon_id": "LEX_028",
+          "chinglish_trap": "using investors' money very savingly and smartly",
+          "executive_subtext_zh": "资本寒冬里 VC 最爱听的顶级褒义词：证明你每一美元融资撬动的营收与里程碑远超同行，不是靠烧钱换规模。"
+        },
+        {
+          "phrase_en": "10 times the throughput",
+          "source_type": "corpus",
+          "clip_id": "012_AI",
+          "lexicon_id": "LEX_049",
+          "chinglish_trap": "10 times faster processing and output speed / You can choose any number you want, it doesn't matter.",
+          "executive_subtext_zh": "黄仁勋式算力经济学核弹：把客户目光从“单卡采购价贵不贵”强行拽到“同样机房电费下吞吐量翻十倍”的总拥有成本（TCO）碾压。（联用搭档：Pick your favorite number——美式高管降维打击式让步：假装把前提假设权大方让给对手，实则暗示“不管你怎么调参数，底层的数量级结论依然碾压你”。）",
+          "companion_phrase_en": "Pick your favorite number",
+          "companion_lexicon_id": "LEX_001"
+        },
+        {
+          "phrase_en": "In other words",
+          "source_type": "corpus",
+          "clip_id": "039_BIZ",
+          "lexicon_id": "LEX_002",
+          "chinglish_trap": "That is to say / Let me explain simply to you.",
+          "executive_subtext_zh": "董事会最锋利的“翻译成人话”切换词：把对方或自己复杂的宏观数字，瞬间折算成老板一眼看懂的单人成本或现金流ROI。"
+        },
+        {
+          "phrase_en": "eating into budgets",
+          "source_type": "corpus",
+          "clip_id": "090_USC",
+          "lexicon_id": "LEX_050",
+          "chinglish_trap": "spending too much of our annual department budget / a very difficult choice between two bad things",
+          "executive_subtext_zh": "欧美企业买家和大渠道砍价最常用的痛点动词：形象表达持续上涨的云端AI调用费正在“活生生啃噬”他们的利润与年度预算。（联用搭档：a really hard trade-off——高管谈预算与取舍时的体面刀法：不说“你太贵了我买不起”，而说“这是个很难忽略的权衡”，把压价包装成理性经营抉择。）",
+          "companion_phrase_en": "a really hard trade-off",
+          "companion_lexicon_id": "LEX_003"
+        },
+        {
+          "phrase_en": "What is good enough",
+          "source_type": "corpus",
+          "clip_id": "090_USC",
+          "lexicon_id": "LEX_004",
+          "chinglish_trap": "Is the quality okay enough for us to use? / call this AI API for one million times",
+          "executive_subtext_zh": "企业级采购拍板灵魂发问：撕掉实验室跑分虚荣心，直指商业底线——“做到多少分就能卖钱且不超预算？”（联用搭档：run this thing a million times——打破AI实验室Demo滤镜的灵魂算账句：单次调用几美分看似便宜，但企业级高频并发跑一百万次时，单位推理成本立刻决定生死。）",
+          "companion_phrase_en": "run this thing a million times",
+          "companion_lexicon_id": "LEX_051"
+        },
+        {
+          "phrase_en": "upside",
+          "source_type": "corpus",
+          "clip_id": "059_FIN",
+          "lexicon_id": "LEX_029",
+          "chinglish_trap": "future rising room / profit space / What year will we actually receive this cash?",
+          "executive_subtext_zh": "投行与VC桌面最高频单字：专指资产或股权的“上行赔率与想象空间”，常与 downside（下行风险）成对出击。（联用搭档：When are you going to get it——巴菲特式灵魂拷问：所有远期画饼估值模型在现金回流时间表前都会现原形——“账面赚得再多，钱到底哪年到账？”）",
+          "companion_phrase_en": "When are you going to get it",
+          "companion_lexicon_id": "LEX_030"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 46,
+        "conflict_angle": "沙丘路 VC 借可转债重估的 8000 万账面巨亏逼宫砍估值，中国创始人冷峻三连击反杀",
+        "hook_line_en": "That eighty-million-dollar loss is a phantom number—not a cash loss, and you know it flowed through into the income statement on paper only.",
+        "hook_line_zh": "那八千万亏损只是账面幽灵数字——根本没烧掉一分现金，你心里比谁都清楚它只是可转债重估流进了利润表。",
+        "cta_zh": "下一秒，伦敦大买手亮出了更致命的云端算力账单——点击置顶收听《跨境底牌：硅深暗战》第 1 集完整 12 分钟正片与 3 分钟高管黑话拆局。"
+      },
+      "cliffhanger_zh": "林沉刚把 Victoria 逼回原估值谈判桌，法务 Claire 推门把第 14 页条款拍在桌上：条款附录里埋了一条隐蔽对赌——60 天内若无法签下首批 5 万台欧美渠道硬里程碑，Apex Horizon 将自动接管 NovaEdge 董事会否决权。"
+    },
+    {
+      "episode_id": "E002",
+      "arc_number": 1,
+      "arc_title": "第一弧：硅谷估值与算力账单突围",
+      "title_zh": "十分钟路演与一万小时底牌",
+      "title_en": "Demo Day Bluff vs. 10,000 Hours",
+      "logline_zh": "60 天硬里程碑倒计时启动。帕洛阿尔托私募晚宴上，一家靠华丽 PPT 拿到天价估值的纯软件眼镜竞品抢先截胡投资人视线；林沉被迫与周默拆开深圳供应链光学模组 MOQ 与真实 BOM 成本账本，用“交出真货”撕碎硅谷资本圈的估值幻觉。",
+      "primary_clip_ids": [
+        "047_BIZ",
+        "048_BIZ",
+        "062_FIN",
+        "057_FIN"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音（林沉、Victoria 沙丘路美音主攻；深圳产线热线切周默中文）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "raise another round",
+          "source_type": "corpus",
+          "clip_id": "048_BIZ",
+          "lexicon_id": "LEX_039",
+          "chinglish_trap": "get one more batch of VC investment money",
+          "executive_subtext_zh": "创投圈标准融资表达（再融一轮）：强调融资不是靠PPT口才，而是靠上一轮钱跑出硬里程碑换取下一轮溢价。"
+        },
+        {
+          "phrase_en": "upside",
+          "source_type": "corpus",
+          "clip_id": "062_FIN",
+          "lexicon_id": "LEX_029",
+          "chinglish_trap": "future rising room / profit space",
+          "executive_subtext_zh": "投行与VC桌面最高频单字：专指资产或股权的“上行赔率与想象空间”，常与 downside（下行风险）成对出击。"
+        },
+        {
+          "phrase_en": "downside",
+          "source_type": "corpus",
+          "clip_id": "062_FIN",
+          "lexicon_id": "LEX_033",
+          "chinglish_trap": "the bad risk of losing our investment",
+          "executive_subtext_zh": "机构 LP 募资与并购谈判的核心防线：成熟资本不只看能赚多少，更看最坏情况下底盘能不能兜住。"
+        },
+        {
+          "phrase_en": "golden ticket",
+          "source_type": "corpus",
+          "clip_id": "047_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "the best lucky entrance chance",
+          "executive_subtext_zh": "硅谷顶级机构或孵化器背书的“黄金入场券”暗语：拿到名号不等于稳赢，台下十年硬功才是真正筹码。"
+        },
+        {
+          "phrase_en": "automatic cred",
+          "source_type": "corpus",
+          "clip_id": "048_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "natural automatic trust from investors",
+          "executive_subtext_zh": "创投圈极地道的简写口语（自动信誉背书）：用已经落地的硬里程碑直接锁死机构信任，胜过一百页精美路演稿。"
+        },
+        {
+          "phrase_en": "where the kids are going",
+          "source_type": "corpus",
+          "clip_id": "057_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "which industry young college students choose",
+          "executive_subtext_zh": "顶级对冲基金大佬提前两年嗅出技术浪潮的暗语：紧盯顶尖斯坦福/MIT 极客的脚往哪走，比看华尔街研报快两拍。"
+        },
+        {
+          "phrase_en": "MOQ",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_099",
+          "chinglish_trap": "smallest order quantity number we must buy",
+          "executive_subtext_zh": "供应链与渠道谈判桌上的双刃剑（最小起订量 Minimum Order Quantity）：工厂用MOQ卡死你的现金流，你也要用MOQ试探海外大买手是真下注还是空手套白狼。"
+        },
+        {
+          "phrase_en": "BOM cost",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_110",
+          "chinglish_trap": "hardware parts list total material cost",
+          "executive_subtext_zh": "深圳智造与硅谷硬件投资人张口就问的硬指标（物料清单成本 Bill of Materials）：直接决定零售定价空间和硬件毛利率能不能撑住AI云服务开销。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 44,
+        "conflict_angle": "硅谷晚宴上靠 PPT 吹牛的竞品嘲笑硬件太重，林沉甩出光学 BOM 账本与真实下行风控反将一军",
+        "hook_line_en": "Anyone can pitch upside on a ten-minute deck; twenty-year LPs only write checks when you prove you can protect the downside.",
+        "hook_line_zh": "十分钟路演谁都能画上行空间的大饼；真正掌管百亿资金的老钱，只看你能不能兜住最坏的下行底盘。",
+        "cta_zh": "晚宴刚散，竞品已联合北美消费电子巨头在亚马逊开启补贴倾销、打穿全网价格锚点——完整正片与 0.80x 慢拆跟读，收听《跨境底牌：硅深暗战》第 2 集。"
+      },
+      "cliffhanger_zh": "晚宴刚散，周默从南山发来加密语音：竞争对手不仅在硅谷抢故事，还已联合北美某消费电子巨头在亚马逊开启补贴倾销，企图在 NovaEdge 发货前打穿全网零售价格锚点。"
+    },
+    {
+      "episode_id": "E003",
+      "arc_number": 1,
+      "arc_title": "第一弧：硅谷估值与算力账单突围",
+      "title_zh": "零广告费硬刚三百亿巨头",
+      "title_en": "Zero Ad Spend vs. The $30B Incumbent",
+      "logline_zh": "市值三百亿美元的老牌跨国消费电子巨头宣布砸下三千万美元营销预算封杀 AI 眼镜新品类，欧美科技媒体集体唱衰“NovaEdge 活不过下季度”。Victoria 催促林沉烧融资款打价格广告战，林沉却召开紧急全员大会砍掉全部品牌广告预算，把每一美元压向研发迭代并死守欧美渠道最低标价与货架配额。",
+      "primary_clip_ids": [
+        "030_BIZ",
+        "032_BIZ",
+        "033_BIZ",
+        "034_BIZ"
+      ],
+      "accent_profile": "100% 核心硅谷美音 + 伦敦 RP 英音（林沉、Victoria 美音董事会交锋 + Alistair 伦敦电话施压）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "All Hands meeting",
+          "source_type": "corpus",
+          "clip_id": "033_BIZ",
+          "lexicon_id": "LEX_024",
+          "chinglish_trap": "a whole-company employee meeting",
+          "executive_subtext_zh": "硅谷与出海科技公司危机动员标准词：当巨头宣战或重大危机爆发时，创始人亲召全员大会统一军心与战时叙事。"
+        },
+        {
+          "phrase_en": "leaning into the future",
+          "source_type": "corpus",
+          "clip_id": "034_BIZ",
+          "lexicon_id": "LEX_017",
+          "chinglish_trap": "actively embracing future market trends",
+          "executive_subtext_zh": "贝索斯式进攻型战略口号：不被动防御颠覆，而是主动把资源压向不可逆的趋势——“躲着未来走必输无疑”。"
+        },
+        {
+          "phrase_en": "now is the time to take risk",
+          "source_type": "corpus",
+          "clip_id": "030_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "right now we must try risky things",
+          "executive_subtext_zh": "创始人向保守董事会摊牌的进攻号角：在对手沉迷铺广告守旧摊时，把赌注全押在产品跨越上才是唯一生路。"
+        },
+        {
+          "phrase_en": "limited resources",
+          "source_type": "corpus",
+          "clip_id": "033_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "very small money and few staff",
+          "executive_subtext_zh": "以小博大商战中的清醒底牌：坦承手头弹药有限，反而以此为由强硬砍掉一切不能直接提升产品的冗余开支。"
+        },
+        {
+          "phrase_en": "nimble and robust",
+          "source_type": "corpus",
+          "clip_id": "034_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "fast moving and also very strong",
+          "executive_subtext_zh": "穿越周期的组织双面要求（既敏捷灵动又皮实抗打）：既能按周迭代软件，又能扛住巨头价格战的正面重击。"
+        },
+        {
+          "phrase_en": "take a punch",
+          "source_type": "corpus",
+          "clip_id": "034_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "suffer a heavy hit without falling down",
+          "executive_subtext_zh": "北美拳击隐喻进董事会（扛得住重拳）：真正能活下来的创业公司，靠的不是不被打中，而是挨完重拳还能反手出招。"
+        },
+        {
+          "phrase_en": "MAP pricing",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_101",
+          "chinglish_trap": "lowest online advertisement price control",
+          "executive_subtext_zh": "欧美全渠道防窜货生命线（最低广告标价 Minimum Advertised Price）：一旦亚马逊第三方卖家破价，线下旗舰渠道会立刻翻脸停止主推。"
+        },
+        {
+          "phrase_en": "shelf allocation",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_107",
+          "chinglish_trap": "how much shelf space the store gives us",
+          "executive_subtext_zh": "线下零售寸土寸金的权力筹码（货架配额/陈列面积）：买手只要暗示“下季度要重评你的货架配额”，就是最礼貌的最后通牒。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 45,
+        "conflict_angle": "三万员工巨头宣战、媒体宣判死刑，林沉在全员大会上顶着 VC 压力砍光广告费",
+        "hook_line_en": "We have limited resources and a thirty-billion-dollar rival at the door—so every dollar goes into engineering, not vanity ads.",
+        "hook_line_zh": "我们弹药有限，门口站着三百亿美元的巨头——所以每一分钱都砸进工程研发，绝不拿去买虚荣的广告位。",
+        "cta_zh": "砍掉广告费换来的首批 2000 台试产眼镜，却在深圳产线出了致命良率崩盘——点击收听第 3 集完整剧集与黑话拆局。"
+      },
+      "cliffhanger_zh": "伦敦买手 Alistair 勉强同意保留 Q4 货架考察期，但条件是 14 天内交付首批 2000 台零缺陷工程样机；就在当晚，深圳南山 SMT 产线全线报警——微显示镜片贴合良率暴跌至 54%。"
+    },
+    {
+      "episode_id": "E004",
+      "arc_number": 1,
+      "arc_title": "第一弧：硅谷估值与算力账单突围",
+      "title_zh": "深圳午夜产线的第一性拆解",
+      "title_en": "First-Principles Teardown on the Shenzhen Line",
+      "logline_zh": "距离伦敦交付倒计时 72 小时，深圳无尘车间自动化贴装线连续报废镜片，美方驻厂顾问与自动化团队互相甩锅。林沉星夜飞回南山睡在产线旁，和周默亲手撕掉荒诞冗余的光学缓冲垫设计，在 EVT/DVT/PVT 锁模前用毫米级工艺重构拉起良率爬坡曲线。",
+      "primary_clip_ids": [
+        "031_BIZ",
+        "043_BIZ",
+        "05_USCHINA_Robots",
+        "100_USC"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音（英文线：林沉与驻厂美籍顾问交锋；双语战时线：深圳车间周默中文硬核拆解）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "automating was a mistake",
+          "source_type": "corpus",
+          "clip_id": "031_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "using robot machines early was wrong",
+          "executive_subtext_zh": "制造第一性原理暴击：在没搞清楚零件本身是否多余之前盲目上全自动产线，只会把愚蠢放大十倍。"
+        },
+        {
+          "phrase_en": "Dilbert cartoon",
+          "source_type": "corpus",
+          "clip_id": "031_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "a funny office comic strip joke",
+          "executive_subtext_zh": "硅谷工程师吐槽大公司荒诞官僚推诿的经典文化梗（呆伯特漫画）：形容两部门互相踢皮球造出没人要的蠢需求。"
+        },
+        {
+          "phrase_en": "slept literally on the floor",
+          "source_type": "corpus",
+          "clip_id": "043_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "really slept down on factory ground",
+          "executive_subtext_zh": "创始人战时动员的极端具象细节：不是在 PPT 里喊口号，而是真把行军床铺在产线工位旁死磕产能地狱。"
+        },
+        {
+          "phrase_en": "at its darkest moment",
+          "source_type": "corpus",
+          "clip_id": "043_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "during the worst and hardest time",
+          "executive_subtext_zh": "公司濒临破产前夜的叙事定调词：用于董事会复盘或激励核心团队，强调谁在至暗时刻押上身家谁才配掌舵。"
+        },
+        {
+          "phrase_en": "require no human involvement",
+          "source_type": "corpus",
+          "clip_id": "05_USCHINA_Robots",
+          "lexicon_id": null,
+          "chinglish_trap": "do not need any factory workers inside",
+          "executive_subtext_zh": "中国灯塔无人工厂压低制造成本的核心描述（全程零人工干预）：向海外投资人展示深圳智造的工业代差。"
+        },
+        {
+          "phrase_en": "movement precision",
+          "source_type": "corpus",
+          "clip_id": "100_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "accurate moving control of robot arms",
+          "executive_subtext_zh": "高端精密装配的硬核工程词（毫米级运动精度）：决定智能眼镜波导贴合能不能跨过消费级量产门槛。"
+        },
+        {
+          "phrase_en": "EVT/DVT/PVT",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_111",
+          "chinglish_trap": "three factory sample-to-mass-production test stages",
+          "executive_subtext_zh": "消费硬件量产爬坡铁三角黑话（工程验证/设计验证/生产验证）：内行一听就能分辨你的AI眼镜是PPT概念机，还是真正过完PVT准备锁模大批量出货。"
+        },
+        {
+          "phrase_en": "yield ramp",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_115",
+          "chinglish_trap": "factory good-product rate slowly climbing up",
+          "executive_subtext_zh": "深圳量产线最紧张的爬坡期黑话（良率爬坡）：新品首批良率往往只有60%，能不能在30天内拉升到92%以上，决定你能不能如期交付圣诞季大单。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 42,
+        "conflict_angle": "跨洋产线扯皮导致百万报废，林沉午夜怒撕冗余工艺需求直击第一性原理",
+        "hook_line_en": "Two teams blamed each other for a spacer nobody needs—it's a Dilbert cartoon, and automating was a mistake before deleting the part.",
+        "hook_line_zh": "两个部门为了一个根本多余的垫片互相甩锅——简直像呆伯特漫画，还没删掉蠢零件就急着搞自动化才是最大错误。",
+        "cta_zh": "产线良率刚刚冲破 91%，云服务商却发来一张足以击穿毛利的百万美元 API 欠费账单——收听第 4 集完整商战剧。"
+      },
+      "cliffhanger_zh": "第一批 2000 台 NovaEdge Glass 惊险装机起飞，周默却把刚出炉的公有云账单摔在林沉面前：每台眼镜活跃用户日均调用闭源大模型消耗 18 美分，按三年生命周期算，每卖一台硬件反而要倒贴 197 美元云费。"
+    },
+    {
+      "episode_id": "E005",
+      "arc_number": 1,
+      "arc_title": "第一弧：硅谷估值与算力账单突围",
+      "title_zh": "Token 税与开源蒸馏兵变",
+      "title_en": "The Token Tax & Open-Weight Revolt",
+      "logline_zh": "闭源云巨头连夜上调多模态 API 单价并要求签独家排他条款，NovaEdge 硬件毛利瞬间归零。Victoria 警告切开源模型会得罪硅谷算力阵营，周默却在 48 小时内用开源旗舰当“老师”蒸馏出轻量端侧模型，把高频唤醒与视觉摘要塞进眼镜本地芯片，硬生生砍掉 78% 云端算力税。",
+      "primary_clip_ids": [
+        "006_AI",
+        "037_BIZ",
+        "051_BIZ",
+        "078_USC"
+      ],
+      "accent_profile": "100% 核心硅谷美音（林沉与 Victoria、硅谷云厂商代表高强度美音对峙 + 周默深圳技术战报）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "use it as a teacher",
+          "source_type": "corpus",
+          "clip_id": "037_BIZ",
+          "lexicon_id": "LEX_055",
+          "chinglish_trap": "use a huge model to train a smaller model",
+          "executive_subtext_zh": "AI硬件端侧落地核心技术路径（大模型蒸馏教学）：用旗舰开源大模型当“老师”蒸馏轻量端侧模型，一刀砍掉90%云端推理账单。"
+        },
+        {
+          "phrase_en": "open weight AI",
+          "source_type": "corpus",
+          "clip_id": "078_USC",
+          "lexicon_id": "LEX_054",
+          "chinglish_trap": "AI model whose parameter weights are free to download",
+          "executive_subtext_zh": "比笼统说 open source 更精准的AI高管术语（开放权重模型）：代表可下载、可私有部署、可深度定制，直接瓦解闭源API垄断定价权。"
+        },
+        {
+          "phrase_en": "computational complexity",
+          "source_type": "corpus",
+          "clip_id": "006_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "very hard computer math difficulty",
+          "executive_subtext_zh": "区分“推理部署轻便”与“预训练炼丹天价”的专业科技高管词（计算复杂度），用来戳破算力恐吓。"
+        },
+        {
+          "phrase_en": "build custom models",
+          "source_type": "corpus",
+          "clip_id": "037_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "make our own special AI systems",
+          "executive_subtext_zh": "摆脱大厂闭源 API 勒索的战略核心词（定制专属模型）：把通用大模型底座改造成贴合眼镜低功耗芯片的专用武器。"
+        },
+        {
+          "phrase_en": "run on your own infrastructure",
+          "source_type": "corpus",
+          "clip_id": "078_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "deploy models on our own server machines",
+          "executive_subtext_zh": "企业级数据主权与成本自主权铁律（跑在自有基建上）：不被云巨头按次抽血，也不把用户数据拱手让人。"
+        },
+        {
+          "phrase_en": "control the price",
+          "source_type": "corpus",
+          "clip_id": "078_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "decide how much money customers pay",
+          "executive_subtext_zh": "点穿闭源巨头商业阳谋的直白杀招：只要依赖封闭接口，对方就握着随时涨价抽干你毛利的定价权。"
+        },
+        {
+          "phrase_en": "on-device inference",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_116",
+          "chinglish_trap": "running AI locally inside the glasses chip",
+          "executive_subtext_zh": "AI消费硬件同时破解“Token烧钱”与“隐私合规”双死结的终极技术王牌（端侧本地推理）：小模型跑在眼镜芯片上，零延迟、零云费、数据不出设备。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 47,
+        "conflict_angle": "闭源大模型巨头坐地起价锁死毛利，林沉用开源权重蒸馏反手掀翻算力霸权",
+        "hook_line_en": "Closed models control the price and the rules; with open weight AI, we use it as a teacher and run on our own infrastructure.",
+        "hook_line_zh": "闭源模型垄断着定价和规则；换上开放权重模型，我们拿大模型当老师蒸馏小模型，跑在自己的底座上。",
+        "cta_zh": "开源蒸馏砍掉了云账单，但超级云巨头反手联合头部机构宣布千亿级 AI 硬件算力基金、企图冻死 C 轮融资——收听第 5 集正片与黑话拆局。"
+      },
+      "cliffhanger_zh": "开源蒸馏方案刚跑通压力测试，Victoria 紧急致电：某超级云巨头联合头部机构高调宣布千亿级 AI 硬件基金，沙丘路 LP 集体收手观望——要求林沉明早证明 NovaEdge 不会在巨头算力碾压下瞬间出局。"
+    },
+    {
+      "episode_id": "E006",
+      "arc_number": 1,
+      "arc_title": "第一弧：硅谷估值与算力账单突围",
+      "title_zh": "万亿算力豪赌的致命陷阱",
+      "title_en": "The Trillion-Dollar Compute Trap",
+      "logline_zh": "第一弧终局大考。C 轮过桥融资最终投委会上，Victoria 抛出灵魂拷问：面对云巨头动辄五千亿美元的算力军备竞赛，一家独立 AI 硬件公司凭什么不被碾死？林沉联手 Claire 拆穿“算力承诺没有对冲退路”的行业致命陷阱，反手迫使 Apex Horizon 以原估值落笔打款，拿下出海欧洲的弹药库。",
+      "primary_clip_ids": [
+        "010_AI",
+        "021_AI",
+        "083_USC",
+        "099_USC",
+        "074_FIN"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音（林沉、Victoria、Claire 投委会终极高压飙戏，零客串口音）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "no hedge on earth",
+          "source_type": "corpus",
+          "clip_id": "010_AI",
+          "lexicon_id": "LEX_018",
+          "chinglish_trap": "no financial tool in the world can protect us",
+          "executive_subtext_zh": "高管向董事会摊牌生死红线的重话：明确指出某个重资产豪赌一旦节奏错判，没有任何金融对冲或退路能救命。"
+        },
+        {
+          "phrase_en": "good for it",
+          "source_type": "corpus",
+          "clip_id": "021_AI",
+          "lexicon_id": "LEX_019",
+          "chinglish_trap": "they really have enough money to pay back",
+          "executive_subtext_zh": "华尔街与大宗融资圈极地道的信用担保口语：“放心，出资方兜里有钱、信誉兜得住，这笔承诺不会跳票”。"
+        },
+        {
+          "phrase_en": "let alone",
+          "source_type": "corpus",
+          "clip_id": "099_USC",
+          "lexicon_id": "LEX_011",
+          "chinglish_trap": "not to mention / even less possible is...",
+          "executive_subtext_zh": "质疑对手画大饼时的冷嘲递增结构：“连低门槛那一步都没影呢，更别提你吹的天文数字了”。"
+        },
+        {
+          "phrase_en": "hyperscalers",
+          "source_type": "corpus",
+          "clip_id": "074_FIN",
+          "lexicon_id": "LEX_068",
+          "chinglish_trap": "super massive cloud computing tech giants",
+          "executive_subtext_zh": "华尔街与硅谷专指微软、亚马逊、谷歌等超大云巨头的行业暗语：在估值和算力博弈中，他们靠主营现金牛托底，而纯AI独角兽必须靠效率突围。"
+        },
+        {
+          "phrase_en": "off by a year",
+          "source_type": "corpus",
+          "clip_id": "010_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "wrong in time prediction by one year",
+          "executive_subtext_zh": "重资产豪赌中最冷酷的时间错配表达（哪怕只算错一年）：营收晚到十二个月，提前锁死的刚性算力合同就会让人当场破产。"
+        },
+        {
+          "phrase_en": "marketing play",
+          "source_type": "corpus",
+          "clip_id": "099_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "just a PR show to get media news",
+          "executive_subtext_zh": "华尔街识破虚张声势天价宣布的毒舌定性（纯属公关营销造势）：直指对方口头承诺根本没有实缴现金兜底。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 49,
+        "conflict_angle": "C 轮终极投委会反杀：揭穿五千亿算力狂欢背后的破产陷阱，逼沙丘路合伙人原价签字",
+        "hook_line_en": "If you pre-commit to trillion-dollar compute and you're off by a year, there is no hedge on earth—hyperscalers can absorb that, pure plays can't.",
+        "hook_line_zh": "提前签下万亿算力死约，哪怕节奏算错一年，世上没有任何对冲工具救得了你——超级云巨头有主业兜底，纯押注者一脚踩空就是破产。",
+        "cta_zh": "C 轮资金刚刚到账，伦敦牛津街百货的传真却送来一份堪称霸王条款的寄售合同——点击收听第一弧收官第 6 集。"
+      },
+      "cliffhanger_zh": "C 轮过桥资金到账不到三小时，伦敦传来 Alistair Finch 的正式邀请函——Selfridges 牛津街旗舰店愿给 NovaEdge Glass 与全新桌面伴侣 NovaDock 开放圣诞主陈列，但前置条件是：高额进场费加上苛刻的寄售结算，且必须先过现场真人魔鬼盲测。"
+    },
+    {
+      "episode_id": "E007",
+      "arc_number": 2,
+      "arc_title": "第二弧：欧美大渠道压价与伦敦旗舰血战",
+      "title_zh": "牛津街旗舰与伴侣新品类",
+      "title_en": "Selfridges & The Companion Category",
+      "logline_zh": "林沉率队空降伦敦梅费尔区，带着 NovaEdge Glass 与桌面空间伴侣 NovaDock 叩击高端百货大门。Alistair Finch 以“裸大模型只是粗糙原语、实验室演示进了真实客厅就会翻车”冷嘲热讽，甩出天价进场费与寄售条款；林沉必须把单品拔高为全新品类，从牛津街买手嘴里虎口夺食。",
+      "primary_clip_ids": [
+        "025_AI",
+        "084_USC",
+        "095_USC",
+        "007_AI"
+      ],
+      "accent_profile": "100% 核心伦敦 RP 英音 + 硅谷美音（Alistair 伦敦主场 RP 压阵，林沉美音见招拆招）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "working backwards from",
+          "source_type": "corpus",
+          "clip_id": "025_AI",
+          "lexicon_id": "LEX_014",
+          "chinglish_trap": "thinking from the final result back to the start",
+          "executive_subtext_zh": "亚马逊与硅谷顶级产品方法论黑话：不从手头现有技术出发，而是从客户终极体验倒推研发路线与商业模式。"
+        },
+        {
+          "phrase_en": "under the hood",
+          "source_type": "corpus",
+          "clip_id": "025_AI",
+          "lexicon_id": "LEX_061",
+          "chinglish_trap": "the hidden technical architecture inside the product",
+          "executive_subtext_zh": "硅谷产品发布会与投融路演经典汽车隐喻（引擎盖之下）：把前端优雅极简的用户体验，与后台复杂的端云协同/模型调度区分开来。"
+        },
+        {
+          "phrase_en": "too raw of a primitive",
+          "source_type": "corpus",
+          "clip_id": "025_AI",
+          "lexicon_id": "LEX_062",
+          "chinglish_trap": "too basic and rough to sell straight to consumers",
+          "executive_subtext_zh": "顶级AI产品经理批判“套壳产品”的毒舌神句：点破纯大模型只是未经打磨的底层原语，不封装成硬件形态与人格记忆就卖不动大众市场。"
+        },
+        {
+          "phrase_en": "tightly controlled environment",
+          "source_type": "corpus",
+          "clip_id": "084_USC",
+          "lexicon_id": "LEX_072",
+          "chinglish_trap": "strictly arranged lab testing room",
+          "executive_subtext_zh": "资深买家拆穿“炫技Demo”的毒辣话术：暗示你的产品只在精心布置的实验室里能跑，一进真实家庭或卖场就会翻车。"
+        },
+        {
+          "phrase_en": "major new consumer category",
+          "source_type": "corpus",
+          "clip_id": "095_USC",
+          "lexicon_id": "LEX_071",
+          "chinglish_trap": "a big brand-new kind of consumer product",
+          "executive_subtext_zh": "出海消费硬件打动高端百货（如 Selfridges/Best Buy）与VC的定位杀招：把单品拔高为开创全新品类，跳出红海比价泥潭。"
+        },
+        {
+          "phrase_en": "personalized emotional support",
+          "source_type": "corpus",
+          "clip_id": "095_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "private feeling care service for lonely people",
+          "executive_subtext_zh": "消费硬件切入万亿情感陪伴赛道的高端卖点词（个性化情绪陪伴）：跳出冰冷参数对比，直击欧美独居消费溢价。"
+        },
+        {
+          "phrase_en": "slotting fee",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_097",
+          "chinglish_trap": "shelf entrance fee / store display entry money",
+          "executive_subtext_zh": "欧美大型零售渠道（Best Buy / Selfridges）最隐蔽的入场过路费（进场费/货架位费）：毛利测算漏掉这一项，硬件出海卖越多亏越惨。"
+        },
+        {
+          "phrase_en": "consignment terms",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_106",
+          "chinglish_trap": "sell-first pay-later store contract",
+          "executive_subtext_zh": "奢侈品百货与强势买手试水新硬件时的极限压榨（寄售条款）：货先铺进去，卖出才结账、卖不掉原封退回，极大考验出海公司的营运现金流。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 46,
+        "conflict_angle": "伦敦百货副总裁用纯正 RP 英音毒舌讽刺 AI 硬件都是实验室玩具，林沉现场翻转品类叙事",
+        "hook_line_en": "Raw LLMs are too raw of a primitive, Mr. Chen—and your rival's demo collapsed even inside a tightly controlled environment.",
+        "hook_line_zh": "陈先生，裸大模型太粗糙了，根本算不上消费品——你们竞品的演示机连在严密控场的实验室里都频频翻车。",
+        "cta_zh": "林沉拿下伦敦百货首单试销的第二天，首批体验机却在媒体直播中突发严重幻觉事故——收听第 7 集正片与黑话拆局。"
+      },
+      "cliffhanger_zh": "Alistair 勉强松口免去一半进场费、批出 3000 台圣诞试销单，可就在伦敦科技媒体闭门评测夜，一台未开启工具验算的工程版 NovaEdge Glass 竟当着记者面把财报汇率算错十倍，公关危机瞬间引爆。"
+    },
+    {
+      "episode_id": "E008",
+      "arc_number": 2,
+      "arc_title": "第二弧：欧美大渠道压价与伦敦旗舰血战",
+      "title_zh": "幻觉召回与工程硬护栏",
+      "title_en": "The Hallucination Recall",
+      "logline_zh": "评测翻车视频在伦敦媒体圈发酵，Alistair 发出 24 小时最后通牒：若首批次退换货率（RMA）抬头，将直接触发渠道违约罚金并暂停发货。周默在深圳查出根因——外包团队只用提示词约束模型，缺乏代码级硬护栏与自动测试闭环。林沉顶住压力主动宣布延迟 72 小时推送固件补丁，以“先做出真正靠谱的产品”硬扛公关风暴。",
+      "primary_clip_ids": [
+        "015_AI",
+        "019_AI",
+        "020_AI",
+        "029_AI"
+      ],
+      "accent_profile": "100% 核心伦敦 RP 英音 + 硅谷美音（Alistair 伦敦问责、林沉美音危机谈判 + 周默深圳彻夜排障）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "hallucinate through",
+          "source_type": "corpus",
+          "clip_id": "015_AI",
+          "lexicon_id": "LEX_066",
+          "chinglish_trap": "blindly guess and make up fake answers",
+          "executive_subtext_zh": "精准描述大模型“硬蒙过去”的动词短语：当模型没有调用工具验算时，会一本正经地编造出看似极接近、实则致命错误的结果。"
+        },
+        {
+          "phrase_en": "rule-based guardrails",
+          "source_type": "corpus",
+          "clip_id": "019_AI",
+          "lexicon_id": "LEX_056",
+          "chinglish_trap": "strict safety limits written in code rules",
+          "executive_subtext_zh": "企业级AI产品过合规审查的必考术语（基于规则的硬护栏）：向欧美法务和大客户证明你的AI不是靠祈祷不犯错，而是有确定性拦截。"
+        },
+        {
+          "phrase_en": "a request, not a rule",
+          "source_type": "corpus",
+          "clip_id": "019_AI",
+          "lexicon_id": "LEX_057",
+          "chinglish_trap": "just politely asking the AI, not forcing it",
+          "executive_subtext_zh": "CTO在安全事故复盘会上的经典暴击：一针点穿纯靠提示词（Prompt）约束大模型有多脆弱——“写进提示词只是客气请求，不是铁律”。"
+        },
+        {
+          "phrase_en": "feedback loops",
+          "source_type": "corpus",
+          "clip_id": "020_AI",
+          "lexicon_id": "LEX_058",
+          "chinglish_trap": "automatic testing and self-fixing cycles",
+          "executive_subtext_zh": "硅谷工程团队衡量AI智能体可靠性的生命线（反馈闭环）：没有自动化测试与验证闭环，AI写代码或做硬件控制必然失控。"
+        },
+        {
+          "phrase_en": "coding blind",
+          "source_type": "corpus",
+          "clip_id": "020_AI",
+          "lexicon_id": "LEX_059",
+          "chinglish_trap": "writing code without seeing any test feedback",
+          "executive_subtext_zh": "技术高管吐槽低水平AI研发流程的精准比喻（盲写代码）：把没有验证环境与指标反馈就让Agent硬改代码的风险一语道破。"
+        },
+        {
+          "phrase_en": "job one is to create something that works",
+          "source_type": "corpus",
+          "clip_id": "029_AI",
+          "lexicon_id": "LEX_069",
+          "chinglish_trap": "our first task is building a usable product",
+          "executive_subtext_zh": "硬件与科技CEO在媒体追问“竞争焦虑”时的反杀定力：别被对手口水战带偏，第一要务永远是造出真正靠谱能打的产品。"
+        },
+        {
+          "phrase_en": "RMA rate",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_112",
+          "chinglish_trap": "broken product return-and-repair percentage",
+          "executive_subtext_zh": "消费电子出海最致命的隐形杀手（售后退换货率 Return Merchandise Authorization）：RMA一旦超过3%，跨境逆向物流与翻新成本会把整季净利烧穿。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 43,
+        "conflict_angle": "AI 眼镜现场算错关键数据险酿召回，周默与林沉一刀点穿提示词安全神话",
+        "hook_line_en": "Putting a safety line inside a system prompt is a request, not a rule—without feedback loops, your agent is coding blind.",
+        "hook_line_zh": "把安全要求写进提示词只是客气请求，根本不是铁律——没有自动化验证闭环，智能体就是在蒙眼瞎干。",
+        "cta_zh": "紧急固件补丁刚把退货率压回红线以内，美国 FCC 射频认证实验室却发来红牌警告——收听第 8 集完整正片与拆局。"
+      },
+      "cliffhanger_zh": "工具调用硬护栏上线后，伦敦评测团重新给出高分，Alistair 暂缓撤单；可深圳刚松一口气，固件团队报告：为修复幻觉新增的蓝牙低功耗协同模块触发了底层老代码架构冲突，若不能在两周内重写完毕，美国 FCC 认证将整批延期六周。"
+    },
+    {
+      "episode_id": "E009",
+      "arc_number": 2,
+      "arc_title": "第二弧：欧美大渠道压价与伦敦旗舰血战",
+      "title_zh": "智能体狂飙与老固件暗礁",
+      "title_en": "Agentic Overdrive vs. Legacy Firmware",
+      "logline_zh": "距离北美假日季锁仓只剩十天，周默力推全团队切入多智能体全自动编写新模块，但面对十年沉淀的底层射频与功耗老代码库却频频踩坑。林沉在深圳与硅谷架构师之间调停代差冲突，重构人机抽象分工，抢在 FCC 认证关闭前夜交出通过射频暗室检测的量产固件。",
+      "primary_clip_ids": [
+        "01_AI_DHH",
+        "011_AI",
+        "018_AI",
+        "013_AI"
+      ],
+      "accent_profile": "100% 核心硅谷美音（林沉与硅谷软件 VP 美音辩论 + 周默深圳固件战室中文复盘）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "agent acceleration",
+          "source_type": "corpus",
+          "clip_id": "01_AI_DHH",
+          "lexicon_id": "LEX_060",
+          "chinglish_trap": "making software work faster by using AI agents",
+          "executive_subtext_zh": "研发效能汇报中的硬核新词（智能体加速）：描述从“人手写代码”跃迁到“AI全量生成、人类只做架构审阅”的组织提速拐点。"
+        },
+        {
+          "phrase_en": "I really like that framing",
+          "source_type": "corpus",
+          "clip_id": "011_AI",
+          "lexicon_id": "LEX_009",
+          "chinglish_trap": "I agree with your way of speaking very much.",
+          "executive_subtext_zh": "高段位会议控场夸奖：不直接说你对，而是赞赏对方的“叙事框架/切入视角”，既给足面子又顺势接过话语主导权。"
+        },
+        {
+          "phrase_en": "higher level of abstraction",
+          "source_type": "corpus",
+          "clip_id": "013_AI",
+          "lexicon_id": "LEX_013",
+          "chinglish_trap": "more high-level and conceptual thinking",
+          "executive_subtext_zh": "科技高管谈组织与产品升级的核心视角：不再抠底层琐碎执行，而是把问题抽象升维到系统架构与战略决策层。"
+        },
+        {
+          "phrase_en": "surprisingly tricky",
+          "source_type": "corpus",
+          "clip_id": "01_AI_DHH",
+          "lexicon_id": null,
+          "chinglish_trap": "unexpectedly very difficult and complex",
+          "executive_subtext_zh": "资深技术高管轻描淡写点破深坑的地道美式克制词（出人意料地棘手）：表面云淡风轻，实则警告老代码库藏着大雷。"
+        },
+        {
+          "phrase_en": "10x engineer",
+          "source_type": "corpus",
+          "clip_id": "011_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "super programmer who works ten times faster",
+          "executive_subtext_zh": "硅谷传奇人才标杆词（十倍工程师）：在智能体调度时代正被重新定义为能驾驭百倍并发 Agent 的架构操盘手。"
+        },
+        {
+          "phrase_en": "tiny by modern standards",
+          "source_type": "corpus",
+          "clip_id": "018_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "very small compared to today's tech level",
+          "executive_subtext_zh": "用代际跃迁降维打击旧架构的精准表达（按今天标准简直小得可怜）：瞬间凸显长上下文与算力演进的恐怖速度。"
+        },
+        {
+          "phrase_en": "FCC certification",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_117",
+          "chinglish_trap": "US government wireless radio entry certificate",
+          "executive_subtext_zh": "无线智能硬件进入美国海关的硬门槛（美国联邦通信委员会射频认证）：没拿到FCC ID任何一批蓝牙/Wi-Fi眼镜都会被美国海关整柜扣留。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 44,
+        "conflict_angle": "旧固件濒临拖垮 FCC 认证窗口，硅谷架构师与深圳 CTO 激辩 AI 编程真实极限",
+        "hook_line_en": "I really like that framing—agent acceleration is near 100% on greenfield code, yet legacy firmware stays surprisingly tricky.",
+        "hook_line_zh": "我很欣赏你这个切入视角——新项目上智能体加速逼近百分百，但十万行老固件依然出人意料地棘手。",
+        "cta_zh": "FCC 认证惊险通关的同一周，一家华尔街背景的美国医疗保险巨头主动上门开出两千万美元企业大单，却藏着致命伦理陷阱——收听第 9 集。"
+      },
+      "cliffhanger_zh": "FCC 射频证书刚刚落袋，Claire 却带来一份令人背脊发凉的 B2B 巨额意向书：北美某顶级商保与国防外包联盟愿采购 10 万台定制版 NovaEdge Glass，条件是开放全部原始视听流数据并取消合同赔偿责任上限。"
+    },
+    {
+      "episode_id": "E010",
+      "arc_number": 2,
+      "arc_title": "第二弧：欧美大渠道压价与伦敦旗舰血战",
+      "title_zh": "业务闭环里的幽灵帝国",
+      "title_en": "AI in the Loop & The Shadow Empire",
+      "logline_zh": "两千万美元的北美 B2B 预付款足以立刻填平现金流缺口，但 Claire 查出买方背后的影子软件帝国打算用 NovaEdge 眼镜数据搭建医保“拒赔管理”自动化模型，并拒绝签署标准数据处理协议与赔偿责任上限。林沉陷入商业诱惑与道德/法律核雷区的生死抉择，最终立下“只做本地私有化部署、绝不碰灰产拒赔”的铁血红线。",
+      "primary_clip_ids": [
+        "009_AI",
+        "045_BIZ",
+        "014_AI",
+        "017_AI"
+      ],
+      "accent_profile": "100% 核心纽约/硅谷美音（林沉、Claire 纽约法务美音联手硬刚北美 B2B 买方代表）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "AI in the loop",
+          "source_type": "corpus",
+          "clip_id": "009_AI",
+          "lexicon_id": "LEX_064",
+          "chinglish_trap": "embedding AI into every company workflow",
+          "executive_subtext_zh": "黄仁勋反转旧共识的战略金句：不再把AI当成需要人盯着的附属品（human in the loop），而是让AI嵌入企业每个环节持续复利。"
+        },
+        {
+          "phrase_en": "on-prem",
+          "source_type": "corpus",
+          "clip_id": "009_AI",
+          "lexicon_id": "LEX_065",
+          "chinglish_trap": "installed locally on company servers, not public cloud",
+          "executive_subtext_zh": "欧美政企大客户与隐私敏感买家的硬性采购黑话（本地私有化部署 on-premises）：核心数据不出屋，绝不上传公有云。"
+        },
+        {
+          "phrase_en": "denials management",
+          "source_type": "corpus",
+          "clip_id": "045_BIZ",
+          "lexicon_id": "LEX_092",
+          "chinglish_trap": "using AI to reject insurance claims for profit",
+          "executive_subtext_zh": "欧美医疗保险与B2B企业AI伦理雷区黑话（拒赔管理）：在商业变现与舆论公关之间最致命的灰产边界，碰错一步就可能引爆品牌危机。"
+        },
+        {
+          "phrase_en": "human in the loop",
+          "source_type": "corpus",
+          "clip_id": "009_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "keeping people inside AI working process",
+          "executive_subtext_zh": "硅谷旧安全共识术语（人在回路）：剧中用于与“AI in the loop”正面碰撞，厘清企业级自动化与责任边界。"
+        },
+        {
+          "phrase_en": "lose most sleep over",
+          "source_type": "corpus",
+          "clip_id": "014_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "worry about most at night without sleeping",
+          "executive_subtext_zh": "高管表达深层战略焦虑的极地道美式口语（最让我夜不能寐的事）：比 worry most about 更真实有重量。"
+        },
+        {
+          "phrase_en": "moral framework",
+          "source_type": "corpus",
+          "clip_id": "014_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "rules about what is right and wrong",
+          "executive_subtext_zh": "欧美听证会与高管访谈高频压迫词（道德与价值框架）：当技术尺度乘以百万用户，谁来划定不可逾越的红线。"
+        },
+        {
+          "phrase_en": "data processing agreement",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_119",
+          "chinglish_trap": "user data handling legal contract",
+          "executive_subtext_zh": "欧美大客户采购AI硬件/SaaS的法务标配前置文件（数据处理协议 DPA）：没签好DPA明确数据控制者与处理者边界，采购流程连第一步都走不出去。"
+        },
+        {
+          "phrase_en": "indemnity cap",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_113",
+          "chinglish_trap": "highest legal compensation ceiling in a contract",
+          "executive_subtext_zh": "欧美大企业与法务签约拉锯的生死条款（赔偿责任上限）：对方想让你对隐私或专利纠纷承担无限连带赔偿，你的法务必须死守赔偿上限。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 48,
+        "conflict_angle": "拒绝两千万美元带毒订单：Claire 撕破医保拒赔 AI 的无限连带赔偿陷阱",
+        "hook_line_en": "We ship on-prem with a hard indemnity cap—we are not putting NovaEdge inside an insurer's denials management machine.",
+        "hook_line_zh": "我们只提供本地私有化部署加硬性赔偿上限——绝不让灵犀智造变成保险公司自动拒赔的帮凶机器。",
+        "cta_zh": "刚躲过美国的 B2B 伦理暗雷，欧盟布鲁塞尔的隐私传票却精准拍在了欧洲首发前 48 小时——收听第 10 集正片与黑话拆局。"
+      },
+      "cliffhanger_zh": "林沉当场撕毁无上限赔偿协议，保住了公司底线；然而刚走出纽约会议室，布鲁塞尔监管机构正式下发紧急听证通知——匿名举报称 NovaEdge Glass 的记忆功能涉嫌违反 GDPR 数据驻留与被遗忘权条款，欧洲海关已暂扣首批货柜。"
+    },
+    {
+      "episode_id": "E011",
+      "arc_number": 2,
+      "arc_title": "第二弧：欧美大渠道压价与伦敦旗舰血战",
+      "title_zh": "布鲁塞尔听证：给电网画红线",
+      "title_en": "Brussels & Westminster: Regulating the Electric Grid",
+      "logline_zh": "第二弧合规风暴爆发，欧盟 AI 法案与隐私首席法务顾问 Henrik Lindqvist（北欧冷峻客串）在布鲁塞尔听证会现场向林沉和 Claire 发难，指控消费级智能眼镜的持久记忆功能无法满足 GDPR 数据驻留与 72 小时被遗忘权。林沉巧借“监管电网边界”与“智能防骚扰护盾”逻辑正面接招，联合周默当场演示法兰克福本地向量库毫秒级清零，惊险保住欧洲通关许可。",
+      "primary_clip_ids": [
+        "026_AI",
+        "030_AI",
+        "024_AI",
+        "027_AI"
+      ],
+      "accent_profile": "70% 核心美音 + 伦敦 RP（林沉、Claire、Alistair）/ 30% 精控北欧欧盟法务客串（Henrik Lindqvist，intl_eu_legal）",
+      "core_us_uk_en_pct": 70,
+      "target_phrases": [
+        {
+          "phrase_en": "at the end of the day",
+          "source_type": "corpus",
+          "clip_id": "026_AI",
+          "lexicon_id": "LEX_006",
+          "chinglish_trap": "Finally speaking / In the final analysis",
+          "executive_subtext_zh": "终结无休止扯皮的拍板短语：把所有细节噪音一刀切掉，强行拉回唯一决定生死的底层现实。"
+        },
+        {
+          "phrase_en": "pacing the frontier",
+          "source_type": "corpus",
+          "clip_id": "026_AI",
+          "lexicon_id": "LEX_093",
+          "chinglish_trap": "controlling the speed of leading AI research",
+          "executive_subtext_zh": "硅谷AI安全派在听证会与监管博弈中的核心修辞（控制前沿推进节奏）：既想显得负责任，又暗藏用合规门槛锁死后来者的商业算盘。"
+        },
+        {
+          "phrase_en": "acceptable use",
+          "source_type": "corpus",
+          "clip_id": "030_AI",
+          "lexicon_id": "LEX_094",
+          "chinglish_trap": "rules saying how users are allowed to use AI",
+          "executive_subtext_zh": "欧美科技法务与隐私听证会标准条款术语（可接受使用政策 AUP）：在创新自由与监管红线之间划定平台免责与合规边界。"
+        },
+        {
+          "phrase_en": "a fair criticism",
+          "source_type": "corpus",
+          "clip_id": "027_AI",
+          "lexicon_id": "LEX_005",
+          "chinglish_trap": "Your blame is very reasonable and I admit my fault.",
+          "executive_subtext_zh": "硅谷顶级“礼貌带刀”让步句式：先优雅承认对方质疑有道理（卸掉敌意、显得大度），紧接着用转折把议题拉回自己的长期叙事。"
+        },
+        {
+          "phrase_en": "feel our way through",
+          "source_type": "corpus",
+          "clip_id": "030_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "carefully explore unclear new legal borders",
+          "executive_subtext_zh": "面对史无前例的新技术监管灰色地带时的顶级外交表达（摸索校准边界）：承认规则尚在演进，拒绝一刀切封杀。"
+        },
+        {
+          "phrase_en": "like a spam filter",
+          "source_type": "corpus",
+          "clip_id": "024_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "working as a junk message blocking shield",
+          "executive_subtext_zh": "用大众秒懂类比化解 AI 安全恐慌的话术（就像垃圾邮件过滤器）：说明端侧防御智能体天然能拦截恶意诱导。"
+        },
+        {
+          "phrase_en": "GDPR data residency",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_109",
+          "chinglish_trap": "European user data staying inside Europe rule",
+          "executive_subtext_zh": "AI硬件出海欧洲不可触碰的合规红线（GDPR数据驻留）：语音和视觉流若未经隔离就回传跨境服务器，布鲁塞尔监管罚单最高可达全球营收4%。"
+        },
+        {
+          "phrase_en": "right to erasure",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_118",
+          "chinglish_trap": "user legal right to delete all saved history",
+          "executive_subtext_zh": "欧洲GDPR隐私听证会最爱拿来狙击AI记忆功能的条款（被遗忘权/删除权）：你的伴侣机器人记住用户偏好是卖点，但无法彻底清除训练与日志数据就是违规重罪。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 50,
+        "conflict_angle": "布鲁塞尔听证会北欧法务冰冷扣货，林沉用“承认合理批评 + 电网边界”完成高段位合规反杀",
+        "hook_line_en": "That is a fair criticism, Counsel—at the end of the day, acceptable use means outlawing harm, not shutting off the electric grid.",
+        "hook_line_zh": "顾问先生，这是很中肯的批评——但归根结底，可接受使用规则是禁止伤人，而不是切断整个社会的电网。",
+        "cta_zh": "欧洲海关刚刚放行，伦敦与沙丘路却在半季高潮联合亮出最狠的一张牌：用补贴换创始人超级投票权——收听第 11 集。"
+      },
+      "cliffhanger_zh": "Henrik Lindqvist 在核验完法兰克福物理服务器删除日志后冷峻签字放行，Selfridges 首批 3000 台圣诞大单彻底打通；但当晚林沉收到双线警报——Best Buy 要求追加 8% 联合营销费换黄金端头陈列，而 Victoria 同时联合早期股东发起董事会提案，试图趁中季增发剥离林沉的超级投票权。"
+    },
+    {
+      "episode_id": "E012",
+      "arc_number": 2,
+      "arc_title": "第二弧：欧美大渠道压价与伦敦旗舰血战",
+      "title_zh": "税收补贴陷阱与 AB 股宫变",
+      "title_en": "The Tax-Break Trap & Dual-Class Coup",
+      "logline_zh": "第一季半季高潮大集。北美多州政府为争夺 NovaEdge 北美装配中心竞相开出税收减免筹码，零售大渠道趁机捆绑联合营销费与货架端头位，Victoria 更在资本泡沫指标逼近 80% 之际密谋通过新融资条款瓦解林沉的超级投票权。林沉在伦敦与硅谷双线反围剿，借势锁住北美核心黄金端头陈列并守住创始人控制权，却也把矛盾彻底推向第三弧地缘正面冲突。",
+      "primary_clip_ids": [
+        "035_BIZ",
+        "041_BIZ",
+        "060_FIN",
+        "052_BIZ",
+        "038_BIZ"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音 + 伦敦 RP 英音（全员核心卡司林沉、Victoria、Alistair、Claire 火力全开）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "tax breaks",
+          "source_type": "corpus",
+          "clip_id": "035_BIZ",
+          "lexicon_id": "LEX_091",
+          "chinglish_trap": "government tax discount gifts for factories",
+          "executive_subtext_zh": "海外选址与政府招商谈判桌上最直接的筹码（税收减免优惠）：巨头常靠就业承诺让多州政府竞价，但也极易招致舆论反噬。"
+        },
+        {
+          "phrase_en": "super voting provision",
+          "source_type": "corpus",
+          "clip_id": "041_BIZ",
+          "lexicon_id": "LEX_038",
+          "chinglish_trap": "special founder shares with ten times voting power",
+          "executive_subtext_zh": "硅谷创始人控制权生死条款（AB股超级投票权）：后期融资与董事会宫斗的核心争夺点，交出去就可能被资本踢出局。"
+        },
+        {
+          "phrase_en": "bubble indicator",
+          "source_type": "corpus",
+          "clip_id": "060_FIN",
+          "lexicon_id": "LEX_046",
+          "chinglish_trap": "a number showing if the market is overheating",
+          "executive_subtext_zh": "宏观对冲基金研判IPO窗口与估值顶部的量化温度计：把“我觉得过热”升级为基于杠杆率与流动性的系统化预警。"
+        },
+        {
+          "phrase_en": "grotesque display of corporate power",
+          "source_type": "corpus",
+          "clip_id": "035_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "ugly show of big company bullying",
+          "executive_subtext_zh": "欧美舆论与监管批判巨头逼迫地方政府割肉免税的重炮短语（企业权力的丑陋炫耀）：提醒高管拿补贴必防舆论反噬。"
+        },
+        {
+          "phrase_en": "drag of selling",
+          "source_type": "corpus",
+          "clip_id": "041_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "price drop loss when forced to sell shares",
+          "executive_subtext_zh": "股权税负与大宗减持谈判中的硬核金融词（被迫抛售导致的市值折损拖累）：点穿大股东被迫变现的连锁杀伤。"
+        },
+        {
+          "phrase_en": "tracking quite well",
+          "source_type": "corpus",
+          "clip_id": "038_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "business numbers going smoothly as planned",
+          "executive_subtext_zh": "顶级机构背书业绩稳健的克制美式表态（业务进展相当扎实）：越轻描淡写的肯定，在投资人眼里含金量越高。"
+        },
+        {
+          "phrase_en": "co-op marketing",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_102",
+          "chinglish_trap": "together-advertising fee with the retailer",
+          "executive_subtext_zh": "大渠道买手在压完进货价后追加的第二把刀（联合营销基金）：名义上是品牌与渠道共摊推广费，实则常被当成变相返点强制捆绑。"
+        },
+        {
+          "phrase_en": "endcap placement",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_103",
+          "chinglish_trap": "store aisle front-head display spot",
+          "executive_subtext_zh": "北美消费电子卖场的黄金流量位（货架端头黄金陈列位）：直接决定AI眼镜这种新品类能不能让逛店顾客停下来试戴，谈判价值远超普通折扣。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 52,
+        "conflict_angle": "半季大高潮：沙丘路合伙人趁增发密谋剥夺 AB 股投票权，林沉与 Claire 掀桌守住控制权",
+        "hook_line_en": "You want my super voting provision off the table while the bubble indicator sits at eighty percent? That is not governance—that is a coup.",
+        "hook_line_zh": "在市场泡沫指标冲到百分之八十的时候，你逼我交出超级投票权？这不叫公司治理——这是一场政变。",
+        "cta_zh": "控制权保卫战刚刚险胜，华盛顿凌晨突发 25% 消费电子关税加征令，深圳供应链一夜拉响红色警报——收听半季高潮第 12 集。"
+      },
+      "cliffhanger_zh": "林沉保住了 AB 股超级投票权并拿下 150 家旗舰黄金端头位，庆功香槟尚未开瓶，手机屏幕同时弹出两条致命快讯：华盛顿宣布对华智能穿戴类目加征 25% 惩罚性关税，而北美采购总监 Rajiv Menon 已预约明早 7 点重算全部到岸成本。"
+    },
+    {
+      "episode_id": "E013",
+      "arc_number": 3,
+      "arc_title": "第三弧：关税风暴、东南亚备产与合规围剿",
+      "title_zh": "关税高墙与越墨备产奇袭",
+      "title_en": "Tariff Walls & The Mexico/Vietnam Gambit",
+      "logline_zh": "25% 惩罚性关税正式砸落，NovaEdge Glass 每台到岸完税总成本骤增 31 美元。北美采购总监 Rajiv Menon（受控印度裔高管客串）冷酷警告：深圳直出已跌破零售毛利底线，延期即触发巨额扣款罚单。林沉连夜飞赴新加坡密会主权基金合伙人 Wei-Ling Tan（新加坡外交精英客串），借鉴跨国巨头“核心留在深圳、总装切往越南/墨西哥”的务实棋局，打响供应链二次突围战。",
+      "primary_clip_ids": [
+        "065_FIN",
+        "086_USC",
+        "093_USC",
+        "087_USC"
+      ],
+      "accent_profile": "64% 核心美音 + 伦敦 RP（林沉、Claire、Alistair）/ 36% 精控双客串（22% 印度裔采购总监 Rajiv Menon intl_indian_exec + 14% 新加坡主权基金 Wei-Ling Tan intl_singapore_vc）",
+      "core_us_uk_en_pct": 64,
+      "target_phrases": [
+        {
+          "phrase_en": "back off of it",
+          "source_type": "corpus",
+          "clip_id": "065_FIN",
+          "lexicon_id": "LEX_077",
+          "chinglish_trap": "cancel or retreat from that tough tariff policy",
+          "executive_subtext_zh": "华尔街大行CEO评估关税极限施压时的直白口语：“过度不确定性正在挥霍自身筹码，现在明智之举是赶紧往回撤”。"
+        },
+        {
+          "phrase_en": "supply chain disruptions",
+          "source_type": "corpus",
+          "clip_id": "086_USC",
+          "lexicon_id": "LEX_074",
+          "chinglish_trap": "supply chain stopping or breaking accidents",
+          "executive_subtext_zh": "全球制造与跨境出海董事会必考词（供应链中断风险）：用于向欧美大客户解释为何必须布局双基地备份与安全库存。"
+        },
+        {
+          "phrase_en": "insulated from",
+          "source_type": "corpus",
+          "clip_id": "086_USC",
+          "lexicon_id": "LEX_075",
+          "chinglish_trap": "well protected and separated from outside shocks",
+          "executive_subtext_zh": "向机构投资人兜售抗周期韧性的高级动词短语（免受……冲击/隔离风险）：比 protected from 更具金融与供应链架构感。"
+        },
+        {
+          "phrase_en": "base cost",
+          "source_type": "corpus",
+          "clip_id": "093_USC",
+          "lexicon_id": "LEX_076",
+          "chinglish_trap": "the basic bottom price after adding import tax",
+          "executive_subtext_zh": "关税冲击测算与定价谈判的硬核锚点（基准成本）：直接把25%关税摊到出厂基准成本上算清底线，决定是硬扛还是转产墨西哥/东南亚。"
+        },
+        {
+          "phrase_en": "pragmatically adjusting",
+          "source_type": "corpus",
+          "clip_id": "087_USC",
+          "lexicon_id": "LEX_087",
+          "chinglish_trap": "realistically changing strategy to fit new power",
+          "executive_subtext_zh": "东南亚及跨国企业在中美夹缝中的高级生存法则（务实校准/实用主义调适）：不站意识形态口水队，只按商业利益动态下注。"
+        },
+        {
+          "phrase_en": "stand up to China",
+          "source_type": "corpus",
+          "clip_id": "087_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "be tough and resist Chinese pressure",
+          "executive_subtext_zh": "地缘现实主义平衡法则中的关键短语（既要顶住压力又要务实相处）：听懂亚洲邻国与跨国资本的双轨生存术。"
+        },
+        {
+          "phrase_en": "landed cost",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_105",
+          "chinglish_trap": "arrive-at-port all-included total cost",
+          "executive_subtext_zh": "跨境硬件真实毛利底线（到岸完税总成本）：把BOM物料、深圳组装、空海运、保险与25%进口关税全算进去，才是真正能用来谈批发价的底牌。"
+        },
+        {
+          "phrase_en": "chargeback",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_098",
+          "chinglish_trap": "deduct-money fine from the retail store",
+          "executive_subtext_zh": "跨境硬件供货商的利润黑洞（渠道扣款/退单罚款）：只要贴标差一毫米、交期晚一天或退货率冒头，欧美大买手直接从尾款里硬扣。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 49,
+        "conflict_angle": "25% 关税落地次日，印度裔北美采购总监冷酷算账逼迁产能，新加坡主权基金点破亚洲务实底牌",
+        "hook_line_en": "A twenty-five percent tariff resets your base cost overnight—our buyers only pay for supply chains insulated from disruptions.",
+        "hook_line_zh": "百分之二十五的关税一夜之间改写了你的基准成本——我们的买手只为能隔离中断风险的供应链买单。",
+        "cta_zh": "越南新组装线刚刚点火试产，光学微显示的单一供应商却在关键工序爆出微米级污染报废——收听第 13 集完整剧集与黑话拆局。"
+      },
+      "cliffhanger_zh": "新加坡主权基金原则同意领投东南亚备产专款，越南胡志明市新组装线火速启动；可首周试产尚未结束，周默紧急传回显微检测图——越南产线擅自替换了某道清洗溶剂参数，数万片核心光学镜片全批次出现微米级雾点。"
+    },
+    {
+      "episode_id": "E014",
+      "arc_number": 3,
+      "arc_title": "第三弧：关税风暴、东南亚备产与合规围剿",
+      "title_zh": "一微米瑕疵与百万级良率噩梦",
+      "title_en": "One Micron Flaw, Million-Dollar Yield Nightmare",
+      "logline_zh": "跨国建厂最血腥的一课在越南工厂上演：一处微小工艺偏差导致整批核心镜片报废，吞下数百万美元直接损失（如同行业五亿美元级晶圆报废警钟的硬件缩影），更暴露出核心微显示模组受制于单一供应商卡点的致命软肋。周默带深圳工艺团队空降越南立下芯片代工巨头同款“像素级精确复制（copy exact）”铁律，并以架构级垂直封装绕开传统光刻微缩天花板，硬扛住第三方独立实验室盲测。",
+      "primary_clip_ids": [
+        "080_USC",
+        "082_USC",
+        "085_USC",
+        "081_USC"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音（英文线：林沉与北美供应链审计官交锋 + 深圳/越南双线周默硬核中文）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "choke off the supply",
+          "source_type": "corpus",
+          "clip_id": "080_USC",
+          "lexicon_id": "LEX_078",
+          "chinglish_trap": "completely block and cut the chip supply",
+          "executive_subtext_zh": "半导体与地缘风险评估的强冲击动词（掐断供应咽喉）：比 stop supply 更具窒息感和国家安全级别的紧迫压迫力。"
+        },
+        {
+          "phrase_en": "eating a loss",
+          "source_type": "corpus",
+          "clip_id": "082_USC",
+          "lexicon_id": "LEX_079",
+          "chinglish_trap": "having to swallow and pay for a big money loss",
+          "executive_subtext_zh": "硬件制造与供应链翻车时极具画面感的商战口语（硬生生吞下巨额亏损）：没人替你买单，只能自己啃下这笔坏账或报废损失。"
+        },
+        {
+          "phrase_en": "copy exact",
+          "source_type": "corpus",
+          "clip_id": "082_USC",
+          "lexicon_id": "LEX_080",
+          "chinglish_trap": "copy every factory step 100% without any change",
+          "executive_subtext_zh": "台积电/英特尔晶圆厂海外扩产铁律（精确复制原则）：面对跨国建厂良率崩盘风险，任何本地化“微调创新”都可能毁掉整条产线。"
+        },
+        {
+          "phrase_en": "hitting a ceiling",
+          "source_type": "corpus",
+          "clip_id": "081_USC",
+          "lexicon_id": "LEX_081",
+          "chinglish_trap": "reaching the highest limit and cannot go up more",
+          "executive_subtext_zh": "芯片工艺与业务增长遇到物理或市场天花板的地道隐喻：宣告靠老办法线性堆料已经走到尽头，必须换架构破局。"
+        },
+        {
+          "phrase_en": "third-party validation",
+          "source_type": "corpus",
+          "clip_id": "081_USC",
+          "lexicon_id": "LEX_082",
+          "chinglish_trap": "independent outside lab testing to prove it",
+          "executive_subtext_zh": "欧美大渠道采购与技术尽调最冷峻的质疑词（第三方独立验证）：自卖自夸的实验室参数不算数，拿出独立权威机构测试报告再谈。"
+        },
+        {
+          "phrase_en": "process consistency",
+          "source_type": "corpus",
+          "clip_id": "082_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "keeping factory making steps always the same",
+          "executive_subtext_zh": "半导体与精密光学制造的生死词（工艺一致性）：在海外复制产线时，对一致性的偏执不是多疑，是唯一活路。"
+        },
+        {
+          "phrase_en": "sole-source bottleneck",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_120",
+          "chinglish_trap": "only-one-supplier neck-choking supply risk",
+          "executive_subtext_zh": "跨国硬件董事会尽调最怕看到的致命脆弱点（单一供应商卡点）：核心光学镜片或NPU一旦只绑一家厂商，地缘制裁或工厂失火就会让全线停摆。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 45,
+        "conflict_angle": "海外新厂擅改一道溶剂参数导致全批镜片报废，林沉立下台积电式“精确复制”军令状",
+        "hook_line_en": "Vigilance over process consistency isn't paranoia—you copy exact from Shenzhen, or we end up eating a loss nobody survives.",
+        "hook_line_zh": "死磕工艺一致性绝不是多疑——把深圳产线像素级精确复制过来，否则吞下这笔报废亏损谁都活不下来。",
+        "cta_zh": "刚啃下良率硬骨头，美方最新一轮高端算力芯片出口禁令落地，边缘算力集群一夜断粮——收听第 14 集正片与拆局。"
+      },
+      "cliffhanger_zh": "越南厂在像素级复制深圳工艺后良率回升至 93%，第三方法检报告正式签发；但次日清晨，Claire 带来更窒息的华盛顿新规——高端训练加速卡全面禁售升级，NovaEdge 下一代视觉世界模型的训练集群彻底断供。"
+    },
+    {
+      "episode_id": "E015",
+      "arc_number": 3,
+      "arc_title": "第三弧：关税风暴、东南亚备产与合规围剿",
+      "title_zh": "缺芯倒逼与电力卡点反杀",
+      "title_en": "ASML, Power Grids & The Chip-Starved Edge",
+      "logline_zh": "高端芯片禁运让硅谷唱空者再次宣称“缺芯的中国硬件团队已失去下一代 AI 竞赛入场券”。然而林沉与周默却看穿对手的隐蔽软肋——北美数据中心正被老旧电网发电量卡死脖子，而极度算力约束反倒逼出了 NovaEdge 90% 核心组件本土自研与极致算法稀疏化，当新基准跑分公布时，当年看空的前巨头高管不得不集体改口。",
+      "primary_clip_ids": [
+        "042_BIZ",
+        "088_USC",
+        "092_USC",
+        "079_USC"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音（林沉、Claire 与华尔街科技分析师、北美云伙伴美音硬核交锋）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "chip starved",
+          "source_type": "corpus",
+          "clip_id": "042_BIZ",
+          "lexicon_id": "LEX_085",
+          "chinglish_trap": "seriously lacking advanced semiconductor chips",
+          "executive_subtext_zh": "地缘算力封锁下的鲜活形容词（芯片饥渴/缺芯受限）：在商战辩论中常用来反衬极端资源约束反而倒逼出10倍算法与工程效率。"
+        },
+        {
+          "phrase_en": "biggest bottlenecks",
+          "source_type": "corpus",
+          "clip_id": "088_USC",
+          "lexicon_id": "LEX_086",
+          "chinglish_trap": "the most serious blocking points stopping growth",
+          "executive_subtext_zh": "跨国产能与AI基建战略分析核心词（最大卡点/瓶颈）：帮高管从表面喧嚣中精准锁定真正限制交付的那个短板（如电力或封装）。"
+        },
+        {
+          "phrase_en": "domestically sourced",
+          "source_type": "corpus",
+          "clip_id": "092_USC",
+          "lexicon_id": "LEX_083",
+          "chinglish_trap": "bought from local suppliers inside the home country",
+          "executive_subtext_zh": "供应链国产化与原产地合规审查核心词（本土采购）：在关税原产地认定与自主可控博弈中决定产品能不能过海关与审查。"
+        },
+        {
+          "phrase_en": "barred from selling",
+          "source_type": "corpus",
+          "clip_id": "092_USC",
+          "lexicon_id": "LEX_084",
+          "chinglish_trap": "legally not allowed by government to sell",
+          "executive_subtext_zh": "出口管制与贸易禁令的精准法律新闻表达（被明令禁止销售）：比 not allowed to sell 更正式、更具监管红线威慑力。"
+        },
+        {
+          "phrase_en": "singing a different tune",
+          "source_type": "corpus",
+          "clip_id": "079_USC",
+          "lexicon_id": "LEX_015",
+          "chinglish_trap": "changing his opinion completely now",
+          "executive_subtext_zh": "商战与媒体圈带刺调侃：暗讽当年看空你或放狠话的大佬，如今被现实打脸后悄悄改口换了一套说辞。"
+        },
+        {
+          "phrase_en": "the game has changed",
+          "source_type": "corpus",
+          "clip_id": "079_USC",
+          "lexicon_id": "LEX_016",
+          "chinglish_trap": "The rules of competition are totally different now.",
+          "executive_subtext_zh": "董事会战略转折点宣言：宣告旧护城河已经失效、竞争范式彻底重写，逼迫保守派停止沿用去年的打法。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 44,
+        "conflict_angle": "算力封锁下反杀华尔街看空派：缺芯倒逼十倍效率，电网才是北美算力最大卡点",
+        "hook_line_en": "Everyone wrote us off as chip starved while power became their biggest bottleneck—now the skeptics are singing a different tune because the game has changed.",
+        "hook_line_zh": "所有人都笑我们缺芯卡脖子，却没看清电力成了他们最大的瓶颈——现在看空派集体改口了，因为牌桌规则已经彻底变了。",
+        "cta_zh": "技术封锁线刚被凿开缺口，新加坡主权基金的正式签约前夜却杀出华盛顿与布鲁塞尔的双重合规质询——收听第 15 集。"
+      },
+      "cliffhanger_zh": "NovaEdge 端云混合新模型在低功耗算力上追平旗舰闭源效果，华尔街风向瞬间逆转；但当晚新加坡主权基金发来急件：美欧监管正联手施压亚太资本站队，要求核查 NovaEdge 跨区域数据本地化架构，Wei-Ling Tan 约林沉 24 小时内亲赴新加坡摊牌。"
+    },
+    {
+      "episode_id": "E016",
+      "arc_number": 3,
+      "arc_title": "第三弧：关税风暴、东南亚备产与合规围剿",
+      "title_zh": "礼貌外交背后的共享飞轮",
+      "title_en": "Polite Diplomacy vs. Shared Flywheel",
+      "logline_zh": "新加坡滨海湾私密闭门会上，主权基金合伙人 Wei-Ling Tan（受控新加坡外交精英客串）提醒林沉切勿被华盛顿的客套调音麻痹——大国博弈早已进入全栈主动战略竞争。林沉与 Claire 亮出“区域独立数据本地化孤岛 + 面向 30 国开放端侧标准接口”的共享飞轮架构，用商业互利逻辑而非情绪站队，一举敲定新加坡 1.2 亿美元战略领投。",
+      "primary_clip_ids": [
+        "04_USCHINA_Jensen",
+        "094_USC",
+        "096_USC",
+        "098_USC"
+      ],
+      "accent_profile": "70% 核心美音（林沉、Claire）/ 30% 精控新加坡主权基金客串（Wei-Ling Tan，intl_singapore_vc）",
+      "core_us_uk_en_pct": 70,
+      "target_phrases": [
+        {
+          "phrase_en": "destroy everybody's flywheel",
+          "source_type": "corpus",
+          "clip_id": "04_USCHINA_Jensen",
+          "lexicon_id": "LEX_073",
+          "chinglish_trap": "break everyone's good business growth cycle",
+          "executive_subtext_zh": "黄仁勋在华盛顿博弈中的高段位劝诫：用商业增长“飞轮”隐喻警示政策制定者——把良性竞争推成敌对脱钩，最终所有人一起坠毁。"
+        },
+        {
+          "phrase_en": "polite modulations",
+          "source_type": "corpus",
+          "clip_id": "094_USC",
+          "lexicon_id": "LEX_020",
+          "chinglish_trap": "polite changes of speaking tone in diplomacy",
+          "executive_subtext_zh": "顶级跨国谈判识局黑话：点破对方台面上的客套修辞只是“礼貌调音”，绝不能错把客气当成对方底牌的松动。"
+        },
+        {
+          "phrase_en": "active strategic competition",
+          "source_type": "corpus",
+          "clip_id": "094_USC",
+          "lexicon_id": "LEX_088",
+          "chinglish_trap": "fierce long-term fighting between two superpowers",
+          "executive_subtext_zh": "华盛顿与达沃斯政策圈标准定性词（全方位主动战略竞争）：提醒出海创业者放弃“纯商业不涉政治”的天真幻想，提前做好合规隔离。"
+        },
+        {
+          "phrase_en": "shaping global AI norms",
+          "source_type": "corpus",
+          "clip_id": "096_USC",
+          "lexicon_id": "LEX_089",
+          "chinglish_trap": "making international AI rules and standards",
+          "executive_subtext_zh": "国际合规与行业话语权顶层概念（塑造全球AI规则与标准）：谁定义了安全、接口与伦理标准，谁就拿到了下一代全球市场的入场发牌权。"
+        },
+        {
+          "phrase_en": "live in the shadow of",
+          "source_type": "corpus",
+          "clip_id": "098_USC",
+          "lexicon_id": "LEX_095",
+          "chinglish_trap": "always stay under the influence of a huge neighbor",
+          "executive_subtext_zh": "地缘战略与区域市场格局的经典隐喻（生活在巨头的阴影之下）：道尽东南亚供应链节点或中小品牌在超级大国与巨无霸平台间的现实处境。"
+        },
+        {
+          "phrase_en": "operational position",
+          "source_type": "corpus",
+          "clip_id": "094_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "real practical working standing in action",
+          "executive_subtext_zh": "剥开外交辞令看穿对手真实底牌的精准术语（实战操作立场）：不听对方嘴上怎么说，只看他真金白银怎么布阵。"
+        },
+        {
+          "phrase_en": "data localization",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_114",
+          "chinglish_trap": "forcing user data to stay in local country",
+          "executive_subtext_zh": "跨国AI终端面对欧美及东南亚多国监管的架构铁律（数据本地化）：迫使云架构从全球单一集群拆成区域独立孤岛，直接推高合规与运维成本。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 47,
+        "conflict_angle": "新加坡主权基金闭门摊牌：听懂台面客套话背后的大国战略底牌，守住全球共享商业飞轮",
+        "hook_line_en": "Strip away the polite modulations—this is active strategic competition, yet crossing the red line will destroy everybody's flywheel.",
+        "hook_line_zh": "剥掉台面上那些礼貌调音——这就是全栈主动战略竞争，但谁一旦越过脱钩红线，摧毁的是所有人的增长飞轮。",
+        "cta_zh": "1.2 亿美元战略资金落袋，NovaDock 二代桌面机器人正式对决硅谷十亿美元人形明星——收听第 16 集正片与黑话拆局。"
+      },
+      "cliffhanger_zh": "新加坡主权基金 1.2 亿美元战略投资正式签字，欧美亚三地数据孤岛全面合规；林沉随即把枪口转向产品下一代护城河——硅谷巨头刚发布语言大模型眼镜二代，但周默在深圳实验室亮出了截然不同的底牌：基于物理世界模型的 NovaDock 空间交互引擎。"
+    },
+    {
+      "episode_id": "E017",
+      "arc_number": 3,
+      "arc_title": "第三弧：关税风暴、东南亚备产与合规围剿",
+      "title_zh": "世界模型与物理 AI 决战",
+      "title_en": "World Models & The Physical AI Race",
+      "logline_zh": "消费电子展前夜，硅谷竞争对手押注纯语言交互噱头，林沉却把赌注全押在理解真实三维空间因果的“世界模型”与深圳百万级量产硬件集群上。面对顶级机构关于“小公司凭什么在物理 AI 赛道反超硅谷巨头”的尖锐追问，林沉用数量级级别的真实世界交互数据与量产规模优势彻底点燃预售风暴。",
+      "primary_clip_ids": [
+        "016_AI",
+        "008_AI",
+        "089_USC",
+        "091_USC"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音（林沉全球发布会英文主讲与北美科技媒体尖锐问答 + 周默深圳后台）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "world models",
+          "source_type": "corpus",
+          "clip_id": "016_AI",
+          "lexicon_id": "LEX_063",
+          "chinglish_trap": "AI models that understand real physical space rules",
+          "executive_subtext_zh": "具身智能与空间硬件（眼镜/桌面机器人）的下一代技术护城河（世界模型）：能预测物理因果与空间后果，而不只是文字接龙。"
+        },
+        {
+          "phrase_en": "orders of magnitude",
+          "source_type": "corpus",
+          "clip_id": "008_AI",
+          "lexicon_id": "LEX_012",
+          "chinglish_trap": "many times bigger / a huge gap in numbers",
+          "executive_subtext_zh": "硅谷硬核科技圈高频量级词：指的不是差20%，而是差10倍、100倍的数量级鸿沟，用于一锤定音终结细枝末节的纠缠。"
+        },
+        {
+          "phrase_en": "sizable fleet",
+          "source_type": "corpus",
+          "clip_id": "089_USC",
+          "lexicon_id": "LEX_070",
+          "chinglish_trap": "a quite large group of deployed robots and devices",
+          "executive_subtext_zh": "硬件量产与商用落地圈的高级量化表达（颇具规模的终端集群）：专指跨越样机阶段、真正在真实场景规模化铺开的设备群。"
+        },
+        {
+          "phrase_en": "missing piece",
+          "source_type": "corpus",
+          "clip_id": "016_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "the lost important part we still need",
+          "executive_subtext_zh": "科技领袖定义下一代技术范式突破口的高频叙事词（缺失的关键拼图）：一语说清旧路线为什么走到了尽头。"
+        },
+        {
+          "phrase_en": "joint embedding architectures",
+          "source_type": "corpus",
+          "clip_id": "016_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "combined vector space neural network structure",
+          "executive_subtext_zh": "具身智能与世界模型领域的硬核技术护城河词（联合嵌入架构）：在硅谷技术尽调会上瞬间确立一线研发权威。"
+        },
+        {
+          "phrase_en": "surpass rivals",
+          "source_type": "corpus",
+          "clip_id": "091_USC",
+          "lexicon_id": null,
+          "chinglish_trap": "beat and go ahead of competing companies",
+          "executive_subtext_zh": "全球制造业与实体 AI 竞赛中的凌厉动词搭配（反超竞争对手）：从“追赶者”正式切换为“品类定义者”。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 43,
+        "conflict_angle": "全球科技峰会现场反杀纯语言套壳质疑：物理世界模型 + 实体终端集群才是数量级护城河",
+        "hook_line_en": "Text prediction isn't enough—world models are the missing piece, and a sizable fleet in real homes gives us orders of magnitude more physical data.",
+        "hook_line_zh": "文字接龙远远不够——理解物理因果的世界模型才是缺失的关键拼图，而铺进真实家庭的庞大终端集群能给我们带来数量级领先的交互数据。",
+        "cta_zh": "预售突破 40 万台的同时，公司从 200 人暴涨到 2000 人却爆发严重“大公司病”与部门内斗——收听第 17 集正片与黑话拆局。"
+      },
+      "cliffhanger_zh": "NovaEdge Glass 二代与 NovaDock 全球预售引爆 40 万台订单，估值飙升至 45 亿美元；但高速扩张埋下组织暗雷——旧硬件部与新 AI 研究院为争夺研发预算公然决裂，Victoria 趁机向董事会密报“林沉已失去对两千人跨国组织的掌控力”。"
+    },
+    {
+      "episode_id": "E018",
+      "arc_number": 3,
+      "arc_title": "第三弧：关税风暴、东南亚备产与合规围剿",
+      "title_zh": "炮火下的组织重构与 AI 优先",
+      "title_en": "Organizational Reinvention Under Fire",
+      "logline_zh": "第三弧收官之战。面对组织内耗、研发资源内卷与 Victoria 的撤换 CEO 试探，林沉痛下决心发起全公司“AI 优先”组织重构——不再守着老硬件部门挤牙膏，而是把 R&D 预算全线重构为跨硬件与算法的一体化作战单元，并在董事会上直白摊牌：追求稳赚风险调整后收益的守旧者，永远造不出颠覆式创新。",
+      "primary_clip_ids": [
+        "022_AI",
+        "049_BIZ",
+        "050_BIZ",
+        "044_BIZ"
+      ],
+      "accent_profile": "100% 核心硅谷美音（林沉、Victoria 董事会交锋 + 深圳与硅谷跨洋全员动员）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "the reality is",
+          "source_type": "corpus",
+          "clip_id": "049_BIZ",
+          "lexicon_id": "LEX_007",
+          "chinglish_trap": "The true fact is that...",
+          "executive_subtext_zh": "CEO 破除幻觉的冷峻转折：礼貌否定前一句理想化假设，直接把残酷的客户、竞争或财务现实拍在桌面上。"
+        },
+        {
+          "phrase_en": "AI first",
+          "source_type": "corpus",
+          "clip_id": "050_BIZ",
+          "lexicon_id": "LEX_067",
+          "chinglish_trap": "putting AI as our number one company strategy",
+          "executive_subtext_zh": "大厂CEO重构组织与研发预算的顶层号令（AI优先）：不是把AI当成一个边角功能，而是重排全公司R&D资源向AI倾斜。"
+        },
+        {
+          "phrase_en": "risk adjusted return",
+          "source_type": "corpus",
+          "clip_id": "044_BIZ",
+          "lexicon_id": "LEX_045",
+          "chinglish_trap": "profit calculated together with the risk level",
+          "executive_subtext_zh": "机构投资委员会的标准否决/放行标尺（风险调整后收益）：用来区分“稳健理财”和创始人孤注一掷的颠覆式豪赌。"
+        },
+        {
+          "phrase_en": "hits and misses",
+          "source_type": "corpus",
+          "clip_id": "049_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "some successful products and some failed ones",
+          "executive_subtext_zh": "大厂 CEO 坦然面对创新试错的松弛表达（有爆款也有折戟）：把单次失败纳入长期组织进化的正常成本。"
+        },
+        {
+          "phrase_en": "radical innovation",
+          "source_type": "corpus",
+          "clip_id": "044_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "completely bold breakthrough new invention",
+          "executive_subtext_zh": "回击华尔街保守派挤牙膏思维的重炮词（颠覆式激进创新）：宣告不掀旧桌子就只能被淘汰。"
+        },
+        {
+          "phrase_en": "R&D spend",
+          "source_type": "corpus",
+          "clip_id": "050_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "research and development budget money",
+          "executive_subtext_zh": "CFO 与 CTO 在财报会和董事会上的标准简写（研发投入）：直接锚定每一分投入对应的技术代差回报。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 46,
+        "conflict_angle": "面对投资人以“风险调整收益”逼迫砍研发，林沉拍案立下全公司 AI 优先重构铁律",
+        "hook_line_en": "The reality is every product morphs—if our only goal were safe risk adjusted return, we'd never touch radical innovation, so our R&D spend goes AI first.",
+        "hook_line_zh": "残酷现实是任何产品形态都会演化——如果目标只是稳妥的风险调整后收益，我们永远碰不到颠覆式创新，所以全部研发预算必须转向 AI 优先。",
+        "cta_zh": "组织刚刚稳住阵脚，欧美通胀反扑与消费退潮同时袭来，华尔街做空机构的狙击子弹已经上膛——收听第三弧大结局第 18 集。"
+      },
+      "cliffhanger_zh": "组织重构大获成功，NovaEdge 正式启动美股 IPO 密交程序；然而就在路演启动前一个月，欧美消费者超额储蓄见底、收益率曲线倒挂冲击信贷市场，伦敦买手 Alistair 突然发来急电：欧美零售动销率开始放缓，要求追加 12% 滞销降价补贴。"
+    },
+    {
+      "episode_id": "E019",
+      "arc_number": 4,
+      "arc_title": "第四弧：董事会宫斗、宏观退潮与全球上市终局",
+      "title_zh": "狂欢酒碗见底之后",
+      "title_en": "The Punch Is Out of the Bowl",
+      "logline_zh": "第四弧终局大幕拉开。欧美宏观流动性急剧收紧、高息环境挤压银行净息差与消费信贷，昔日疯抢硬件的渠道一夜间转向谨慎。Alistair 拿 Q1 实销率下滑要求高额降价补贴，部分债权投资人企图借高息债锁死公司上行空间。林沉果断拒绝有毒长债、死守正净资产收益与现金安全垫，在行业寒冬中提前收缩战线。",
+      "primary_clip_ids": [
+        "070_FIN",
+        "077_FIN",
+        "061_FIN",
+        "071_FIN"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音 + 伦敦 RP 英音（林沉、Victoria、Alistair 三方宏观寒冬拉锯）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "the punch is out of the bowl",
+          "source_type": "corpus",
+          "clip_id": "070_FIN",
+          "lexicon_id": "LEX_044",
+          "chinglish_trap": "government stimulus money and hot spending are over",
+          "executive_subtext_zh": "华尔街极具画面感的宏观退潮暗语（派对酒碗见底了）：暗示超额储蓄与补贴红利已耗尽，消费硬件马上要迎来真实需求大考。"
+        },
+        {
+          "phrase_en": "in hindsight",
+          "source_type": "corpus",
+          "clip_id": "077_FIN",
+          "lexicon_id": "LEX_021",
+          "chinglish_trap": "looking back after everything already happened",
+          "executive_subtext_zh": "董事会复盘与宏观预判高频词：用来警示决策者“现在为了迎合短期情绪硬上，事后回头看一定会是个蠢决定”。"
+        },
+        {
+          "phrase_en": "net interest margin",
+          "source_type": "corpus",
+          "clip_id": "077_FIN",
+          "lexicon_id": "LEX_041",
+          "chinglish_trap": "the profit gap between loan and deposit interest",
+          "executive_subtext_zh": "金融与银行业核心盈利指标（净息差 NIM）：当收益率曲线趋平、资金成本抬升时，银行信贷收紧的真正底层诱因。"
+        },
+        {
+          "phrase_en": "positive ROE",
+          "source_type": "corpus",
+          "clip_id": "061_FIN",
+          "lexicon_id": "LEX_040",
+          "chinglish_trap": "still earning positive profit on shareholder money",
+          "executive_subtext_zh": "银行与蓝筹高管在金融风暴中的终极勋章（正净资产收益率）：证明在全行业爆雷的年份，你的资本回报依然为正。"
+        },
+        {
+          "phrase_en": "upside",
+          "source_type": "corpus",
+          "clip_id": "071_FIN",
+          "lexicon_id": "LEX_029",
+          "chinglish_trap": "future rising room / profit space",
+          "executive_subtext_zh": "投行与VC桌面最高频单字：专指资产或股权的“上行赔率与想象空间”，常与 downside（下行风险）成对出击。"
+        },
+        {
+          "phrase_en": "fixed return",
+          "source_type": "corpus",
+          "clip_id": "071_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "unchanged interest profit for lending money",
+          "executive_subtext_zh": "区分债权“封顶固定回报”与股权“无限上行赔率”的华尔街核心词：在科技高波动周期看清谁该承担什么风险。"
+        },
+        {
+          "phrase_en": "sell-through rate",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_100",
+          "chinglish_trap": "real consumer selling speed percentage",
+          "executive_subtext_zh": "区分“压货给渠道”与“真卖给消费者”的照妖镜（实销率/动销率）：首单铺进Selfridges不算赢，30天动销率不达标立刻面临清仓下架。"
+        },
+        {
+          "phrase_en": "markdown allowance",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_104",
+          "chinglish_trap": "slow-selling price-cut compensation money",
+          "executive_subtext_zh": "欧美买手转嫁滞销风险的经典霸王条款（降价补贴/滞销补偿）：如果新品季末卖不动被迫打折清库存，差价得由品牌方吐血补给渠道。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 47,
+        "conflict_angle": "欧美消费退潮、伦敦百货索要 12% 滞销补贴，林沉冷峻点穿“派对酒碗见底”的宏观寒冬",
+        "hook_line_en": "Excess consumer savings are gone—the punch is out of the bowl, and in hindsight, taking fixed-return debt right now would be suicide.",
+        "hook_line_zh": "欧美消费者的超额储蓄耗光了——狂欢的酒碗见底了，事后回头看，现在去借固定利息的高压长债简直就是自杀。",
+        "cta_zh": "刚顶住渠道降价施压，一家臭名昭著的华尔街做空机构却在 IPO 静默期抛出一份 80 页做空报告——收听第 19 集正片与拆局。"
+      },
+      "cliffhanger_zh": "林沉砍掉虚胖促销、守住了正现金流与伦敦核心门店实销率；然而当晚华尔街一家顶级做空机构联合境外财经媒体突然发布 80 页血洗报告，指控 NovaEdge 拿硬件公司硬套 AI 软件估值倍数、预言其将重演“漂亮 50”暴跌 90% 的惨剧。"
+    },
+    {
+      "episode_id": "E020",
+      "arc_number": 4,
+      "arc_title": "第四弧：董事会宫斗、宏观退潮与全球上市终局",
+      "title_zh": "末日估值反杀做空狙击",
+      "title_en": "The Doomsday Valuation & Short-Seller Attack",
+      "logline_zh": "做空报告引爆市场恐慌，灰市报价一夜暴跌 35%，Victoria 趁乱提议引入产业巨头低价私有化抄底，伦敦买手 Alistair 也顺势拿报告施压、威胁冻结 Q4 英国零售授信额度。林沉与 Claire 拒绝情绪口水战，直接请来独立审计并当众运行残酷的“末日情景”现金流折现模型（DCF）——哪怕把研发新业务估值归零、拉高折现率并拿同业苹果比苹果硬算，NovaEdge 的核心现金牛依然被市场严重低估，一场教科书级估值反杀彻底打爆空头防线并稳住伦敦渠道。",
+      "primary_clip_ids": [
+        "058_FIN",
+        "063_FIN",
+        "066_FIN",
+        "072_FIN"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音 + 伦敦 RP 英音（林沉、Claire、Victoria 与 Alistair 在做空恐慌中正面交锋）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "in the long run",
+          "source_type": "corpus",
+          "clip_id": "058_FIN",
+          "lexicon_id": "LEX_010",
+          "chinglish_trap": "after a very long time in the future",
+          "executive_subtext_zh": "华尔街与董事会拉长周期的常用盾牌：用来对冲短期季度业绩波动，把评审标准从“下周股价”切回“五年终局”。"
+        },
+        {
+          "phrase_en": "discounted cashflow",
+          "source_type": "corpus",
+          "clip_id": "063_FIN",
+          "lexicon_id": "LEX_034",
+          "chinglish_trap": "future cash calculated back to today's value",
+          "executive_subtext_zh": "华尔街内在估值圣经（现金流折现模型 DCF）：在资本市场挤泡沫时期，把一切讲故事的倍数估值拉回真金白银的现值拷问。"
+        },
+        {
+          "phrase_en": "discount rate",
+          "source_type": "corpus",
+          "clip_id": "063_FIN",
+          "lexicon_id": "LEX_035",
+          "chinglish_trap": "the percentage we use to shrink future money",
+          "executive_subtext_zh": "估值杀手杠杆（折现率）：利率或风险溢价哪怕只上调200个基点，高增长硬件/AI独角兽的远期估值就能直接腰斩。"
+        },
+        {
+          "phrase_en": "In other words",
+          "source_type": "corpus",
+          "clip_id": "066_FIN",
+          "lexicon_id": "LEX_002",
+          "chinglish_trap": "That is to say / Let me explain simply to you.",
+          "executive_subtext_zh": "董事会最锋利的“翻译成人话”切换词：把对方或自己复杂的宏观数字，瞬间折算成老板一眼看懂的单人成本或现金流ROI。"
+        },
+        {
+          "phrase_en": "doomsday scenario",
+          "source_type": "corpus",
+          "clip_id": "066_FIN",
+          "lexicon_id": "LEX_037",
+          "chinglish_trap": "the most terrible disaster assumption case",
+          "executive_subtext_zh": "估值大师压力测试核武器：主动把最悲观的末日假设全塞进模型，如果算出来公司依然值钱，做空者就再无还手之力。"
+        },
+        {
+          "phrase_en": "compare apples to apples",
+          "source_type": "corpus",
+          "clip_id": "072_FIN",
+          "lexicon_id": "LEX_036",
+          "chinglish_trap": "put two same-level companies together fairly",
+          "executive_subtext_zh": "估值博弈和竞品对标必杀反驳：当对方拿传统制造业PE倍数强行压你AI硬件估值时，用这句当场拆穿对方偷换参照系。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 50,
+        "conflict_angle": "面对华尔街 80 页做空报告血洗，林沉现场跑出“末日情景 DCF”模型当众打爆空头",
+        "hook_line_en": "Stop comparing us to legacy headset makers—compare apples to apples. Even in my doomsday scenario with a brutal discount rate, our discounted cashflow clears today's price.",
+        "hook_line_zh": "别拿传统耳机代工厂来套我们——请拿苹果比苹果。哪怕放进最极端的末日假设加魔鬼折现率，我们的现金流折现现值依然高于今天的报价。",
+        "cta_zh": "空头刚刚溃败，公司内部一条持续失血的 VR 重型头盔旧线却成了董事会最后的逼宫筹码——收听第 20 集正片与拆局。"
+      },
+      "cliffhanger_zh": "末日估值公开信瞬间稳住机构基石投资人，灰市价格强力反弹；但周默深夜在电话里坦言：过去一年悄悄孵化、已投入 4000 万美元的旧款重型工业头盔产品线彻底落后于轻量化眼镜潮流——是咬牙死扛还是挥泪斩仓，天亮前董事会就要表决。"
+    },
+    {
+      "episode_id": "E021",
+      "arc_number": 4,
+      "arc_title": "第四弧：董事会宫斗、宏观退潮与全球上市终局",
+      "title_zh": "坑洞法则与集中重仓定力",
+      "title_en": "The Law of Holes & Concentrated Conviction",
+      "logline_zh": "董事会陷入剧烈撕裂：部分股东心疼 4000 万美元沉没成本要求继续输血重型头盔线，另一派则想把资金分散押注五个平庸品类求稳。林沉在会议室搬出华尔街铁血止损律“坑洞法则”与“冰球滑向何处”的 18 个月前瞻推演，当场挥刀斩断亏损旧线、拒绝精准抄底幻想，把全部弹药集中重仓到下一代空间计算眼镜生态。",
+      "primary_clip_ids": [
+        "054_FIN",
+        "055_FIN",
+        "056_FIN",
+        "069_FIN"
+      ],
+      "accent_profile": "100% 核心硅谷/纽约美音（林沉、Victoria 与基石机构合伙人高压决策交锋 + 周默深圳支持）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "catch the exact bottom",
+          "source_type": "corpus",
+          "clip_id": "054_FIN",
+          "lexicon_id": "LEX_048",
+          "chinglish_trap": "buy right at the lowest price point of the crash",
+          "executive_subtext_zh": "巴菲特戳破散户与犹豫董事会心理陷阱的金句：别幻想踩中绝对最低点，周期底部区间敢下重注才是决定胜负的分水岭。"
+        },
+        {
+          "phrase_en": "already in the price",
+          "source_type": "corpus",
+          "clip_id": "055_FIN",
+          "lexicon_id": "LEX_042",
+          "chinglish_trap": "the stock price already reflects this good news",
+          "executive_subtext_zh": "华尔街顶级交易员浇冷水名言：“你看到的好消息市场早就提前定价完了，现在追进去只会当接盘侠”。"
+        },
+        {
+          "phrase_en": "where the puck is",
+          "source_type": "corpus",
+          "clip_id": "056_FIN",
+          "lexicon_id": "LEX_023",
+          "chinglish_trap": "only looking at the current market instead of the future",
+          "executive_subtext_zh": "北美顶级投资人与CEO经典冰球隐喻：讥讽平庸者只盯着当下财报做决策，而真正的高手永远提前18个月卡位下一站。"
+        },
+        {
+          "phrase_en": "the law of holes",
+          "source_type": "corpus",
+          "clip_id": "069_FIN",
+          "lexicon_id": "LEX_043",
+          "chinglish_trap": "stop pouring more money into a losing project",
+          "executive_subtext_zh": "资本配置止损铁律（坑洞法则）：“当你发现自己掉进坑里时，第一件事是立刻停止继续往下挖”，专治沉没成本幻想。"
+        },
+        {
+          "phrase_en": "cut losses",
+          "source_type": "corpus",
+          "clip_id": "055_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "quickly stop losing more money on bad bets",
+          "executive_subtext_zh": "华尔街交易大师保命第一铁律（果断止损）：承认判断失误只需一秒，死扛沉没成本却能拖垮整家公司。"
+        },
+        {
+          "phrase_en": "holding on to a loser",
+          "source_type": "corpus",
+          "clip_id": "069_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "stubbornly keeping a failing project or stock",
+          "executive_subtext_zh": "直指创始人与投资人心理弱点的犀利批评（死抱亏损包袱不放）：为了推迟承认失败，结果把小亏拖成腰斩再腰斩。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 44,
+        "conflict_angle": "挥刀斩断 4000 万美元沉没成本旧线，林沉在董事会上用“坑洞法则”终结内耗",
+        "hook_line_en": "Obey the law of holes: when you're in one, quit digging. Holding on to a loser just to avoid admitting defeat is already in the price.",
+        "hook_line_zh": "记住坑洞法则：掉进坑里第一件事是立刻停铲。为了面子死抱亏损包袱不放，市场早就把这种懦弱打进折价里了。",
+        "cta_zh": "果断砍掉失血线换来利润率暴涨，可美债上限危机与主权降级风暴却让全球外汇市场剧烈震荡——收听第 21 集正片与拆局。"
+      },
+      "cliffhanger_zh": "壮士断腕砍掉亏损线后，NovaEdge 季度营业利润率首度转正；但就在上市路演倒计时两周，美债债务占 GDP 比重飙升至 105% 触发主权评级警报，美元、欧元与英镑汇率剧烈跳水，叠加大渠道 Net-60 账期错配，公司跨境资金池瞬间出现汇兑敞口危机。"
+    },
+    {
+      "episode_id": "E022",
+      "arc_number": 4,
+      "arc_title": "第四弧：董事会宫斗、宏观退潮与全球上市终局",
+      "title_zh": "主权债务、硬通货与汇率风暴",
+      "title_en": "Sovereign Debt, Hard Money & FX Storm",
+      "logline_zh": "美债收益率倒挂与降级恐慌席卷华尔街，欧洲与英国渠道商的 60 天账期回款在汇率狂震中大幅缩水，深圳芯片供应商却强硬要求美元现结。林沉联手 Claire 重组跨国财资防火墙：一方面锁定 10% 黄金等不依赖他人信用的硬通货与外汇期权对冲主权信用波动，另一方面以强势动销数据逼迫渠道缩短结算账期，守住了 IPO 前最关键的现金底盘。",
+      "primary_clip_ids": [
+        "03_FIN_Dalio",
+        "064_FIN",
+        "068_FIN",
+        "073_FIN"
+      ],
+      "accent_profile": "100% 核心纽约/硅谷美音（林沉、Claire 与华尔街承销投行财资主管美音对峙）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "hard money",
+          "source_type": "corpus",
+          "clip_id": "03_FIN_Dalio",
+          "lexicon_id": "LEX_047",
+          "chinglish_trap": "strong real assets that governments cannot print",
+          "executive_subtext_zh": "跨国CFO与宏观大佬对冲主权通胀与汇率风暴的压舱石（硬通货）：指无法被央行随意印钞稀释、非他人负债的真实资产。"
+        },
+        {
+          "phrase_en": "stick to their guns",
+          "source_type": "corpus",
+          "clip_id": "073_FIN",
+          "lexicon_id": "LEX_022",
+          "chinglish_trap": "refuse to compromise their original position",
+          "executive_subtext_zh": "高压博弈中的强硬表态：形容一方顶住舆论和市场恐慌死咬底线不松口，暗示谈判可能滑向硬碰硬。"
+        },
+        {
+          "phrase_en": "debt to GDP",
+          "source_type": "corpus",
+          "clip_id": "073_FIN",
+          "lexicon_id": "LEX_096",
+          "chinglish_trap": "the ratio between national debt and GDP size",
+          "executive_subtext_zh": "全球宏观与汇率预警核心晴雨表（债务占GDP比重）：一旦逼近临界点触发主权降级恐慌，跨境企业的美元融资成本与FX敞口将瞬间承压。"
+        },
+        {
+          "phrase_en": "somebody else's liability",
+          "source_type": "corpus",
+          "clip_id": "03_FIN_Dalio",
+          "lexicon_id": null,
+          "chinglish_trap": "another person's debt promise to pay you",
+          "executive_subtext_zh": "宏观货币哲学金句（他人的负债）：一针点穿一切纸币与债券的本质，解释为何极端周期必须配置零对手方风险资产。"
+        },
+        {
+          "phrase_en": "tight money soon",
+          "source_type": "corpus",
+          "clip_id": "064_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "central bank shrinking cash supply very soon",
+          "executive_subtext_zh": "资本市场周期拐点预警口语（流动性马上收紧）：提醒创业者别在廉价资金末尾扩表冒险。"
+        },
+        {
+          "phrase_en": "countries can print money",
+          "source_type": "corpus",
+          "clip_id": "068_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "governments can create more cash freely",
+          "executive_subtext_zh": "揭示国家主权债务与个人破产本质差异的极简大白话：个人欠债只能违约，主权国家欠债则靠印钞稀释购买力。"
+        },
+        {
+          "phrase_en": "net-60 payment terms",
+          "source_type": "world_bridge",
+          "clip_id": null,
+          "lexicon_id": "LEX_108",
+          "chinglish_trap": "paying our money 60 days after goods arrive",
+          "executive_subtext_zh": "跨国贸易账期杀手（货到60天结算）：一边是深圳芯片厂要求预付30%定金，一边是欧美渠道拉长到Net-60甚至Net-90，现金流错配能活活憋死独角兽。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 46,
+        "conflict_angle": "美债破 105% GDP 引发汇市震荡，林沉与 Claire 重构硬通货财资防线、拒吞 Net-60 账期失血",
+        "hook_line_en": "At 105 percent debt to GDP, we don't bet our treasury on politics—we hedge with hard money that isn't somebody else's liability and cut net-60 payment terms in half.",
+        "hook_line_zh": "债务占 GDP 飙到百分之一百零五时，我们绝不拿公司金库赌博——用不是他人负债的硬通货做好对冲，同时把六十天账期砍半。",
+        "cta_zh": "财资危机刚解除，承销投行却发来红色预警：AI 泡沫指标再度拉响，IPO 窗口随时可能关闭——收听第 22 集正片与拆局。"
+      },
+      "cliffhanger_zh": "跨国汇兑防线牢牢锁死，承销团却在定价前夜传来惊雷：对冲基金泡沫指标飙回 2000 年科网周期量级，做市商订单流出现机构撤单迹象，Victoria 警告如果下周不定价发行，IPO 窗口将冰封整整十八个月。"
+    },
+    {
+      "episode_id": "E023",
+      "arc_number": 4,
+      "arc_title": "第四弧：董事会宫斗、宏观退潮与全球上市终局",
+      "title_zh": "泡沫警报八十度：上市窗口倒计时",
+      "title_en": "Bubble Indicator at 80%: IPO Window Closing",
+      "logline_zh": "华尔街定价路演进入最后 48 小时。宏观泡沫指标再度逼近历史高位，做市商截流散户情绪，承销团逼迫林沉把发行估值从 15 倍营收打折腰斩以求“安全过会”。林沉在纽约路演厅里直接摊开 AI 驱动的因果经营仪表盘，用垄断级品类份额和真实复购证明 NovaEdge 不是蹭风口的泡沫空壳，逼出超额认购 6 倍的最终定价。",
+      "primary_clip_ids": [
+        "075_FIN",
+        "076_FIN",
+        "067_FIN",
+        "040_BIZ"
+      ],
+      "accent_profile": "100% 核心纽约/硅谷美音（林沉、Claire、Victoria 与华尔街主承销商定价终极博弈）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "bubble indicator",
+          "source_type": "corpus",
+          "clip_id": "076_FIN",
+          "lexicon_id": "LEX_046",
+          "chinglish_trap": "a number showing if the market is overheating",
+          "executive_subtext_zh": "宏观对冲基金研判IPO窗口与估值顶部的量化温度计：把“我觉得过热”升级为基于杠杆率与流动性的系统化预警。"
+        },
+        {
+          "phrase_en": "cause-effect relationships",
+          "source_type": "corpus",
+          "clip_id": "075_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "reasons and results connected together clearly",
+          "executive_subtext_zh": "顶级量化与战略分析核心词（因果传导机制）：把公司增长从“运气讲故事”升级为可验证的系统化因果规律。"
+        },
+        {
+          "phrase_en": "payment for order flow",
+          "source_type": "corpus",
+          "clip_id": "067_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "paying brokers to handle retail stock trades",
+          "executive_subtext_zh": "华尔街交易 microstructure 深度黑话（订单流付费 PFOF）：看透“零佣金”背后谁才是真正的食物链顶端收割者。"
+        },
+        {
+          "phrase_en": "market makers",
+          "source_type": "corpus",
+          "clip_id": "067_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "big trading companies providing market liquidity",
+          "executive_subtext_zh": "二级市场定价与流动性暗战关键角色（做市商）：决定新股上市首日买盘深度与抛压承接。"
+        },
+        {
+          "phrase_en": "won market share",
+          "source_type": "corpus",
+          "clip_id": "067_FIN",
+          "lexicon_id": null,
+          "chinglish_trap": "took more customer percentage from rivals",
+          "executive_subtext_zh": "向二级市场基金经理证明杀伤力的铁证动词（硬生生抢下市场份额）：比“行业增长”更有说服力。"
+        },
+        {
+          "phrase_en": "15 times revenue",
+          "source_type": "corpus",
+          "clip_id": "040_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "valued at fifteen times yearly sales income",
+          "executive_subtext_zh": "硅谷顶级稀缺标的估值倍数锚点（十五倍市销率）：只有垄断级增速与壁垒才配拿到的估值溢价。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 48,
+        "conflict_angle": "IPO 定价前夜投行以“泡沫指标 80%”逼迫折价发行，林沉反手亮出垄断份额硬保 15 倍营收定价",
+        "hook_line_en": "Your bubble indicator measures hype, not monopolies—we won market share in a downturn, and fifteen times revenue is the floor, not the ceiling.",
+        "hook_line_zh": "你的泡沫指标测的是跟风炒作，不是垄断壁垒——我们在寒冬里硬生生抢下了市场份额，十五倍营收是底价，不是天花板。",
+        "cta_zh": "超额认购六倍、定价落锤，纽约证券交易所的开市铜钟只剩最后十二小时——点击收听大结局前篇第 23 集。"
+      },
+      "cliffhanger_zh": "认购簿超额 6 倍正式封账，Victoria 罕见地在定价会上向林沉举杯致意；然而敲钟前夜，一封来自硅谷闭源霸主的秘密并购电邮发进林沉私人信箱——对方愿溢价 40% 全现金收购，前提是放弃“百万企业独立智能体”开源硬件生态。"
+    },
+    {
+      "episode_id": "E024",
+      "arc_number": 4,
+      "arc_title": "第四弧：董事会宫斗、宏观退潮与全球上市终局",
+      "title_zh": "百万智能体而非单一神祇：敲钟终局",
+      "title_en": "One Million Agents, Not One God AI: Ringing the Bell",
+      "logline_zh": "第一季大结局。纽约证券交易所敲钟晨光中，林沉当场婉拒巨头天价收编，在上市演说中直面全球资本宣告 NovaEdge 的终极愿景：未来不属于任何一家垄断算力的“单一神级 AI”，而属于每个企业、每个家庭触手可及的百万专属空间智能体，依托跨越购买力平价壁垒的深圳智造与全球开发者生态，把人类推向生产力丰饶新纪元。铜钟敲响，而第二季的新战场已在手机屏幕上悄然亮起。",
+      "primary_clip_ids": [
+        "036_BIZ",
+        "023_AI",
+        "053_BIZ",
+        "054_BIZ",
+        "097_USC"
+      ],
+      "accent_profile": "100% 核心纽约/硅谷美音 + 伦敦 RP 英音（全核心卡司林沉、周默、Victoria、Alistair、Claire 第一季终局同台收官）",
+      "core_us_uk_en_pct": 100,
+      "target_phrases": [
+        {
+          "phrase_en": "purchasing power parity",
+          "source_type": "corpus",
+          "clip_id": "097_USC",
+          "lexicon_id": "LEX_090",
+          "chinglish_trap": "comparing countries by what local money really buys",
+          "executive_subtext_zh": "跨国宏观研判与定价策略必懂指标（购买力平价 PPP）：戳破单一汇率换算的失真，看清各国真实工业体量与本地消费购买力。"
+        },
+        {
+          "phrase_en": "at a high level",
+          "source_type": "corpus",
+          "clip_id": "036_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "speaking from a big macro overview angle",
+          "executive_subtext_zh": "硅谷 CEO 战略定调开场高频语块（从顶层战略维度来看）：一句话把讨论从战术枝节拉升到十年终局判断。"
+        },
+        {
+          "phrase_en": "raw productivity",
+          "source_type": "corpus",
+          "clip_id": "023_AI",
+          "lexicon_id": null,
+          "chinglish_trap": "pure real working output efficiency gain",
+          "executive_subtext_zh": "衡量 AI 技术是否真正创造宏观财富的核心标尺（纯粹底层生产力）：剥除概念泡沫，直指单位人力产出暴涨。"
+        },
+        {
+          "phrase_en": "age of amazing abundance",
+          "source_type": "corpus",
+          "clip_id": "053_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "a future time when goods are super plentiful",
+          "executive_subtext_zh": "顶级科技愿景演讲中的宏大终局意象（极致丰饶的新纪元）：用极具感染力的画面为 IPO 路演定下长期想象空间。"
+        },
+        {
+          "phrase_en": "totally shelved",
+          "source_type": "corpus",
+          "clip_id": "054_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "completely put away and stopped forever",
+          "executive_subtext_zh": "描述被官僚天价预算彻底雪藏的宏大项目（彻底束之高阁）：反衬创业者绕开臃肿旧体系亲手破局的传奇起点。"
+        },
+        {
+          "phrase_en": "galvanize public interest",
+          "source_type": "corpus",
+          "clip_id": "054_BIZ",
+          "lexicon_id": null,
+          "chinglish_trap": "excite and wake up global public attention",
+          "executive_subtext_zh": "领袖级公关与品牌破圈核心动词搭配（点燃全球公众想象与热情）：说明一款伟大硬件如何把冰冷技术变成文化事件。"
+        }
+      ],
+      "viral_45s_hook": {
+        "duration_target_s": 51,
+        "conflict_angle": "第一季大结局高燃敲钟演讲：拒绝巨头天价收编，宣告“百万专属智能体”时代降临",
+        "hook_line_en": "At a high level, the future is never one god AI—it is millions of sovereign agents turning raw productivity into an age of amazing abundance.",
+        "hook_line_zh": "从顶层终局来看，未来绝不属于某一个垄断世界的单一神级 AI——而属于数百万个专属智能体，把纯粹生产力推向极致丰饶的新纪元。",
+        "cta_zh": "纽交所铜钟敲响那一刻，周默却发来了一张来自布鲁塞尔与华盛顿的联合听证传票——收听《跨境底牌：硅深暗战》第一季大结局第 24 集。"
+      },
+      "cliffhanger_zh": "纽交所开市铜钟震彻华尔街，NovaEdge 开盘暴涨 48%，Alistair 在伦敦同步点亮牛津街巨幅橱窗；就在庆功台上，林沉眼镜镜腿轻轻一震，周默加密弹窗跃上视野——“别喝香槟。我们刚拿到情报：两家超级巨头联手向国会与布鲁塞尔递交了反垄断与空间视觉主权调查案，第二季真正的深水战，现在才开始。”"
+    }
+  ]
+}

@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass
 import json
 import math
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import wave
@@ -23,6 +24,7 @@ from .models import EpisodeCueSheet, extract_tags_and_spoken_text, next_append_o
 
 SAMPLE_RATE = 48000
 CHANNELS = 2
+_CTRL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
 @dataclass
@@ -47,6 +49,8 @@ class ResolvedTimelineItem:
     duck_lead_in_s: float = 3.5
     duck_gain: float = 0.15
     duck_tail_out_s: float = 0.80
+    playback_rate: float = 1.0
+    subtitle_translation: str = ""
 
 
 def _format_srt_ts(seconds: float) -> str:
@@ -65,15 +69,32 @@ def condition_dialogue_clip(
     conditioned_wav: Path,
     *,
     acoustic_space: str = "dry",
+    playback_rate: float = 1.0,
 ) -> Path:
-    """Condition a 48kHz dialogue clip: rumble filter, gentle speech leveling, optional space."""
+    """Condition a 48kHz dialogue clip: rumble filter, optional pitch-preserving tempo, space, and leveling."""
+    if isinstance(playback_rate, bool) or not isinstance(playback_rate, (int, float)):
+        raise ValueError(
+            f"playback_rate={playback_rate!r} must be a finite numeric value within [0.5, 2.0]."
+        )
+    rate = float(playback_rate)
+    if not math.isfinite(rate) or not (0.5 <= rate <= 2.0):
+        raise ValueError(
+            f"playback_rate={playback_rate!r} out of supported FFmpeg atempo range [0.5, 2.0]."
+        )
+
     conditioned_wav.parent.mkdir(parents=True, exist_ok=True)
-    dur = probe_duration_seconds(raw_wav)
+    raw_dur = probe_duration_seconds(raw_wav)
+    apply_tempo = abs(rate - 1.0) > 1e-3
+    effective_dur = (raw_dur / rate) if apply_tempo else raw_dur
 
     filters: list[str] = [
         "aformat=sample_rates=48000:channel_layouts=stereo",
         "highpass=f=75",
     ]
+    if apply_tempo:
+        # Pitch-preserving WSOLA time-scale BEFORE acoustic filters & loudness leveling
+        filters.append(f"atempo={rate:.3f}")
+
     if acoustic_space == "mental_realm":
         # Subtle ancient void / mental-world early reflections without muddying diction
         filters.append("aecho=0.85:0.82:48|96:0.20|0.10")
@@ -91,8 +112,17 @@ def condition_dialogue_clip(
     elif acoustic_space == "vintage_study":
         # Prime-age Omaha / PBS studio close-mic warmth (crisp articulation, zero analog tape hiss or echo)
         filters.append("equalizer=f=220:t=q:w=1.2:g=0.9,lowpass=f=9600")
+    elif acoustic_space == "inner_monologue":
+        # Dry intimate proximity (House of Cards aside, zero cavern echo)
+        filters.append("equalizer=f=150:t=q:w=1.2:g=1.8,equalizer=f=3200:t=q:w=1.4:g=0.9")
+    elif acoustic_space == "boardroom":
+        # Tight glass-room early reflection (no trailing apad so negative-gap crosstalk stays tight)
+        filters.append("aecho=0.88:0.86:18|36:0.12|0.06")
+    elif acoustic_space == "phone_call":
+        # Clean telecom voiceband bandpass + gentle dynamics leveling
+        filters.append("highpass=f=300,lowpass=f=3400,acompressor=threshold=-18dB:ratio=3:attack=5:release=60")
 
-    if dur >= 1.4:
+    if effective_dur >= 1.4:
         # EBU R128 / podcast-drama broadcast loudness target (-16 LUFS) for consistent actor levels
         filters.append("loudnorm=I=-16:TP=-1.5:LRA=11")
     else:
@@ -453,7 +483,12 @@ def render_audition_reel(
     for idx, item in enumerate(audition_items):
         raw_wav = Path(item["wav_path"])
         cond_wav = temp_dir / f"aud_{idx:03d}.wav"
-        condition_dialogue_clip(raw_wav, cond_wav, acoustic_space="dry")
+        condition_dialogue_clip(
+            raw_wav,
+            cond_wav,
+            acoustic_space=str(item.get("acoustic_space", "dry") or "dry"),
+            playback_rate=item.get("playback_rate", 1.0),
+        )
         samples = _read_stereo_s16(cond_wav)
         dur_s = (len(samples) // CHANNELS) / SAMPLE_RATE
         conditioned_clips.append((item, samples, dur_s))
@@ -540,7 +575,7 @@ def find_natural_duck_pause_s(
     sample_rate: int = SAMPLE_RATE,
 ) -> float:
     """Snap `target_s` to the cleanest inter-sentence breath pause (`~180ms` RMS valley) if one exists."""
-    fallback = min(float(target_s), max(0.8, dur_s * 0.85))
+    fallback = min(float(target_s), max(0.0, dur_s * 0.85))
     if dur_s < 4.5 or len(stereo_samples) < sample_rate * CHANNELS * 3:
         return fallback
 
@@ -615,7 +650,12 @@ def master_episode_three_bus(
         raw_path = cue_audio_map[cue.cue_id]
         cond_path = work_dir / f"{cue.cue_id}_cond.wav"
         if cue.kind == "dialogue":
-            condition_dialogue_clip(raw_path, cond_path, acoustic_space=cue.acoustic_space)
+            condition_dialogue_clip(
+                raw_path,
+                cond_path,
+                acoustic_space=cue.acoustic_space,
+                playback_rate=getattr(cue, "playback_rate", 1.0),
+            )
         else:
             condition_sfx_clip(raw_path, cond_path, gain_db=cue.gain_db)
         return cue.cue_id, _read_stereo_s16(cond_path)
@@ -661,6 +701,17 @@ def master_episode_three_bus(
             else float(getattr(cue, "duck_lead_in_s", 3.5))
         )
 
+        raw_cue_rate = getattr(cue, "playback_rate", 1.0)
+        resolved_rate = (
+            float(raw_cue_rate)
+            if isinstance(raw_cue_rate, (int, float))
+            and not isinstance(raw_cue_rate, bool)
+            and math.isfinite(float(raw_cue_rate))
+            else 1.0
+        )
+        raw_sub_tr = getattr(cue, "subtitle_translation", "")
+        resolved_sub_tr = raw_sub_tr if isinstance(raw_sub_tr, str) else ""
+
         resolved_items.append(
             ResolvedTimelineItem(
                 cue_id=cue.cue_id,
@@ -683,20 +734,27 @@ def master_episode_three_bus(
                 duck_lead_in_s=effective_lead_in_s,
                 duck_gain=float(getattr(cue, "duck_gain", 0.15)),
                 duck_tail_out_s=float(getattr(cue, "duck_tail_out_s", 0.80)),
+                playback_rate=resolved_rate,
+                subtitle_translation=resolved_sub_tr,
             )
         )
 
         if cue.kind == "sfx" and cue.placement == "overlay_next":
-            # Optional pre-offset before dialogue enters while SFX continues underneath
-            cursor_s = start_s + cue.gap_after_s
+            # Optional pre-offset before dialogue enters while SFX continues underneath (never backwards/negative)
+            cursor_s = max(0.0, start_s, start_s + cue.gap_after_s)
         elif has_valid_duck_target:
             # Documentary simultaneous-translation: play solo English sentence up to natural pause, then start interpreter
             active_duck_bed_end_s = end_s
-            cursor_s = start_s + effective_lead_in_s
+            cursor_s = max(0.0, start_s + max(0.0, effective_lead_in_s))
         else:
             effective_end_s = max(end_s, active_duck_bed_end_s)
             active_duck_bed_end_s = 0.0
-            cursor_s = max(0.0, effective_end_s + cue.gap_after_s)
+            min_next_start = (
+                start_s + min(dur_s * 0.5, 0.05)
+                if cue.kind == "dialogue" and dur_s > 0
+                else start_s
+            )
+            cursor_s = max(0.0, min_next_start, effective_end_s + cue.gap_after_s)
 
     total_duration_s = max(cursor_s, max_end_s) + cue_sheet.tail_pad_s
     total_frames = int(math.ceil(total_duration_s * SAMPLE_RATE))
@@ -848,6 +906,18 @@ def master_episode_three_bus(
                 )
                 sub_idx += 1
             pair_end_s = max(item.end_s, next_it.end_s)
+            next_after_pair_start: float | None = None
+            for look_j in range(idx + 2, len(resolved_items)):
+                if resolved_items[look_j].kind == "dialogue" and resolved_items[look_j].spoken_text:
+                    next_after_pair_start = resolved_items[look_j].start_s
+                    break
+            if next_after_pair_start is not None and pair_end_s > next_after_pair_start - 0.01:
+                clamped_pair = next_after_pair_start - 0.01
+                pair_end_s = (
+                    clamped_pair
+                    if clamped_pair >= next_it.start_s + 0.05
+                    else max(next_it.start_s, next_after_pair_start)
+                )
             srt_blocks.append(
                 f"{sub_idx}\n"
                 f"{_format_srt_ts(next_it.start_s)} --> {_format_srt_ts(pair_end_s)}\n"
@@ -860,13 +930,18 @@ def master_episode_three_bus(
 
         srt_end_s = item.end_s
         if next_dlg_start is not None and srt_end_s > next_dlg_start - 0.01:
-            srt_end_s = max(item.start_s + 0.15, next_dlg_start - 0.01)
+            clamped = next_dlg_start - 0.01
+            srt_end_s = clamped if clamped >= item.start_s + 0.05 else max(item.start_s, next_dlg_start)
 
         speaker_prefix = _resolve_speaker_prefix(item, registry)
+        translation = " ".join(_CTRL_CHAR_RE.sub("", item.subtitle_translation).split())
+        text_body = f"{speaker_prefix}{item.spoken_text}\n"
+        if translation:
+            text_body += f"{translation}\n"
         srt_blocks.append(
             f"{sub_idx}\n"
             f"{_format_srt_ts(item.start_s)} --> {_format_srt_ts(srt_end_s)}\n"
-            f"{speaker_prefix}{item.spoken_text}\n"
+            f"{text_body}"
         )
         sub_idx += 1
         idx += 1

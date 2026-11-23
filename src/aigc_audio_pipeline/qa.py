@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import math
 from pathlib import Path
 import re
 import subprocess
@@ -12,9 +13,14 @@ from .elevenlabs_client import ElevenLabsClient, ElevenLabsError, SynthesisResul
 from .models import extract_tags_and_spoken_text, simplify_inline_tags
 
 _CJK_ONLY = re.compile(r"[\u4e00-\u9fff0-9]+")
+_HANZI_RE = re.compile(r"[\u4e00-\u9fff]")
 _DIGIT_MAP = str.maketrans("0123456789", "零一二三四五六七八九")
 _LATIN_WORDS = re.compile(r"[a-zA-Z]{3,}")
-_EN_WORD_TOKENS = re.compile(r"[a-z0-9']+")
+_EN_PERCENT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
+_CURLY_APOSTROPHE_TRANS = str.maketrans({"\u2018": "'", "\u2019": "'"})
+_EN_WORD_TOKENS = re.compile(r"[a-z0-9']+(?:\.[0-9]+)?")
+_EMBEDDED_EN_WORD_TOKENS = re.compile(r"[a-z0-9']*[a-z][a-z0-9']*")
+_SCRIPT_CHAR_RE = re.compile(r"[\u4e00-\u9fffA-Za-z]")
 # Strip Scribe non-speech event annotations like (笑声), (laughter), [sighs] before checking spoken leaks
 _AUDIO_EVENT_ANNOTATIONS = re.compile(r"\([^)]*\)|（[^）]*）|\[[^\]]*\]")
 
@@ -60,18 +66,40 @@ COMMON_TAG_WORDS: frozenset[str] = frozenset(
         "maniacal",
         "solemn",
         "haunting",
+        "measured",
+        "deadpan",
+        "icy",
+        "polite",
+        "blunt",
+        "guarded",
+        "skeptical",
+        "firmly",
+        "understated",
+        "tense",
+        "confident",
+        "aside",
+        "coach",
+        "interrupting",
     }
 )
 
 
 def _cjk_chars(text: str) -> str:
-    norm = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"百分之\1", text)
+    norm = re.sub(r"(\d+(?:\.\d+)?)\s*(?:%|percent\b)", r"百分之\1", text, flags=re.IGNORECASE)
     norm = re.sub(r"(?<=\d)\.(?=\d)", "点", norm)
     return "".join(_CJK_ONLY.findall(norm)).translate(_DIGIT_MAP)
 
 
 def _en_words(text: str) -> list[str]:
-    return _EN_WORD_TOKENS.findall(text.lower())
+    norm = text.translate(_CURLY_APOSTROPHE_TRANS)
+    norm = _EN_PERCENT_RE.sub(r"\1 percent", norm)
+    return [tok for raw in _EN_WORD_TOKENS.findall(norm.lower()) if (tok := raw.strip("'"))]
+
+
+def _embedded_en_words(text: str) -> list[str]:
+    """Extract English word tokens containing at least one ASCII letter (excludes pure digits in CJK dates/stats)."""
+    norm = text.translate(_CURLY_APOSTROPHE_TRANS)
+    return [tok for raw in _EMBEDDED_EN_WORD_TOKENS.findall(norm.lower()) if (tok := raw.strip("'"))]
 
 
 def _longest_common_subsequence_len(a: str | list[str], b: str | list[str]) -> int:
@@ -173,7 +201,13 @@ def evaluate_dialogue_qa(
     exp_cjk = _cjk_chars(expected_spoken)
     canon_cjk = _cjk_chars(canon_spoken)
     got_cjk = _cjk_chars(cleaned_asr)
-    if len(exp_cjk) == 0:
+    has_hanzi = bool(_HANZI_RE.search(expected_spoken) or _HANZI_RE.search(canon_spoken))
+    is_pure_english = (
+        len(exp_cjk) == 0
+        or language_code == "en"
+        or (not has_hanzi and bool(_embedded_en_words(canon_spoken or expected_spoken)))
+    )
+    if is_pure_english:
         exp_en = _en_words(canon_spoken or expected_spoken)
         got_en = _en_words(cleaned_asr)
         if len(exp_en) == 0:
@@ -186,7 +220,7 @@ def evaluate_dialogue_qa(
             tail_ok = any(w in got_tail_en for w in tail_window_en)
             if not tail_ok and len(exp_en) >= 8 and recall >= 0.78 and len(got_en) >= len(exp_en) - 1:
                 tail_ok = True
-            if len(exp_en) >= 4 and recall < min_char_recall:
+            if len(exp_en) >= 3 and recall < min_char_recall:
                 reasons.append(
                     f"Low English word recall ({recall:.2f} < {min_char_recall:.2f}): "
                     f"expected={canon_spoken!r}, got={asr_text!r}"
@@ -202,9 +236,38 @@ def evaluate_dialogue_qa(
             if canon_cjk
             else 0.0
         )
-        recall = max(recall_tts, recall_canon)
+        cjk_recall = max(recall_tts, recall_canon)
 
-        def _check_tail(ref_cjk: str) -> bool:
+        ref_text = canon_spoken or expected_spoken
+        exp_en = _embedded_en_words(ref_text)
+        got_en = _embedded_en_words(cleaned_asr)
+        en_recall = (
+            _longest_common_subsequence_len(exp_en, got_en) / len(exp_en)
+            if exp_en
+            else 1.0
+        )
+
+        check_cjk = len(exp_cjk) >= 4
+        check_en = len(exp_en) >= 3
+        if check_cjk and check_en:
+            recall = min(cjk_recall, en_recall)
+        elif check_en:
+            recall = en_recall
+        else:
+            recall = cjk_recall
+
+        if check_cjk and cjk_recall < min_char_recall:
+            reasons.append(
+                f"Low character recall ({cjk_recall:.2f} < {min_char_recall:.2f}): "
+                f"expected={canon_spoken!r}, got={asr_text!r}"
+            )
+        if check_en and en_recall < min_char_recall:
+            reasons.append(
+                f"Low embedded English word recall ({en_recall:.2f} < {min_char_recall:.2f}): "
+                f"expected={canon_spoken!r}, got={asr_text!r}"
+            )
+
+        def _check_cjk_tail(ref_cjk: str) -> bool:
             if not ref_cjk:
                 return True
             if not got_cjk:
@@ -215,27 +278,54 @@ def evaluate_dialogue_qa(
                 return True
             # Tolerate acoustic ASR homophones at sentence end (e.g. '异变骤生' -> '一遍咒声')
             # when the spoken syllable count reaches the end of the line and overall recall is high.
-            if len(ref_cjk) >= 10 and recall >= 0.78:
+            if len(ref_cjk) >= 10 and cjk_recall >= 0.78:
                 max_drop = max(1, int(len(ref_cjk) * 0.05))
                 if len(got_cjk) >= len(ref_cjk) - max_drop:
                     return True
             return False
 
-        tail_ok = _check_tail(exp_cjk) or _check_tail(canon_cjk)
-        if len(exp_cjk) >= 4 and recall < min_char_recall:
-            reasons.append(
-                f"Low character recall ({recall:.2f} < {min_char_recall:.2f}): "
-                f"expected={canon_spoken!r}, got={asr_text!r}"
-            )
-        if len(exp_cjk) >= 6 and not tail_ok:
-            tail_window = canon_cjk[-min(3, len(canon_cjk)) :] if canon_cjk else exp_cjk[-3:]
-            reasons.append(f"Potential tail truncation: ending {tail_window!r} missing in ASR {asr_text!r}")
+        def _check_en_tail(ref_en: list[str]) -> bool:
+            if not ref_en:
+                return True
+            if not got_en:
+                return False
+            tw = ref_en[-min(2, len(ref_en)) :]
+            got_tail = got_en[-min(6, max(1, len(got_en))) :]
+            if any(w in got_tail for w in tw):
+                return True
+            if len(ref_en) >= 8 and en_recall >= 0.78 and len(got_en) >= len(ref_en) - 1:
+                return True
+            return False
+
+        script_chars = _SCRIPT_CHAR_RE.findall(ref_text)
+        ends_with_latin = bool(script_chars) and script_chars[-1].isascii()
+
+        if ends_with_latin and (len(exp_en) >= 2 or (len(exp_en) == 1 and len(exp_en[0]) >= 3)):
+            tail_ok = _check_en_tail(exp_en)
+            if not tail_ok:
+                tail_window_en = exp_en[-min(2, len(exp_en)) :]
+                reasons.append(
+                    f"Potential English tail truncation: ending {tail_window_en!r} missing in ASR {asr_text!r}"
+                )
+        else:
+            tail_ok = _check_cjk_tail(exp_cjk) or _check_cjk_tail(canon_cjk)
+            if len(exp_cjk) >= 6 and not tail_ok:
+                tail_window = canon_cjk[-min(3, len(canon_cjk)) :] if canon_cjk else exp_cjk[-3:]
+                reasons.append(f"Potential tail truncation: ending {tail_window!r} missing in ASR {asr_text!r}")
 
     # 3. Signal sanity check
-    if duration_s < 0.25:
-        reasons.append(f"Audio abnormally short ({duration_s:.2f}s)")
-    if peak_dbfs < -45.0:
-        reasons.append(f"Audio nearly silent (peak {peak_dbfs:.1f} dBFS)")
+    if not math.isfinite(duration_s) or duration_s < 0.25:
+        reasons.append(
+            f"Audio abnormally short ({duration_s:.2f}s)"
+            if math.isfinite(duration_s)
+            else f"Audio abnormally short / non-finite duration ({duration_s!r}s)"
+        )
+    if not math.isfinite(peak_dbfs) or peak_dbfs < -45.0:
+        reasons.append(
+            f"Audio nearly silent (peak {peak_dbfs:.1f} dBFS)"
+            if math.isfinite(peak_dbfs)
+            else f"Audio nearly silent / non-finite peak ({peak_dbfs!r} dBFS)"
+        )
 
     return LineQAResult(
         passed=len(reasons) == 0,
@@ -321,6 +411,7 @@ def synthesize_with_playbook_qa(
             duration_s=dur_s,
             peak_dbfs=peak_db,
             attempt=attempt,
+            language_code=language_code,
         )
         if qa.passed or attempt == 2:
             return synth, qa, current_text

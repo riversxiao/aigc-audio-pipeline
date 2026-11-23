@@ -1,0 +1,508 @@
+{
+  "project_id": "global_edge",
+  "project_title": "《跨境底牌：硅深暗战》 / Global Edge",
+  "language_code": "zh-en",
+  "domain": "business_english_drama",
+  "tts_model_id": "fishaudio/drama-3",
+  "sfx_model_id": "OpenMOSS-Team/MOSS-SoundEffect-v2.0",
+  "music_model_id": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+  "asr_model_id": "faster-whisper-small-int8",
+  "updated_at": "2026-11-23T07:00:00Z",
+  "drive_audio_root_id": "",
+  "roles": {
+    "lin_chen": {
+      "role_id": "lin_chen",
+      "display_name": "林沉 / Lin Chen",
+      "aliases": [
+        "林沉",
+        "Lin Chen",
+        "Lin",
+        "林总"
+      ],
+      "tier": "protagonist",
+      "gender": "male",
+      "age_group": "adult",
+      "language_code": "zh-en",
+      "accent_code": "zh_en_bilingual_us",
+      "vocal_register": "冷峻克制、低沉磁性的34岁双语男中音（同一真人录音棚干声锚点驱动英中双语：硅谷董事会话锋锐利克制，中文内心独白与片尾复盘贴麦冷静）",
+      "persona_summary": "NovaEdge Technologies（灵犀智造）创始人兼 CEO。深圳工科出身、斯坦福硕士背景，亲手把 AI 智能眼镜 NovaEdge Glass 与桌面伴侣 NovaDock 推向欧美大渠道。公开谈判室全程以硅谷高管地道美音硬刚 VC 与跨国买手；切入贴麦内心独白与深圳拍档周默私下复盘时自然切换冷峻中文，同时兼任片尾 Act 5 3分钟高管黑话复盘主讲人。",
+      "accent_requirement": "同声源真实双语锚点（v2_real_human_studio）：英文段锁定硅谷标准美音（General American，rhotic 清晰、重音计时自然，杜绝中式元音与播音腔）；中文段锁定冷峻克制的现代科技高管普通话（杜绝洋腔洋调与教科书朗读腔）",
+      "status": "locked",
+      "voice_id": "drama3_anchor_lin_chen",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Bilingual Anchor: lin_chen (SV General American + Restrained Mandarin)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[measured]",
+        "[blunt]",
+        "[aside]",
+        "[coach]",
+        "[firmly]",
+        "[short pause]"
+      ],
+      "forbidden_habits": [
+        "严禁播音腔、英语老师说教腔或晚会主持人腔",
+        "严禁失控咆哮或情绪外泄，高压时刻必须压低声线、放缓关键重音",
+        "严禁在中文独白中夹杂生硬翻译腔或在英文台词中露出中式平调",
+        "严禁说出任何外部视频平台名称或“各位听众/欢迎收听今天的英语课”类套话"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "audition_line": "[measured] That eighty-million-dollar loss is a phantom number—not a cash loss, and you know it. [short pause] [aside] 她把可转债重估包装成经营失血，不是看不懂财报，是想趁签约前把估值砍掉三成。",
+      "audition_history": []
+    },
+    "zhou_mo": {
+      "role_id": "zhou_mo",
+      "display_name": "周默 / Zhou Mo",
+      "aliases": [
+        "周默",
+        "Zhou Mo",
+        "老周",
+        "Mo",
+        "CTO"
+      ],
+      "tier": "core_supporting",
+      "gender": "male",
+      "age_group": "adult",
+      "language_code": "zh-en",
+      "accent_code": "zh_mainland_sz",
+      "vocal_register": "干脆硬核、带熬夜产线质感与冷幽默锋芒的35岁深圳科技高管男中音（真人录音棚近麦干声）",
+      "persona_summary": "NovaEdge 联合创始人兼 CTO，坐镇深圳南山总部与 SMT 智能产线。硬件架构与端侧推理死磕狂，最讨厌硅谷 PPT 吹牛和华尔街会计文字游戏。私下与林沉用极接地气的中文拆穿欧美资本与渠道套路，自然夹带精准英文硬件/算力术语（BOM cost、on-device inference、yield ramp），并在 E001_VB 出租车复盘版中与林沉双人拆解黑话。",
+      "accent_requirement": "纯正干练的现代深圳/大陆科技职场普通话，嵌入的英文硬件与算力术语发音清晰准确但不刻意炫技；严禁古风腔、小品插科打诨腔与播音腔",
+      "status": "locked",
+      "voice_id": "drama3_anchor_zhou_mo",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Anchor: zhou_mo (Shenzhen Tech Executive Mandarin + Clean EN Terms)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[deadpan]",
+        "[blunt]",
+        "[skeptical]",
+        "[tense]",
+        "[wryly]",
+        "[sighs]"
+      ],
+      "forbidden_habits": [
+        "严禁浮夸相声捧哏腔或廉价捧场（严禁“问到根子上了”“这个比方绝了”）",
+        "严禁木讷背诵技术参数表，所有数字必须带着产线现金流生死感说出口",
+        "严禁故意用拙劣中式英语丑化中国工程师形象"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "audition_line": "[deadpan] [sighs] 产线刚把微显示模组的 BOM cost 压掉十八美金，硅谷那边又要为公有云 token 账单多烧三十块。[blunt] 听好了，明天切回端侧推理，不然卖一台亏一台。",
+      "audition_history": []
+    },
+    "victoria_vance": {
+      "role_id": "victoria_vance",
+      "display_name": "Victoria Vance",
+      "aliases": [
+        "Victoria",
+        "维多利亚",
+        "Vance",
+        "Apex Horizon"
+      ],
+      "tier": "antagonist",
+      "gender": "female",
+      "age_group": "adult",
+      "language_code": "en",
+      "accent_code": "us_silicon_valley",
+      "vocal_register": "冰冷优雅、语速凌厉、礼貌中透出绝对资本压迫感的39岁硅谷沙丘路顶级女合伙人中低音（真人录音棚纯英干声）",
+      "persona_summary": "沙丘路顶级风投 Apex Horizon Ventures 主管合伙人，斯坦福商学院与高盛出身。擅长在微笑与赞美间精准施压估值、埋设优先清算与超级投票权剥离条款，把创始人逼进过桥融资陷阱；是林沉在第一弧与第四弧最危险的资本博弈对手。",
+      "accent_requirement": "纯正硅谷/纽约精英标准美音（General American，165–185 WPM，辅音干脆、向下收尾权威感强，自然使用美式闪音与连读）；严禁夸张反派尖叫、甜美客服腔或播音朗诵腔",
+      "status": "locked",
+      "voice_id": "drama3_anchor_victoria_vance",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Anchor: victoria_vance (Silicon Valley / Sand Hill General American Female)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[icy polite]",
+        "[measured]",
+        "[skeptical]",
+        "[coldly]",
+        "[interrupting]",
+        "[short pause]"
+      ],
+      "forbidden_habits": [
+        "严禁歇斯底里吼叫或卡通式恶人冷笑，杀意必须藏在丝绸般克制的礼貌语调之下",
+        "严禁慢吞吞的 ESL 教材朗读语速，必须维持硅谷合伙人 165–185 WPM 的真实谈判节奏",
+        "严禁在纯英台词中使用 [wryly] 标签（避免触发中西部乡土幽默提示词漂移）"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        12,
+        18,
+        19,
+        20,
+        21,
+        23,
+        24
+      ],
+      "audition_line": "[icy polite] That is a charming deck, Lin, truly. [short pause] [coldly] Now walk me through the eighty million that just flowed through into the income statement before my partners lose patience.",
+      "audition_history": []
+    },
+    "alistair_finch": {
+      "role_id": "alistair_finch",
+      "display_name": "Alistair Finch",
+      "aliases": [
+        "Alistair",
+        "阿利斯泰尔",
+        "Finch",
+        "Selfridges Buyer"
+      ],
+      "tier": "antagonist",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "en",
+      "accent_code": "uk_london_rp",
+      "vocal_register": "矜持冷峭、咬字考究、自带伦敦牛津街百货老牌贵族压迫感的48岁英伦男中低音（真人录音棚纯英 RP 干声）",
+      "persona_summary": "跨大西洋高端消费科技零售联盟（Selfridges 伦敦旗舰 / Best Buy 跨海采购）全球采购副总裁。信奉“硬件必须经受真实货架动销率与毛利大考”，惯用不动声色的英式低调讽刺、清嗓停顿与进场费/退单扣款条款榨干出海品牌利润。",
+      "accent_requirement": "纯正现代伦敦标准 RP 英音（Received Pronunciation，非卷舌 non-rhotic、清晰齿龈爆破 /t/、英式 BATH/LOT 元音与克制低调句尾，145–165 WPM）；严禁美音混杂、科克尼俚语过载或舞台剧腔",
+      "status": "locked",
+      "voice_id": "drama3_anchor_alistair_finch",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Anchor: alistair_finch (London Received Pronunciation Executive Male)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[icy polite]",
+        "[understated]",
+        "[deadpan]",
+        "[sarcastic]",
+        "[dismissive]",
+        "[clears throat]"
+      ],
+      "forbidden_habits": [
+        "严禁提高嗓门争吵，英式压迫感完全依赖极度礼貌的措辞与冰冷的低调停顿",
+        "严禁飘成美式卷舌口音或播音员 BBC 晚间新闻腔",
+        "严禁在纯英台词中使用 [wryly] 标签（防止触发美式中西部口音漂移）"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        3,
+        7,
+        8,
+        11,
+        12,
+        13,
+        19,
+        20,
+        24
+      ],
+      "audition_line": "[understated] [clears throat] Oxford Street shoppers do not subsidize your cloud bill, Mr. Chen. [icy polite] Tell me what is good enough, and what it costs to run this thing a million times without eating into my margin.",
+      "audition_history": []
+    },
+    "claire_chen_gc": {
+      "role_id": "claire_chen_gc",
+      "display_name": "Claire Sterling",
+      "aliases": [
+        "克莱尔",
+        "Claire",
+        "General Counsel",
+        "Claire Sterling"
+      ],
+      "tier": "core_supporting",
+      "gender": "female",
+      "age_group": "adult",
+      "language_code": "en",
+      "accent_code": "us_nyc",
+      "vocal_register": "干脆利落、刀锋般精准、带着华尔街红圈所诉讼气场的37岁纽约美音女中音（真人录音棚纯英干声）",
+      "persona_summary": "NovaEdge 总法律顾问（General Counsel）兼北美商业负责人，前纽约华尔街并购律师。林沉在欧美战场最锋利的法律与合同护盾，专门负责撕开 VC 条款陷阱、反制做空机构诉讼、打赢 FCC/GDPR 合规听证与 IPO 路演尽调。",
+      "accent_requirement": "纯正纽约/东海岸商业精英美音（NYC-inflected General American，节奏紧凑明快、辅音精准、句尾干脆利落，160–185 WPM）；严禁温和甜美客服腔或拖泥带水语速",
+      "status": "locked",
+      "voice_id": "drama3_anchor_claire_chen_gc",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Anchor: claire_chen_gc (NYC Corporate General Counsel Female)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.85,
+      "signature_tags": [
+        "[blunt]",
+        "[firmly]",
+        "[measured]",
+        "[pushback]",
+        "[tense]",
+        "[short pause]"
+      ],
+      "forbidden_habits": [
+        "严禁情绪化惊慌或过度附和，法务高管在危机中永远以条款编号与硬边界压阵",
+        "严禁冗长学院派长句，必须保持纽约谈判室短促有力的反击节奏",
+        "严禁在纯英台词中使用 [wryly] 标签"
+      ],
+      "first_appearance_chapter": 1,
+      "appearance_chapters": [
+        1,
+        6,
+        10,
+        11,
+        12,
+        13,
+        15,
+        16,
+        20,
+        22,
+        23,
+        24
+      ],
+      "audition_line": "[blunt] Do not sign that bridge sheet without a hard indemnity cap, Lin. [firmly] Victoria buried a super voting strip on page fourteen, and she is banking on you being too exhausted to notice.",
+      "audition_history": []
+    },
+    "rajiv_menon": {
+      "role_id": "rajiv_menon",
+      "display_name": "Rajiv Menon",
+      "aliases": [
+        "Rajiv",
+        "拉吉夫",
+        "Menon"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "en",
+      "accent_code": "intl_indian_exec",
+      "vocal_register": "吐字清晰、逻辑严密、自带跨国供应链高管压迫感的44岁受控精英印度裔美企高管男中音（真人录音棚纯英干声）",
+      "persona_summary": "北美大型零售集团全球硬件供应链与采购高级总监，印度理工学院与沃顿商学院毕业。仅在第三弧 E013 关税风暴关键集客串登场，代表真实全球采购桌上的成本冷酷核算——只认落地完税成本与越南/墨西哥双基地备份，不听任何情怀故事。",
+      "accent_requirement": "高清晰度受控精英印度裔高管英语（Educated Indian Executive English，严格遵循 Lingua Franca Core 辅音与核重音清晰标准，轻微卷舌特征与节奏特色但不影响 B1–C1 听辨）；严禁任何刻板印象漫画式夸张口音",
+      "status": "locked",
+      "voice_id": "drama3_anchor_rajiv_menon",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Anchor: rajiv_menon (Clear Educated Indian Executive English Male)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.82,
+      "signature_tags": [
+        "[measured]",
+        "[blunt]",
+        "[skeptical]",
+        "[confident]",
+        "[short pause]"
+      ],
+      "forbidden_habits": [
+        "严禁任何喜剧化、脸谱化或模糊含混的刻板口音演绎",
+        "严禁在 E001 或非授权集数出场，严格遵守全季国际客串 <=15% 配额"
+      ],
+      "first_appearance_chapter": 13,
+      "appearance_chapters": [
+        13
+      ],
+      "audition_line": "[measured] At twenty-five percent tariff, your Shenzhen base cost no longer clears our North American hurdle rate. [blunt] Qualify a Vietnam assembly line by Friday, or we reallocate the entire Q4 purchase order.",
+      "audition_history": []
+    },
+    "wei_ling_tan": {
+      "role_id": "wei_ling_tan",
+      "display_name": "Wei-Ling Tan",
+      "aliases": [
+        "Wei-Ling",
+        "陈慧玲",
+        "Tan"
+      ],
+      "tier": "recurring",
+      "gender": "female",
+      "age_group": "middle_aged",
+      "language_code": "en",
+      "accent_code": "intl_singapore_vc",
+      "vocal_register": "沉静外交官质感、分寸精准、绵里藏针的46岁新加坡主权基金女合伙人中音（真人录音棚纯英干声）",
+      "persona_summary": "新加坡主权财富基金亚洲科技直投主管合伙人。在第三弧 E013 与 E016 精控客串登场，兼具亚洲地缘实用主义与顶级全球资本视野，在关税风暴与中美算力夹缝中向林沉抛出“新加坡架构隔离 + 东南亚产能对冲”的战略融资底牌。",
+      "accent_requirement": "清晰克制的新加坡精英外交与金融英语（Educated Singaporean Diplomatic English，受过英式标准体系训练且保留自然清晰的东南亚精英韵律，LFC 辨识度 100%）；严禁市井 Singlish 俚语或含混尾音",
+      "status": "locked",
+      "voice_id": "drama3_anchor_wei_ling_tan",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Anchor: wei_ling_tan (Clear Singaporean Sovereign Fund Executive Female)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.82,
+      "signature_tags": [
+        "[measured]",
+        "[guarded]",
+        "[icy polite]",
+        "[confident]",
+        "[short pause]"
+      ],
+      "forbidden_habits": [
+        "严禁使用街头 Singlish 助词（如 lah/lor）破坏主权基金合伙人的庄重威严",
+        "严禁在 E001 或非授权集数出场，严格锁死于 E013 与 E016"
+      ],
+      "first_appearance_chapter": 13,
+      "appearance_chapters": [
+        13,
+        16
+      ],
+      "audition_line": "[measured] Ignore the polite modulations coming out of Washington and Brussels, Lin. [guarded] Sovereign capital does not invest in geopolitics—we invest in teams pragmatically adjusting before everyone else.",
+      "audition_history": []
+    },
+    "henrik_lindqvist": {
+      "role_id": "henrik_lindqvist",
+      "display_name": "Henrik Lindqvist",
+      "aliases": [
+        "Henrik",
+        "亨里克",
+        "Lindqvist"
+      ],
+      "tier": "recurring",
+      "gender": "male",
+      "age_group": "middle_aged",
+      "language_code": "en",
+      "accent_code": "intl_eu_legal",
+      "vocal_register": "冷冽精密、手术刀般毫无冗余情绪的49岁北欧布鲁塞尔欧盟法务男中音（真人录音棚纯英干声）",
+      "persona_summary": "布鲁塞尔欧盟 AI 法案与 GDPR 隐私听证会首席合规顾问。仅在第二弧 E011 精控客串登场，代表欧洲监管铁腕——当场拷问 NovaEdge Glass 的视觉/音频数据驻留、被遗忘权与可接受使用边界，倒逼林沉与周默重构法兰克福本地推理孤岛。",
+      "accent_requirement": "极度清晰冷峻的北欧精英法务英语（Clear Northern-European Legal English，咬字精密、句法冷酷、轻微北欧清辅音与节拍质感，145–160 WPM）；严禁生硬机械音或模糊重音",
+      "status": "locked",
+      "voice_id": "drama3_anchor_henrik_lindqvist",
+      "public_owner_id": "",
+      "library_voice_name": "Real-Human Studio Anchor: henrik_lindqvist (Northern-European EU Legal Counsel Male)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.82,
+      "signature_tags": [
+        "[coldly]",
+        "[measured]",
+        "[firmly]",
+        "[understated]",
+        "[short pause]"
+      ],
+      "forbidden_habits": [
+        "严禁夸张情绪起伏或政治演讲式高音，必须像宣读欧盟处罚条文般冰冷精确",
+        "严禁在 E001 或非授权集数出场，严格锁死于 E011"
+      ],
+      "first_appearance_chapter": 11,
+      "appearance_chapters": [
+        11
+      ],
+      "audition_line": "[measured] Under European law, a prompt policy is a polite wish, not an enforcement mechanism. [coldly] Prove strict GDPR data residency on Frankfurt metal, or your glasses never clear customs.",
+      "audition_history": []
+    }
+  },
+  "sonic_motifs": {
+    "glass_boardroom_door": {
+      "motif_id": "glass_boardroom_door",
+      "name": "沙丘路玻璃会议室门液压闭锁声",
+      "description": "硅谷 VC 或伦敦旗舰总部无框钢化玻璃门沉重闭合、金属门锁清脆卡紧的声学空间切入锚点",
+      "sfx_prompt": "Heavy frameless tempered glass boardroom door swinging shut with a muted brushed-steel hydraulic latch click inside a quiet Sand Hill Road office suite, pure foley, no human voice",
+      "duration_seconds": 2.2,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "smart_glasses_haptic_ping": {
+      "motif_id": "smart_glasses_haptic_ping",
+      "name": "NovaEdge Glass 镜腿触控微震与光学提示音",
+      "description": "指尖轻触钛合金 AI 眼镜镜腿触发实时翻译或低延迟端侧推理时的冷冽极简微震提示音",
+      "sfx_prompt": "Crisp minimalist titanium smart-glasses temple haptic tap followed by a subtle ultra-clean low-latency micro-chime and soft optical shutter pulse in close stereo proximity, pure foley, no human voice",
+      "duration_seconds": 1.4,
+      "prompt_influence": 0.62,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "shenzhen_smt_factory_line": {
+      "motif_id": "shenzhen_smt_factory_line",
+      "name": "深圳南山 SMT 无尘产线精密贴片声",
+      "description": "周默坐镇的深圳硬件智造产线高速贴片机伺服律动、气动阀轻响与光学质检传送带声景",
+      "sfx_prompt": "Precision high-speed surface-mount pick-and-place robotics humming rhythmically beside soft pneumatic air valves and optical inspection conveyor clicks inside a Shenzhen electronics cleanroom, pure foley, no human voice",
+      "duration_seconds": 3.2,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "transpacific_call_connect": {
+      "motif_id": "transpacific_call_connect",
+      "name": "跨太平洋三时区加密会议连线声",
+      "description": "深夜深圳、清晨硅谷、午后伦敦三地远程会议接通时的干净加密拨号提示音与极轻线路底噪",
+      "sfx_prompt": "Crisp executive smartphone conference bridge dial chime clicking cleanly into a quiet transpacific encrypted telecom line hum across an empty midnight desk, pure foley, no human voice",
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.65,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "paper_term_sheet_slide": {
+      "motif_id": "paper_term_sheet_slide",
+      "name": "胡桃木长桌条款清单推滑与钢笔合盖声",
+      "description": "投资人或大买手把厚重 Term Sheet 推过会议桌并干脆扣上金属钢笔笔帽的冷峻博弈音效",
+      "sfx_prompt": "Thick bound term-sheet dossier sliding briskly across a polished walnut conference table followed by a solid fountain pen cap snapping shut on heavyweight cardstock, pure foley, no human voice",
+      "duration_seconds": 1.9,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "freeze_frame_sub_drop": {
+      "motif_id": "freeze_frame_sub_drop",
+      "name": "《纸牌屋》式冻帧潜台词低频收束声",
+      "description": "关键英文杀招落音瞬间触发的极短超低频收窄抽空声，用于无缝切入林沉 inner_monologue 贴麦独白",
+      "sfx_prompt": "Subtle cinematic low-frequency sub-bass tension swell tightening smoothly into sudden vacuum room stillness like an editorial focus snap, pure foley, no human voice",
+      "duration_seconds": 1.2,
+      "prompt_influence": 0.62,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    },
+    "nyse_bell_and_ticker_pulse": {
+      "motif_id": "nyse_bell_and_ticker_pulse",
+      "name": "交易所开市铜钟与精密金融节拍声",
+      "description": "第四弧做空反击与全球上市敲钟高潮的标志性铜钟鸣响与交易台机械节拍音效",
+      "sfx_prompt": "Resonant brass financial exchange opening bell ringing crisply once over subtle precision mechanical stopwatch ticks and distant trading desk keyboard taps, pure foley, no human voice",
+      "duration_seconds": 2.8,
+      "prompt_influence": 0.6,
+      "loop": false,
+      "cached_file": "",
+      "drive_file_id": ""
+    }
+  }
+}

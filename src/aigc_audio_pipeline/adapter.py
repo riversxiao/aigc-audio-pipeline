@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from pathlib import Path
 import re
 
@@ -24,6 +25,7 @@ _SPEECH_VERB_TAIL = re.compile(
 )
 _INLINE_QUOTE_SUFFIXES = ("的", "二字", "三字", "四字", "五字", "六个字", "字样", "时，", "时,")
 _WRITTEN_INTRO_TAILS = ("写着：", "刻着：", "字痕：", "写有：")
+_CTRL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
 def is_spoken_dialogue_quote(prev_text: str, inner_quote: str, next_text: str) -> bool:
@@ -160,18 +162,31 @@ def export_cue_sheet_markdown(
 ) -> str:
     """Render an EpisodeCueSheet into a clean, human-readable Director & Cast Script (.md)."""
     is_podcast = cue_sheet.mode == "podcast_roundtable"
-    header_suffix = "中英双语深度圆桌播客演出台本" if is_podcast else "广播剧 / 多人精品有声剧演出台本"
-    source_label = (
-        f"第 {cue_sheet.chapter_number} 期（原典档案：`{cue_sheet.source_chapter_file or 'N/A'}`）"
-        if is_podcast
-        else f"第 {cue_sheet.chapter_number} 章（源文件：`{cue_sheet.source_chapter_file or 'N/A'}`）"
-    )
-    bus_desc = (
-        "- **混音总线**：人声圆桌主轨（`-16 LUFS`，含巴菲特英文原声前 `3.5s` 独奏 → 余弦压混至 `0.15` 同传垫底）"
-        " + 前景独立声效母题轨（不随对白闪避） + 分幕纯器乐床（ACE-Step 1.5 XL，对白下极轻垫底）"
-        if is_podcast
-        else "- **混音总线**：人声主轨（`-16 LUFS`） + 前景独立音效轨（不随对白闪避） + 分幕纯音乐床（对白下闪避至 `0.11`，气口回升至 `0.34`）"
-    )
+    is_bilingual_biz = cue_sheet.mode == "bilingual_business_drama"
+
+    if is_podcast:
+        header_suffix = "中英双语深度圆桌播客演出台本"
+        source_label = f"第 {cue_sheet.chapter_number} 期（原典档案：`{cue_sheet.source_chapter_file or 'N/A'}`）"
+        bus_desc = (
+            "- **混音总线**：人声圆桌主轨（`-16 LUFS`，含巴菲特英文原声前 `3.5s` 独奏 → 余弦压混至 `0.15` 同传垫底）"
+            " + 前景独立声效母题轨（不随对白闪避） + 分幕纯器乐床（ACE-Step 1.5 XL，对白下极轻垫底）"
+        )
+    elif is_bilingual_biz:
+        header_suffix = "中英双语商战广播剧演出台本"
+        source_label = f"第 {cue_sheet.chapter_number} 集（语料蓝图：`{cue_sheet.source_chapter_file or 'N/A'}`）"
+        bus_desc = (
+            "- **混音总线**：人声双语主轨（`-16 LUFS`，含保音高 `atempo` 拆局慢放与商战声场）"
+            " + 前景独立声效母题轨（MOSS-SoundEffect-v2.0，不随对白闪避）"
+            " + 分幕纯器乐床（ACE-Step 1.5 XL，对白下极轻垫底）"
+        )
+    else:
+        header_suffix = "广播剧 / 多人精品有声剧演出台本"
+        source_label = f"第 {cue_sheet.chapter_number} 章（源文件：`{cue_sheet.source_chapter_file or 'N/A'}`）"
+        bus_desc = (
+            "- **混音总线**：人声主轨（`-16 LUFS`） + 前景独立音效轨（不随对白闪避）"
+            " + 分幕纯音乐床（对白下闪避至 `0.11`，气口回升至 `0.34`）"
+        )
+
     out: list[str] = [
         f"# {cue_sheet.episode_id} ·《{cue_sheet.title}》{header_suffix}",
         "",
@@ -183,11 +198,12 @@ def export_cue_sheet_markdown(
     ]
 
     if cue_sheet.acts:
-        bgm_heading = (
-            "## 一、 分幕配乐设计（ACE-Step 1.5 XL · 纯器乐纪录片书房声场）"
-            if is_podcast
-            else "## 一、 分幕配乐设计（ElevenLabs `music_v2_5` · `force_instrumental=true`）"
-        )
+        if is_podcast:
+            bgm_heading = "## 一、 分幕配乐设计（ACE-Step 1.5 XL · 纯器乐纪录片书房声场）"
+        elif is_bilingual_biz:
+            bgm_heading = "## 一、 分幕配乐设计（ACE-Step 1.5 XL · 纯器乐冷峻商战原声）"
+        else:
+            bgm_heading = "## 一、 分幕配乐设计（ElevenLabs `music_v2_5` · `force_instrumental=true`）"
         out.append(bgm_heading)
         out.append("")
         out.append("| 幕次 | 幕名 | 音乐提示词（Prompt） | 参考时长 | 对白闪避 / 空隙增益 |")
@@ -222,21 +238,50 @@ def export_cue_sheet_markdown(
             )
         else:
             role_label = cue.speaker_name or cue.role_id
-            if registry is not None:
-                prof = registry.resolve_role(cue.role_id)
-                if prof is not None:
-                    disp = f"{cue.speaker_name} / {prof.display_name}" if cue.speaker_name and cue.speaker_name != prof.display_name else prof.display_name
-                    role_label = f"{disp} (`{cue.role_id}`)"
+            prof = registry.resolve_role(cue.role_id) if registry is not None else None
+            if prof is not None:
+                disp = (
+                    f"{cue.speaker_name} / {prof.display_name}"
+                    if cue.speaker_name and cue.speaker_name != prof.display_name
+                    else prof.display_name
+                )
+                role_label = f"{disp} (`{cue.role_id}`)"
+
+            eff_lang = cue.language_code or (prof.language_code if prof is not None else "")
+            lang_badge = (
+                f" | 语言 `{eff_lang}`"
+                if eff_lang and (is_bilingual_biz or bool(cue.language_code))
+                else ""
+            )
+            accent_badge = (
+                f" | 口音 `{prof.accent_code}`"
+                if is_bilingual_biz and prof is not None and getattr(prof, "accent_code", "")
+                else ""
+            )
             space_badge = f" | 声场 `{cue.acoustic_space}`" if cue.acoustic_space != "dry" else ""
+            raw_rate = getattr(cue, "playback_rate", 1.0)
+            rate = (
+                float(raw_rate)
+                if isinstance(raw_rate, (int, float))
+                and not isinstance(raw_rate, bool)
+                and math.isfinite(float(raw_rate))
+                else 1.0
+            )
+            rate_badge = f" | 语速 `[{rate:.2f}x]`" if abs(rate - 1.0) > 1e-3 else ""
             duck_badge = (
                 f" | **同传叠音：原声独奏 `{cue.duck_lead_in_s}s` → 压混 `{cue.duck_gain}`**"
                 if getattr(cue, "duck_under_next", False)
                 else ""
             )
+            raw_sub_tr = getattr(cue, "subtitle_translation", "")
+            sub_tr = " ".join(_CTRL_CHAR_RE.sub("", raw_sub_tr).split()) if isinstance(raw_sub_tr, str) else ""
+            translation_line = f"  \n  *中文字幕译文：{sub_tr}*" if sub_tr else ""
             out.append(
                 f"- 🎙️ **`[{cue.cue_id}]` {role_label}** "
-                f"（`stability={cue.stability}`{space_badge}{duck_badge} | 句后气口 `{cue.gap_after_s}s`）  \n"
+                f"（`stability={cue.stability}`{lang_badge}{accent_badge}{space_badge}{rate_badge}{duck_badge}"
+                f" | 句后气口 `{cue.gap_after_s}s`）  \n"
                 f"  > {cue.text}"
+                + translation_line
                 + (f"  \n  *导演备注：{cue.director_note}*" if cue.director_note else "")
             )
         out.append("")

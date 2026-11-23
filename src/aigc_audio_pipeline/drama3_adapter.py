@@ -76,6 +76,20 @@ DRAMA3_TAG_MAP: dict[str, tuple[str, str]] = {
     "maniacal": ("unhinged, manic trembling intensity on the brink of madness", ""),
     "solemn": ("grave, solemn, heavy cinematic stillness", "slow"),
     "haunting": ("hollow, haunting unearthly whisper", "whisper"),
+    # HBO corporate-thriller & bilingual executive coaching tags
+    "measured": ("measured, poised executive cadence, unhurried control", ""),
+    "deadpan": ("flat, deadpan understatement, dry executive delivery", ""),
+    "icy polite": ("icy-polite, silk-over-steel corporate courtesy with quiet menace", ""),
+    "blunt": ("blunt, clipped, matter-of-fact boardroom directness", ""),
+    "guarded": ("guarded, cautious, calculated restraint", ""),
+    "skeptical": ("dry, skeptical corporate questioning, eyebrow-raised doubt", ""),
+    "firmly": ("firm, grounded executive authority, steady resolve", ""),
+    "understated": ("quiet, understated intensity, restrained low-key delivery", "soft"),
+    "tense": ("tight, controlled high-stakes tension, restrained breath", ""),
+    "confident": ("calm, effortless executive confidence, assured clarity", ""),
+    "aside": ("close-mic private aside, quiet knowing inner monologue", "soft"),
+    "coach": ("clear, crisp executive mentor cadence, articulate natural emphasis", ""),
+    "interrupting": ("brisk, sharp executive cut-in, tight conversational pace", ""),
 }
 
 # Paralinguistic point events kept inline in Drama 3 square brackets
@@ -173,6 +187,35 @@ FINANCE_PODCAST_ZH_MICRO_MAP: dict[str, tuple[str, str]] = {
     "sarcastic": ("略带反讽", ""),
 }
 
+# Restrained non-announcer Chinese acting micro-cues for `business_english_drama` (zh / zh-en).
+# Conversational/warmly/curious intentionally stay unprefixed so real-human studio anchors drive natural prosody.
+BUSINESS_DRAMA_ZH_MICRO_MAP: dict[str, tuple[str, str]] = {
+    "softly": ("", "soft"),
+    "understated": ("克制低沉", "soft"),
+    "aside": ("贴麦内心独白，克制冷静", "soft"),
+    "whispers": ("压低声音", "whisper"),
+    "whispering": ("压低声音", "whisper"),
+    "coldly": ("冷峻克制", ""),
+    "deadpan": ("冷面平淡、不带波澜", ""),
+    "icy polite": ("礼貌克制、暗藏锋芒", ""),
+    "blunt": ("干脆直白、利落切入", ""),
+    "guarded": ("谨慎克制、话留三分", ""),
+    "skeptical": ("语气微沉、带着审视与怀疑", ""),
+    "firmly": ("语气沉稳笃定", ""),
+    "tense": ("节奏收紧、压迫感克制", ""),
+    "measured": ("不疾不徐、沉稳克制", ""),
+    "confident": ("从容笃定、不急不躁", ""),
+    "coach": ("口语化拆解、吐字清晰自然", ""),
+    "interrupting": ("语速微快、干脆打断", ""),
+    "pushback": ("语气微顿、敏锐反问", ""),
+    "wryly": ("带着一丝冷幽默", ""),
+    "sarcastic": ("略带反讽", ""),
+    "dismissive": ("漫不经心、略带不屑", ""),
+    "seriously": ("沉稳认真", ""),
+    "calmly": ("平静克制", ""),
+    "rushed": ("语速加快、略带紧迫", ""),
+}
+
 
 def estimate_drama3_max_new_tokens(drama3_input: str | TimelineCue, *, language_code: str = "zh") -> int:
     """Estimate safe upper-bound `max_new_tokens` (~3.2x expected 21.53Hz frames, clamped to [384, 2048])."""
@@ -212,6 +255,7 @@ def translate_cue_to_drama3_input(
     """
     lang = cue.language_code or (profile.language_code if profile is not None else "") or "zh"
     is_zh_podcast = (domain == "finance_podcast") and (lang != "en")
+    is_zh_business_drama = (domain == "business_english_drama") and (lang != "en")
     source_tagged = cue.tts_text if (cue.tts_text and not use_phoneme_pins) else cue.text
     phonetic_tagged = _apply_drama3_phonetics(
         source_tagged,
@@ -233,9 +277,14 @@ def translate_cue_to_drama3_input(
         first_tag = all_tags[0].lower().strip()
         if first_tag in DRAMA3_POINT_EVENTS:
             return f"{DRAMA3_POINT_EVENTS[first_tag]} {plain_spoken}"
-        if is_zh_podcast:
+        if is_zh_podcast or is_zh_business_drama:
             return plain_spoken
-        brief, _ = DRAMA3_TAG_MAP.get(first_tag, ("calm, natural dramatic delivery", ""))
+        default_brief = (
+            "calm, restrained executive delivery"
+            if domain == "business_english_drama"
+            else "calm, natural dramatic delivery"
+        )
+        brief, _ = DRAMA3_TAG_MAP.get(first_tag, (default_brief, ""))
         return f"[{brief}] {plain_spoken}"
 
     # Attempt 1: Full segment-aware Drama 3 acting prompt
@@ -265,6 +314,14 @@ def translate_cue_to_drama3_input(
                     if span_candidate and not xml_span:
                         xml_span = span_candidate
                 continue
+            if is_zh_business_drama:
+                if t in BUSINESS_DRAMA_ZH_MICRO_MAP:
+                    zh_brief, span_candidate = BUSINESS_DRAMA_ZH_MICRO_MAP[t]
+                    if zh_brief and zh_brief not in style_briefs:
+                        style_briefs.append(zh_brief)
+                    if span_candidate and not xml_span:
+                        xml_span = span_candidate
+                continue
             if t in DRAMA3_TAG_MAP:
                 brief, span_candidate = DRAMA3_TAG_MAP[t]
                 if brief not in style_briefs:
@@ -276,6 +333,12 @@ def translate_cue_to_drama3_input(
         if seg_idx == 0:
             if lang == "en" and not style_briefs and cue.role_id.startswith("buffett"):
                 style_briefs.append("clear, brisk prime-age Midwestern investor voice, warm and folksy")
+            elif domain == "business_english_drama":
+                if not style_briefs and role_tier == "narrator":
+                    if lang == "en":
+                        style_briefs.append("restrained, understated modern corporate drama narration")
+                    else:
+                        style_briefs.append("克制冷静、低沉写实的现代商战叙事")
             elif domain != "finance_podcast":
                 if cue.stability == 1.0 and not style_briefs:
                     style_briefs.append("solemn, ancient monotone resonance")
@@ -389,10 +452,60 @@ def trim_edge_silence_wav(
 
 
 _CJK_COUNT_RE = re.compile(r"[\u4e00-\u9fff]")
+_EN_WORD_COUNT_RE = re.compile(r"[A-Za-z]+(?:'[A-Za-z]+)?")
 _MAJOR_SENT_SPLIT_RE = re.compile(r"(?<=[。！？；…])\s*")
 _MINOR_CLAUSE_SPLIT_RE = re.compile(r"(?<=[，、：])\s*")
 _EN_MAJOR_SENT_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 _EN_MINOR_CLAUSE_SPLIT_RE = re.compile(r"(?<=[,;:])\s+")
+_BILINGUAL_MAJOR_SENT_SPLIT_RE = re.compile(r"(?:(?<=[。！？；…])\s*|(?<=[.!?])\s+)")
+_BILINGUAL_MINOR_CLAUSE_SPLIT_RE = re.compile(r"(?:(?<=[，、：])\s*|(?<=[,;:])\s+)")
+
+
+def _effective_bilingual_units(text: str) -> float:
+    return len(_CJK_COUNT_RE.findall(text)) + 2.2 * len(_EN_WORD_COUNT_RE.findall(text))
+
+
+def _join_bilingual_units(left: str, right: str) -> str:
+    if not left:
+        return right
+    if not right:
+        return left
+    if (left[-1].isascii() and (right[0].isascii() or left[-1] in ".!?,;:")) or (
+        left[-1] in "\u201d\u2019" and right[0].isascii()
+    ):
+        return f"{left} {right}"
+    return left + right
+
+
+def _split_long_clause_by_whitespace(
+    clause: str,
+    *,
+    max_cjk_chars: int,
+    max_en_words: int,
+    english_only: bool = False,
+) -> list[str]:
+    words = clause.split()
+    if len(words) <= 1:
+        return [clause]
+    parts: list[str] = []
+    cur = ""
+    for w in words:
+        cand = f"{cur} {w}".strip() if cur else w
+        if english_only:
+            over = len(cand.split()) > max_en_words
+        else:
+            over = (
+                _effective_bilingual_units(cand) > max_cjk_chars
+                or len(_EN_WORD_COUNT_RE.findall(cand)) > max_en_words
+            )
+        if cur and over:
+            parts.append(cur)
+            cur = w
+        else:
+            cur = cand
+    if cur:
+        parts.append(cur)
+    return parts
 
 
 def split_cue_into_subcues_for_drama3(
@@ -432,7 +545,18 @@ def split_cue_into_subcues_for_drama3(
                 atomic_units_en.append(sent)
             else:
                 clauses = [c.strip() for c in _EN_MINOR_CLAUSE_SPLIT_RE.split(sent) if c.strip()]
-                atomic_units_en.extend(clauses if len(clauses) > 1 else [sent])
+                for cl in clauses if len(clauses) > 1 else [sent]:
+                    if len(cl.split()) > max_en_words:
+                        atomic_units_en.extend(
+                            _split_long_clause_by_whitespace(
+                                cl,
+                                max_cjk_chars=max_cjk_chars,
+                                max_en_words=max_en_words,
+                                english_only=True,
+                            )
+                        )
+                    else:
+                        atomic_units_en.append(cl)
 
         chunks_en: list[str] = []
         cur_en = ""
@@ -468,40 +592,72 @@ def split_cue_into_subcues_for_drama3(
                     speaker_name=cue.speaker_name,
                     language_code=cue.language_code or "en",
                     text=tagged_txt,
-                    tts_text=None,
+                    tts_text="",
                     stability=cue.stability,
+                    similarity_boost=cue.similarity_boost,
                     acoustic_space=cue.acoustic_space,
+                    playback_rate=cue.playback_rate,
+                    subtitle_translation=cue.subtitle_translation if idx == 1 else "",
                     gap_after_s=cue.gap_after_s if idx == len(chunks_en) else 0.16,
+                    director_note=cue.director_note if idx == 1 else "",
                 )
             )
         return subcues_en
 
-    if cjk_count <= max_cjk_chars:
+    en_count = len(_EN_WORD_COUNT_RE.findall(spoken))
+    effective_units = cjk_count + 2.2 * en_count
+    if effective_units <= max_cjk_chars and en_count <= max_en_words:
         return [cue]
 
-    raw_sents = [s.strip() for s in _MAJOR_SENT_SPLIT_RE.split(clean_body) if s.strip()]
+    major_re = _BILINGUAL_MAJOR_SENT_SPLIT_RE if en_count > 0 else _MAJOR_SENT_SPLIT_RE
+    minor_re = _BILINGUAL_MINOR_CLAUSE_SPLIT_RE if en_count > 0 else _MINOR_CLAUSE_SPLIT_RE
+    raw_sents = [s.strip() for s in major_re.split(clean_body) if s.strip()]
 
-    # Sub-split any single ultra-long sentence on commas/colons
+    def _exceeds_budget(s: str) -> bool:
+        return (
+            _effective_bilingual_units(s) > max_cjk_chars
+            or len(_EN_WORD_COUNT_RE.findall(s)) > max_en_words
+        )
+
+    # Sub-split any single ultra-long sentence on commas/colons, falling back to whitespace for unpunctuated English runs
     atomic_units: list[str] = []
     for sent in raw_sents:
-        if len(_CJK_COUNT_RE.findall(sent)) <= max_cjk_chars:
+        if not _exceeds_budget(sent):
             atomic_units.append(sent)
         else:
-            clauses = [c.strip() for c in _MINOR_CLAUSE_SPLIT_RE.split(sent) if c.strip()]
-            atomic_units.extend(clauses if len(clauses) > 1 else [sent])
+            clauses = [c.strip() for c in minor_re.split(sent) if c.strip()]
+            for cl in clauses if len(clauses) > 1 else [sent]:
+                if _exceeds_budget(cl) and len(cl.split()) > 1:
+                    atomic_units.extend(
+                        _split_long_clause_by_whitespace(
+                            cl,
+                            max_cjk_chars=max_cjk_chars,
+                            max_en_words=max_en_words,
+                        )
+                    )
+                else:
+                    atomic_units.append(cl)
 
     chunks: list[str] = []
     cur = ""
     for unit in atomic_units:
-        candidate = (cur + unit) if cur else unit
-        if cur and len(_CJK_COUNT_RE.findall(candidate)) > max_cjk_chars:
+        candidate = _join_bilingual_units(cur, unit) if cur else unit
+        if cur and _exceeds_budget(candidate):
             chunks.append(cur)
             cur = unit
         else:
             cur = candidate
     if cur:
-        if chunks and len(_CJK_COUNT_RE.findall(cur)) < 14 and len(_CJK_COUNT_RE.findall(chunks[-1] + cur)) <= max_cjk_chars + 20:
-            chunks[-1] = chunks[-1] + cur
+        if chunks:
+            merged_tail = _join_bilingual_units(chunks[-1], cur)
+            if (
+                _effective_bilingual_units(cur) < 14.0
+                and _effective_bilingual_units(merged_tail) <= max_cjk_chars + 20.0
+                and len(_EN_WORD_COUNT_RE.findall(merged_tail)) <= max_en_words + 12
+            ):
+                chunks[-1] = merged_tail
+            else:
+                chunks.append(cur)
         else:
             chunks.append(cur)
 
@@ -521,10 +677,14 @@ def split_cue_into_subcues_for_drama3(
                 speaker_name=cue.speaker_name,
                 language_code=cue.language_code,
                 text=tagged_txt,
-                tts_text=phonetic_txt if phonetic_txt != tagged_txt else None,
+                tts_text=phonetic_txt if phonetic_txt != tagged_txt else "",
                 stability=cue.stability,
+                similarity_boost=cue.similarity_boost,
                 acoustic_space=cue.acoustic_space,
+                playback_rate=cue.playback_rate,
+                subtitle_translation=cue.subtitle_translation if idx == 1 else "",
                 gap_after_s=cue.gap_after_s if idx == len(chunks) else 0.16,
+                director_note=cue.director_note if idx == 1 else "",
             )
         )
     return subcues
@@ -568,28 +728,44 @@ def convert_to_drama3_anchor_wav(src_audio: Path, dst_wav: Path) -> float:
     """Convert a character reference take into clean 44.1kHz mono PCM16 WAV leveled to -16 LUFS."""
     dst_wav.parent.mkdir(parents=True, exist_ok=True)
     dur = probe_duration_seconds(src_audio)
-    af = "highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=11" if dur >= 1.5 else "highpass=f=70,alimiter=limit=0.89:level=disabled"
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-y",
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-i",
-            str(src_audio),
-            "-af",
-            af,
-            "-ar",
-            str(DRAMA3_ANCHOR_SAMPLE_RATE),
-            "-ac",
-            "1",
-            "-c:a",
-            "pcm_s16le",
-            str(dst_wav),
-        ],
-        check=True,
+    mono_pre = f"aformat=sample_rates={DRAMA3_ANCHOR_SAMPLE_RATE}:channel_layouts=mono,"
+    af = (
+        f"{mono_pre}highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=11"
+        if dur >= 1.5
+        else f"{mono_pre}highpass=f=70,alimiter=limit=0.89:level=disabled"
     )
+    same_file = src_audio.resolve() == dst_wav.resolve()
+    work_target = dst_wav.with_suffix(".cond_tmp.wav") if same_file else dst_wav
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-i",
+                str(src_audio),
+                "-af",
+                af,
+                "-ar",
+                str(DRAMA3_ANCHOR_SAMPLE_RATE),
+                "-ac",
+                "1",
+                "-c:a",
+                "pcm_s16le",
+                str(work_target),
+            ],
+            check=True,
+        )
+        if same_file:
+            work_target.replace(dst_wav)
+    finally:
+        if same_file and work_target.exists():
+            try:
+                work_target.unlink()
+            except OSError:
+                pass
     return round(probe_duration_seconds(dst_wav), 3)
 
 
@@ -641,6 +817,7 @@ def export_colab_96gb_bundle(
             "gender": prof.gender if prof else "male",
             "age_group": prof.age_group if prof else "adult",
             "language_code": prof.language_code if prof else "zh",
+            "accent_code": getattr(prof, "accent_code", "") if prof else "",
             "vocal_register": prof.vocal_register if prof else "",
             "source_voice_name": spec.get("source_voice_name") or (prof.library_voice_name if prof else ""),
             "anchor_wav": rel_wav,

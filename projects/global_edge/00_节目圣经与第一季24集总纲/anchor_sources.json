@@ -1,0 +1,266 @@
+{
+  "project_id": "global_edge",
+  "project_title": "《跨境底牌：硅深暗战》 / Global Edge",
+  "domain": "business_english_drama",
+  "anchor_schema_version": "v2_real_human_studio",
+  "target_sample_rate_hz": 44100,
+  "target_channels": 1,
+  "target_lufs": -16.0,
+  "synthetic_tts_forbidden": true,
+  "accent_budget": {
+    "core_us_uk_en_pct_min": 85.0,
+    "season1_actual_core_pct": 96.0,
+    "intl_guest_en_pct_max": 15.0,
+    "season1_actual_intl_pct": 4.0
+  },
+  "roles": {
+    "lin_chen": {
+      "role_id": "lin_chen",
+      "display_name": "林沉 / Lin Chen",
+      "language_code": "zh-en",
+      "accent_code": "zh_en_bilingual_us",
+      "cast_pool": "core_us_uk_bilingual",
+      "source_type": "real_human_studio_corpus",
+      "license": "Apache-2.0",
+      "source_name": "real_human_studio_corpus:moss_ttsd_bilingual_founder_male",
+      "source_urls": [
+        "https://github.com/OpenMOSS/MOSS-TTSD",
+        "https://www.openslr.org/141/"
+      ],
+      "repo_relative_source": "voice_anchors/lin_chen.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 14.0,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "lin_chen.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/lin_chen.{wav,mp3,m4a,flac} single-speaker bilingual EN+ZH studio cut (mandatory for production; never auto-downloads a Mandarin-only clip); Tier 2: repo-bundled voice_anchors/lin_chen.wav; Tier 3: curated single-speaker EN+ZH bilingual reference from OpenMOSS MOSS-TTSD / LibriTTS-R booth sessions; Tier 4: dedicated single-speaker human close-mic booth recording (strictly NEVER synthetic TTS).",
+      "anchor_text": "That eighty-million-dollar loss is a phantom number—not a cash loss, and you know it. 她把可转债重估包装成经营失血，不是看不懂财报，是想趁签约前把估值砍掉三成。",
+      "bilingual_same_speaker_protocol": {
+        "single_human_speaker_required": true,
+        "age_vocal_profile": "30-38yo male bilingual baritone (Stanford/Silicon Valley + Shenzhen hardware CEO register, restrained chest resonance, zero announcer cadence)",
+        "spliced_bilingual_anchor_ratio_en_zh": "55:45 (7-9s Silicon Valley General American English + 5-7s restrained Mandarin, 12-16s total from the exact same close-mic studio session)",
+        "paired_en_zh_audition_ab_test": "Render AUDITION_GLOBAL_EDGE with Candidate A (single 14s spliced EN+ZH anchor from one speaker) vs Candidate B (same-speaker EN-only and ZH-only paired stems) and lock the winner via Gate G1 blind speaker-identity and formant-consistency check.",
+        "anti_accent_bleed_rules": [
+          "Use strictly one real human vocal tract across EN and ZH to lock fundamental frequency (F0) and vocal-tract formants.",
+          "Capture English and Mandarin sentences in the same dry close-mic studio session with identical mic distance and preamp gain.",
+          "Eliminate Chinese flat-vowel transfer or syllable-timing bleed on English boardroom lines (preserve rhotic /r/, American alveolar flapping, and nuclear stress).",
+          "Eliminate Western prosodic drift or textbook reading cadence on Mandarin inner_monologue and Act 5 debrief lines.",
+          "Strictly disable afftdn spectral denoising so upper-formant speaker identity cues remain intact."
+        ],
+        "target_en_wpm": "155-180",
+        "target_zh_cps": "3.55-3.65"
+      }
+    },
+    "zhou_mo": {
+      "role_id": "zhou_mo",
+      "display_name": "周默 / Zhou Mo",
+      "language_code": "zh-en",
+      "accent_code": "zh_mainland_sz",
+      "cast_pool": "core_us_uk_bilingual",
+      "source_type": "real_human_studio_corpus",
+      "license": "Apache-2.0",
+      "source_name": "real_human_studio_corpus:moss_ttsd_pod_m_shenzhen_cto",
+      "source_urls": [
+        "https://raw.githubusercontent.com/OpenMOSS/MOSS-TTSD/main/legacy/v0.7/examples/pod_m_enhanced.wav",
+        "https://www.openslr.org/93/"
+      ],
+      "repo_relative_source": "voice_anchors/zhou_mo.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 13.0,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "zhou_mo.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/zhou_mo.{wav,mp3,m4a,flac} close-mic mainland tech-exec Mandarin recording with clean EN hardware terms; Tier 2: repo-bundled voice_anchors/zhou_mo.wav; Tier 3: Apache-2.0 OpenMOSS MOSS-TTSD / AISHELL-3 close-mic Mandarin male studio speech (paired strictly with verbatim direct_audio_transcript); Tier 4: human booth recording (strictly NEVER synthetic TTS).",
+      "direct_audio_transcript": "九二年回到中国之后跟复旦去建了精算学院，现在跟很多学校也有在合作，就是这是最早在国内去做精算的。现在精算就是有中精，就中国精算师体系，还有北美精算师，这个是提得比较多的，也可能是业界含金量最高的吧。",
+      "anchor_text": "产线刚把微显示模组的 BOM cost 压掉十八美金，硅谷那边又要为公有云 token 账单多烧三十块。听好了，明天切回端侧推理，不然卖一台亏一台。"
+    },
+    "victoria_vance": {
+      "role_id": "victoria_vance",
+      "display_name": "Victoria Vance",
+      "language_code": "en",
+      "accent_code": "us_silicon_valley",
+      "cast_pool": "core_us_uk_bilingual",
+      "source_type": "real_human_studio_corpus",
+      "license": "CC-BY-4.0",
+      "source_name": "real_human_studio_corpus:hifitts_us_silicon_valley_female",
+      "source_urls": [
+        "https://www.openslr.org/109/",
+        "https://www.openslr.org/141/"
+      ],
+      "repo_relative_source": "voice_anchors/victoria_vance.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 12.5,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "victoria_vance.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/victoria_vance.{wav,mp3,m4a,flac} close-mic Silicon Valley/US executive female studio recording; Tier 2: repo-bundled voice_anchors/victoria_vance.wav; Tier 3: CC-BY-4.0 Hi-Fi TTS / LibriTTS-R close-mic General American female studio speech; Tier 4: native US executive voice-actor booth recording (strictly NEVER synthetic TTS).",
+      "anchor_text": "That is a charming deck, Lin, truly. Now walk me through the eighty million that just flowed through into the income statement before my partners lose patience."
+    },
+    "alistair_finch": {
+      "role_id": "alistair_finch",
+      "display_name": "Alistair Finch",
+      "language_code": "en",
+      "accent_code": "uk_london_rp",
+      "cast_pool": "core_us_uk_bilingual",
+      "source_type": "real_human_studio_corpus",
+      "license": "CC-BY-4.0",
+      "source_name": "real_human_studio_corpus:vctk_london_rp_exec_male",
+      "source_urls": [
+        "https://datashare.ed.ac.uk/handle/10283/3443",
+        "https://www.openslr.org/83/"
+      ],
+      "repo_relative_source": "voice_anchors/alistair_finch.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 13.5,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "alistair_finch.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/alistair_finch.{wav,mp3,m4a,flac} close-mic London RP male executive studio speech; Tier 2: repo-bundled voice_anchors/alistair_finch.wav; Tier 3: CC-BY-4.0 CSTR VCTK v0.92 / OpenSLR-83 Southern British RP male studio speech; Tier 4: native London RP voice-actor booth recording (strictly NEVER synthetic TTS).",
+      "anchor_text": "Oxford Street shoppers do not subsidize your cloud bill, Mr. Chen. Tell me what is good enough, and what it costs to run this thing a million times without eating into my margin."
+    },
+    "claire_chen_gc": {
+      "role_id": "claire_chen_gc",
+      "display_name": "Claire Sterling",
+      "language_code": "en",
+      "accent_code": "us_nyc",
+      "cast_pool": "core_us_uk_bilingual",
+      "source_type": "real_human_studio_corpus",
+      "license": "CC-BY-4.0",
+      "source_name": "real_human_studio_corpus:librittsr_us_nyc_counsel_female",
+      "source_urls": [
+        "https://www.openslr.org/141/",
+        "https://www.openslr.org/109/"
+      ],
+      "repo_relative_source": "voice_anchors/claire_chen_gc.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 12.0,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "claire_chen_gc.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/claire_chen_gc.{wav,mp3,m4a,flac} close-mic NYC/East-Coast corporate counsel female recording; Tier 2: repo-bundled voice_anchors/claire_chen_gc.wav; Tier 3: CC-BY-4.0 LibriTTS-R / Hi-Fi TTS crisp US female studio speech; Tier 4: native East-Coast US female voice-actor booth recording (strictly NEVER synthetic TTS).",
+      "anchor_text": "Do not sign that bridge sheet without a hard indemnity cap, Lin. Victoria buried a super voting strip on page fourteen, and she is banking on you being too exhausted to notice."
+    },
+    "rajiv_menon": {
+      "role_id": "rajiv_menon",
+      "display_name": "Rajiv Menon",
+      "language_code": "en",
+      "accent_code": "intl_indian_exec",
+      "cast_pool": "controlled_intl_guest",
+      "source_type": "real_human_studio_corpus",
+      "license": "CC0-1.0",
+      "source_name": "real_human_studio_corpus:commonvoice_indian_exec_male",
+      "source_urls": [
+        "https://commonvoice.mozilla.org/en/datasets",
+        "https://www.openslr.org/103/"
+      ],
+      "repo_relative_source": "voice_anchors/rajiv_menon.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 12.5,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "rajiv_menon.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/rajiv_menon.{wav,mp3,m4a,flac} LFC-clear educated Indian executive English studio recording (E013 guest only); Tier 2: repo-bundled voice_anchors/rajiv_menon.wav; Tier 3: CC0-1.0 Mozilla Common Voice / OpenSLR educated Indian English male studio subset; Tier 4: native educated Indian executive booth recording (strictly NEVER synthetic TTS).",
+      "anchor_text": "At twenty-five percent tariff, your Shenzhen base cost no longer clears our North American hurdle rate. Qualify a Vietnam assembly line by Friday, or we reallocate the entire Q4 purchase order."
+    },
+    "wei_ling_tan": {
+      "role_id": "wei_ling_tan",
+      "display_name": "Wei-Ling Tan",
+      "language_code": "en",
+      "accent_code": "intl_singapore_vc",
+      "cast_pool": "controlled_intl_guest",
+      "source_type": "real_human_studio_corpus",
+      "license": "CC-BY-4.0",
+      "source_name": "real_human_studio_corpus:imda_singapore_diplomatic_female",
+      "source_urls": [
+        "https://www.imda.gov.sg/how-we-can-help/national-speech-corpus",
+        "https://commonvoice.mozilla.org/en/datasets"
+      ],
+      "repo_relative_source": "voice_anchors/wei_ling_tan.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 12.5,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "wei_ling_tan.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/wei_ling_tan.{wav,mp3,m4a,flac} clear educated Singaporean diplomatic/finance female recording (E013/E016 guest only, zero colloquial Singlish); Tier 2: repo-bundled voice_anchors/wei_ling_tan.wav; Tier 3: CC-BY-4.0 IMDA National Speech Corpus / Common Voice Singapore educated female studio speech; Tier 4: native Singaporean executive booth recording (strictly NEVER synthetic TTS).",
+      "anchor_text": "Ignore the polite modulations coming out of Washington and Brussels, Lin. Sovereign capital does not invest in geopolitics—we invest in teams pragmatically adjusting before everyone else."
+    },
+    "henrik_lindqvist": {
+      "role_id": "henrik_lindqvist",
+      "display_name": "Henrik Lindqvist",
+      "language_code": "en",
+      "accent_code": "intl_eu_legal",
+      "cast_pool": "controlled_intl_guest",
+      "source_type": "real_human_studio_corpus",
+      "license": "CC0-1.0",
+      "source_name": "real_human_studio_corpus:voxpopuli_eu_legal_counsel_male",
+      "source_urls": [
+        "https://github.com/facebookresearch/voxpopuli",
+        "https://commonvoice.mozilla.org/en/datasets"
+      ],
+      "repo_relative_source": "voice_anchors/henrik_lindqvist.wav",
+      "conditioning_spec": {
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "highpass_hz": 75,
+        "ffmpeg_filter": "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=75,loudnorm=I=-16:TP=-1.5:LRA=11",
+        "loudnorm": "I=-16:TP=-1.5:LRA=11",
+        "no_afftdn": true
+      },
+      "target_duration_s": 13.0,
+      "snr_min_db": 45.0,
+      "custom_anchor_filename": "henrik_lindqvist.wav",
+      "fallback_strategy": "Tier 1: custom_anchors/henrik_lindqvist.{wav,mp3,m4a,flac} crisp Northern-European legal English male studio recording (E011 guest only); Tier 2: repo-bundled voice_anchors/henrik_lindqvist.wav; Tier 3: CC0-1.0 VoxPopuli European Parliament / Common Voice Nordic English male studio speech; Tier 4: native Northern-European legal voice-actor booth recording (strictly NEVER synthetic TTS).",
+      "anchor_text": "Under European law, a prompt policy is a polite wish, not an enforcement mechanism. Prove strict GDPR data residency on Frankfurt metal, or your glasses never clear customs."
+    }
+  }
+}
