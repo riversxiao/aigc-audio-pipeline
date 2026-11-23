@@ -1,0 +1,55 @@
+{
+  "project_id": "bastiat_unseen",
+  "project_title": "《1850巴黎议会讽刺剧：〈看得见的与看不见的〉》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "bastiat": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (49岁幽默毒舌法国议员与经济学家_弗雷德里克·巴斯夏)"
+    },
+    "host_su": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁敏锐犀利驻巴黎财经女记者_苏晚星)"
+    },
+    "baker_bonhomme": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁接地气巴黎街角面包兼小杂货店主_老博诺姆)"
+    },
+    "deputy_mont": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_55岁热衷关税补贴与大基建的保护派政客蒙托邦议员"
+    },
+    "candle_boss": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_52岁起草控告太阳请愿书的蜡烛厂老板杜邦会长"
+    },
+    "apprentice_luc": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_24岁巴黎年轻鞋匠兼修窗玻璃学徒吕克"
+    },
+    "madame_claire": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "jiang_qinghuang",
+      "source_voice_name": "Reuse: 诸界锁仙_姜清凰_36岁精明持家的巴黎织布坊女老板玛丽夫人"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_1850巴黎历史纪实男中音"
+    }
+  }
+}

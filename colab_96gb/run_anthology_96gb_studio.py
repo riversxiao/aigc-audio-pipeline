@@ -531,6 +531,27 @@ _WHISPER_PROMPTS: dict[str, str] = {
     "wealth_of_nations": "以下是简体中文国富论商业思想广播剧台词：亚当斯密、大卫休谟、詹姆斯瓦特、爱丁堡、格拉斯哥、扣针厂、分工、看不见的手、重商主义、东印度公司、自然价格、市场价格、守夜人、道德情操论。",
     "free_to_choose": "以下是简体中文自由选择商业思想广播剧台词：米尔顿弗里德曼、罗丝弗里德曼、芝加哥、铅笔的故事、价格信号、四种花钱的人、大萧条、美联储、职业牌照、教育券、负所得税、通货膨胀、货币现象。",
     "keynes_1936": "以下是简体中文凯恩斯通论宏观思想广播剧台词：约翰梅纳德凯恩斯、庇古教授、剑桥大学、大萧条、有效需求、非自愿失业、节俭悖论、乘数效应、选美比赛、动物精神、流动性偏好、流动性陷阱、财政刺激、布雷顿森林。",
+    "extraordinary_delusions": "以下是简体中文大癫狂金融泡沫广播剧台词：郁金香狂热、阿姆斯特丹、球茎、约翰劳、密西西比泡沫、巴黎、南海泡沫、伦敦、艾萨克牛顿、群体癫狂、投机崩盘。",
+    "bastiat_unseen": "以下是简体中文巴斯夏讽刺经济学广播剧台词：弗雷德里克巴斯夏、巴黎议会、破窗谬误、看得见的与看不见的、蜡烛请愿书、太阳竞争、断轨铁路、关税保护、机会成本。",
+    "one_lesson_econ": "以下是简体中文一课经济学广播剧台词：亨利黑兹利特、二阶后果、破窗、机器取代人工、公共工程、租金管制、最低工资、价格上限、通货膨胀、储蓄投资。",
+    "basic_economics": "以下是简体中文常识经济学广播剧台词：价格信号、稀缺资源、房租管制、短缺与过剩、利润与亏损、比较优势、国际贸易、医疗教育、人力资本、常识。",
+    "freakonomics_theater": "以下是简体中文魔鬼经济学广播剧台词：激励机制、相扑作弊、房产中介、信息不对称、幼儿园迟到罚款、隐秘动机、因果与相关、数据侦探、反直觉真相。",
+    "leisure_class_1899": "以下是简体中文有闲阶级论广播剧台词：索尔斯坦凡勃伦、镀金时代、炫耀性消费、炫耀性闲暇、凡勃伦效应、奢侈品、银勺子、品味符号、社会阶层。",
+    "schumpeter_1911": "以下是简体中文熊彼特经济发展理论广播剧台词：约瑟夫熊彼特、维也纳、创造性破坏、企业家精神、银行信用、创新组合、马车与汽车、经济周期、静态均衡。",
+    "moral_sentiments_1759": "以下是简体中文道德情操论广播剧台词：亚当斯密、格拉斯哥、同情心、共情、内心公正旁观者、自爱与利他、荣誉与虚荣、崇富轻贫、商业信任、美德。",
+    "why_nations_fail": "以下是简体中文为什么国家会失败广播剧台词：诺加莱斯、包容性制度、汲取性制度、光荣革命、产权保护、工业革命、威尼斯、制度惯性、国运。",
+    "stock_operator_1923": "以下是简体中文股票大作手回忆录广播剧台词：杰西利弗莫尔、对赌行、华尔街、纸带报价、1907年恐慌、棉花大王、趋势交易、仓位控制、人性弱点、止损。",
+    "intelligent_investor": "以下是简体中文聪明的投资者广播剧台词：本杰明格雷厄姆、哥伦比亚大学、市场先生、安全边际、防御型投资者、进取型投资者、烟蒂股、内在价值、巴菲特、复利。",
+    "random_walk_wallstreet": "以下是简体中文漫步华尔街广播剧台词：伯顿马尔基尔、随机漫步、飞镖猩猩、空中楼阁、坚实基础、漂亮50、科网泡沫、指数基金、约翰博格、低费率。",
+    "behavioral_econ_traps": "以下是简体中文行为经济学剧场台词：系统一、系统二、损失厌恶、心理账户、锚定效应、沉没成本、前景理论、过度自信、助推、认知偏差。",
+    "psychology_of_money": "以下是简体中文金钱心理学广播剧台词：复利时间、运气与风险、知足、尾部事件、财务自由、掌控时间、容错空间、低调致富、长期主义、心态。",
+    "black_swan_antifragile": "以下是简体中文黑天鹅与反脆弱广播剧台词：黑天鹅、感恩节火鸡、平均斯坦、极端斯坦、肥尾分布、反脆弱、杠铃策略、切身利益在局中、非线性风险。",
+    "big_short_2008": "以下是简体中文大空头次贷危机广播剧台词：2008年金融危机、次级房贷、CDO、信用违约互换、CDS、评级机构、三A评级、做空华尔街、雷曼兄弟、泡沫崩盘。",
+    "lords_of_finance_1929": "以下是简体中文金融之王1929广播剧台词：金本位、黄金镣铐、英格兰银行、美联储、法兰西银行、德国帝国银行、魏玛通胀、战争赔款、大萧条、货币政策。",
+    "ascent_of_money": "以下是简体中文金钱的崛起广播剧台词：美第奇银行、复式记账、荷兰东印度公司、阿姆斯特丹交易所、债券市场、罗斯柴尔德、保险精算、房贷证券化、金融演进。",
+    "capitalism_and_freedom": "以下是简体中文资本主义与自由广播剧台词：芝加哥学派、经济自由、货币增长规则、浮动汇率、职业许可垄断、负所得税、教育券、反垄断、财政约束。",
+    "game_theory_strategy": "以下是简体中文策略思维与博弈论广播剧台词：囚徒困境、纳什均衡、破釜沉舟、可信威胁、先发优势、价格战、赢家诅咒、倒推法、信号传递、合作博弈。",
+    "debt_cycle_machine": "以下是简体中文大债务危机周期剧场台词：信贷扩张、短期债务周期、长期债务周期、去杠杆、和谐去杠杆、央行降息、印钞货币化、通缩萧条、通胀泡沫、经济机器。",
     "xianxia": "以下是普通话简体中文仙侠有声剧对白，请使用简体中文输出。",
 }
 
@@ -591,6 +612,31 @@ def sanitize_moss_foley_prompt(prompt: str) -> str:
     return cleaned
 
 
+_ECON_FINANCE_BGM_PRESETS: dict[str, str] = {
+    "extraordinary_delusions": "1841 Victorian London baroque-romantic chamber strings, harpsichord and dramatic cello, no modern drums",
+    "bastiat_unseen": "1850 Parisian salon witty chamber string quartet, crisp pizzicato cello and light fortepiano, no modern drums",
+    "one_lesson_econ": "warm modern documentary acoustic felt piano, upright bass and gentle guitar chamber score, no loud drums",
+    "basic_economics": "grounded warm documentary acoustic piano, mellow cello and plucked acoustic bass, no loud drums",
+    "freakonomics_theater": "curious playful pizzicato chamber strings, marimba pulse, upright bass and crisp felt piano, no loud rock drums",
+    "leisure_class_1899": "1899 Gilded Age ironic waltz chamber strings, solo violin and parlor grand piano, no modern drums",
+    "schumpeter_1911": "1911 Vienna expressive romantic string quartet, driving cello ostinato and grand piano, no modern pop drums",
+    "moral_sentiments_1759": "1759 Scottish Enlightenment warm intimate baroque chamber strings, solo cello and wooden flute, no modern drums",
+    "why_nations_fail": "grand historical documentary cinematic chamber strings, warm horn swell and deep cello, no pop drums",
+    "stock_operator_1923": "1920s Wall Street noir late-night upright bass, muted brass chamber accents and moody felt piano, no loud rock drums",
+    "intelligent_investor": "calm warm 1950s New York academic study acoustic piano, soft cello and gentle jazz upright bass, no loud drums",
+    "random_walk_wallstreet": "breezy witty Manhattan acoustic jazz piano trio with warm upright bass and light acoustic guitar, no loud drums",
+    "behavioral_econ_traps": "curious modern documentary felt piano, pulsing pizzicato strings and warm subtle marimba, no heavy drums",
+    "psychology_of_money": "warm fireside intimate acoustic guitar, soft felt piano and tender solo cello, no modern drums",
+    "black_swan_antifragile": "tense intellectual Mediterranean-meets-chamber cello drone, stark solo piano and suspenseful strings, no pop drums",
+    "big_short_2008": "taut 2008 financial thriller low pulsing cello ostinato, moody upright bass and dark minimalist piano, no EDM beat",
+    "lords_of_finance_1929": "1929 interwar European tragic chamber orchestra, somber solo cello and dark stately piano, no modern drums",
+    "ascent_of_money": "sweeping European historical documentary chamber strings, renaissance lute accents and warm cello, no pop drums",
+    "capitalism_and_freedom": "1962 Chicago late-night intellectual acoustic jazz piano, warm upright bass and mellow strings, no loud drums",
+    "game_theory_strategy": "clever crisp minimalist chamber strings, rhythmic pizzicato cello and sharp felt piano, no heavy pop drums",
+    "debt_cycle_machine": "steady cyclical macro documentary minimalist piano arpeggio, warm cello and subtle string swell, no pop drums",
+}
+
+
 def enrich_anthology_bgm_prompt(prompt: str, *, bgm_style: str) -> str:
     base = (prompt or "").strip().rstrip(".")
     lower = base.lower()
@@ -630,6 +676,11 @@ def enrich_anthology_bgm_prompt(prompt: str, *, bgm_style: str) -> str:
             extras.append("1936 interwar Cambridge reflective chamber strings, deep solo cello and muted upright piano")
         if "no drums" not in lower and "no modern beat" not in lower:
             extras.append("no modern drums, no pop beat")
+    elif bgm_style in _ECON_FINANCE_BGM_PRESETS:
+        if "chamber" not in lower and "piano" not in lower and "cello" not in lower and "strings" not in lower and "guitar" not in lower:
+            extras.append(_ECON_FINANCE_BGM_PRESETS[bgm_style])
+        elif "no drums" not in lower and "no loud drums" not in lower and "no modern beat" not in lower:
+            extras.append("no pop beat, no synth trap")
     if "no singing" not in lower:
         extras.append("purely instrumental, no vocals, no singing")
     return ", ".join([base, *extras]) if extras else base
@@ -645,6 +696,27 @@ def canonical_anthology_stem(cue_sheet: EpisodeCueSheet, *, domain: str) -> str:
         "wealth_of_nations": "国富论思想剧母带",
         "free_to_choose": "自由选择思想剧母带",
         "keynes_1936": "凯恩斯通论思想剧母带",
+        "extraordinary_delusions": "大癫狂泡沫剧母带",
+        "bastiat_unseen": "巴斯夏讽刺剧母带",
+        "one_lesson_econ": "一课经济学剧母带",
+        "basic_economics": "常识经济学剧母带",
+        "freakonomics_theater": "魔鬼经济学剧母带",
+        "leisure_class_1899": "有闲阶级论剧母带",
+        "schumpeter_1911": "熊彼特创新剧母带",
+        "moral_sentiments_1759": "道德情操论剧母带",
+        "why_nations_fail": "国家成败制度剧母带",
+        "stock_operator_1923": "股票大作手剧母带",
+        "intelligent_investor": "聪明的投资者母带",
+        "random_walk_wallstreet": "漫步华尔街剧母带",
+        "behavioral_econ_traps": "行为经济学剧母带",
+        "psychology_of_money": "金钱心理学剧母带",
+        "black_swan_antifragile": "黑天鹅反脆弱母带",
+        "big_short_2008": "大空头危机剧母带",
+        "lords_of_finance_1929": "金融之王央行剧母带",
+        "ascent_of_money": "金钱的崛起剧母带",
+        "capitalism_and_freedom": "资本主义自由母带",
+        "game_theory_strategy": "博弈论策略剧母带",
+        "debt_cycle_machine": "债务大周期剧母带",
     }
     label = suffix_map.get(domain, "Drama3广播剧母带")
     if cue_sheet.mode == "audition_pack":

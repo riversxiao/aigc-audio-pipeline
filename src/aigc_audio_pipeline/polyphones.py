@@ -559,6 +559,89 @@ def apply_keynes_1936_polyphone_overrides(text: str) -> str:
     return out
 
 
+# Unified polyphone overrides & automatic foreign-name interpunct smoothing for Waves 2–8 economics & finance dramas.
+ECON_FINANCE_DRAMA_DOMAINS: frozenset[str] = frozenset({
+    "extraordinary_delusions",
+    "bastiat_unseen",
+    "one_lesson_econ",
+    "basic_economics",
+    "freakonomics_theater",
+    "leisure_class_1899",
+    "schumpeter_1911",
+    "moral_sentiments_1759",
+    "why_nations_fail",
+    "stock_operator_1923",
+    "intelligent_investor",
+    "random_walk_wallstreet",
+    "behavioral_econ_traps",
+    "psychology_of_money",
+    "black_swan_antifragile",
+    "big_short_2008",
+    "lords_of_finance_1929",
+    "ascent_of_money",
+    "capitalism_and_freedom",
+    "game_theory_strategy",
+    "debt_cycle_machine",
+})
+
+ECON_FINANCE_COMMON_POLYPHONE_MAP: tuple[tuple[str, str], ...] = (
+    ("老行当", "老航当"),
+    ("这行当", "这航当"),
+    ("各行各业", "各航各业"),
+    ("同业行会", "同业航会"),
+    ("行会", "航会"),
+    ("银行行长", "银行航长"),
+    ("央行行长", "央行航长"),
+    ("同行们", "同航们"),
+    ("同行", "同航"),
+    ("内行人", "内航人"),
+    ("外行人", "外航人"),
+    ("调仓换股", "条仓换股"),
+    ("调仓", "条仓"),
+    ("调节", "条节"),
+    ("调控", "条控"),
+    ("调配", "条配"),
+    ("调整", "条整"),
+    ("大幅回调", "大幅回条"),
+    ("市场回调", "市场回条"),
+    ("利率下调", "利率下条"),
+    ("评级下调", "评级下条"),
+    ("资产重组", "资产崇组"),
+    ("债务重组", "债务崇组"),
+    ("破产重组", "破产崇组"),
+    ("摊薄", "摊博"),
+    ("重重关卡", "崇崇关卡"),
+    ("重重壁垒", "崇崇壁垒"),
+    ("重重危机", "崇崇危机"),
+    ("重重迷雾", "崇崇迷雾"),
+    ("重重", "崇崇"),
+    ("船舷", "船咸"),
+    ("埋怨", "蛮怨"),
+    ("屏息", "丙息"),
+    ("背负", "杯负"),
+    ("单薄", "单博"),
+    ("压榨", "押榨"),
+    ("着魔", "招魔"),
+    ("否极泰来", "匹极泰来"),
+)
+
+_INTERPUNCT_NAME_RE = re.compile(r"([\u4e00-\u9fff])·([\u4e00-\u9fff])")
+
+
+def apply_econ_finance_drama_polyphone_overrides(text: str) -> str:
+    """Return phonetic `tts_text` override for economics & finance radio drama domains (Waves 2–8)."""
+    if not text:
+        return text
+    out = text
+    for canonical, phonetic in ECON_FINANCE_COMMON_POLYPHONE_MAP:
+        if canonical in out:
+            out = out.replace(canonical, phonetic)
+    # Strip interpunct '·' inside transliterated Western names for smooth Drama 3 TTS (canonical '·' kept in .srt)
+    out = _INTERPUNCT_NAME_RE.sub(r"\1\2", out)
+    out = _INTERPUNCT_NAME_RE.sub(r"\1\2", out)
+    return out
+
+
 def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
     """Apply domain-appropriate Mandarin polyphone overrides."""
     if not text or domain == "none":
@@ -579,6 +662,8 @@ def apply_domain_polyphone_overrides(text: str, domain: str = "xianxia") -> str:
         return apply_free_to_choose_polyphone_overrides(text)
     if domain == "keynes_1936":
         return apply_keynes_1936_polyphone_overrides(text)
+    if domain in ECON_FINANCE_DRAMA_DOMAINS:
+        return apply_econ_finance_drama_polyphone_overrides(text)
     return apply_xianxia_polyphone_overrides(text)
 
 

@@ -1,0 +1,55 @@
+{
+  "project_id": "basic_economics",
+  "project_title": "《零公式常识课：〈常识经济学〉街头案例剧》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "prof_tang": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (55岁温润接地气零公式街头经济学者·唐致远)"
+    },
+    "host_xia": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁清亮敏锐城市纪实财经记者·夏宁)"
+    },
+    "boss_he": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁爽朗实干生鲜超市兼物流老板·老何)"
+    },
+    "official_song": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_体面锐利主张行政定价与指令调配的辩论对手·宋处长"
+    },
+    "farmer_wu": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_58岁醇厚朴实蔬菜种植合作社老农·老吴"
+    },
+    "young_zhou": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_25岁清朗拼劲外卖骑手兼夜校青年·小周"
+    },
+    "doctor_lin": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "su_qinghan",
+      "source_voice_name": "Reuse: 诸界锁仙_苏清寒_36岁清冽专业三甲医院兼诊所医生·林医生"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇人文城市纪实节目旁白"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "project_id": "leisure_class_1899",
+  "project_title": "《1899镀金时代：〈有闲阶级论〉奢侈消费剧》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_历史讽刺男中音"
+    },
+    "veblen": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (42岁冷幽默芝加哥学者_索尔斯坦凡勃伦)"
+    },
+    "host_bai": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁时尚与财经双栖记者_白清浅)"
+    },
+    "craftsman_tom": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁脚踏实地银器与机械匠人_老工匠托马斯)"
+    },
+    "tycoon_sterling": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_纽约第五大道铁路豪门大亨斯特林爵士"
+    },
+    "mrs_sterling": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "hongxiu_louzhu",
+      "source_voice_name": "Reuse: 诸界锁仙_红袖楼主_热衷奢华宴会与名媛攀比的斯特林夫人"
+    },
+    "young_edward": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_苦读死文字拉丁语的体面贵族青年爱德华"
+    },
+    "clara": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "su_qinghan",
+      "source_voice_name": "Reuse: 诸界锁仙_苏清寒_精打细算却被消费焦虑裹挟的城市白领克拉拉"
+    }
+  }
+}

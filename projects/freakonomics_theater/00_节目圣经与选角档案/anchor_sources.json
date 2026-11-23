@@ -1,0 +1,55 @@
+{
+  "project_id": "freakonomics_theater",
+  "project_title": "《激励侦探局：〈魔鬼经济学〉隐秘动机剧》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "detective_lu": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (38岁从容犀利数据经济学家·激励侦探陆寻)"
+    },
+    "host_su": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (29岁清亮好奇调查女记者搭档·苏小满)"
+    },
+    "boss_wang": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁二十年街角老店人精老板·老王)"
+    },
+    "agent_zhou": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_舌灿莲花房产兼金融中介·周经理"
+    },
+    "principal_lin": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "jiang_qinghuang",
+      "source_voice_name": "Reuse: 诸界锁仙_姜清凰_干练威严幼儿园及学校管理者·林园长"
+    },
+    "young_hao": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_清朗热血写代码查数据年轻研究员·小浩"
+    },
+    "mom_zhao": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "su_qinghan",
+      "source_voice_name": "Reuse: 诸界锁仙_苏清寒_精明直率焦虑家长兼消费者·赵姐"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇现代都市悬疑侦探旁白"
+    }
+  }
+}

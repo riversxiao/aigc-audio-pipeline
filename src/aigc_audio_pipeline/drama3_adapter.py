@@ -192,6 +192,31 @@ def estimate_drama3_max_new_tokens(drama3_input: str | TimelineCue, *, language_
     return max(384, min(2048, est_tokens))
 
 
+_ECON_FINANCE_NARRATOR_BRIEFS: dict[str, str] = {
+    "extraordinary_delusions": "vivid, wry 1841 Victorian London historical chronicle narration",
+    "bastiat_unseen": "witty, sparkling 1850 Parisian satirical intellectual drama narration",
+    "one_lesson_econ": "clear, sharp, everyday-life practical economics storytelling narration",
+    "basic_economics": "grounded, lucid, down-to-earth investigative economics drama narration",
+    "freakonomics_theater": "curious, snappy modern investigative mystery storytelling narration",
+    "leisure_class_1899": "dry, observant 1899 Gilded Age social satire narration",
+    "schumpeter_1911": "energetic, sweeping 1911 Vienna industrial innovation drama narration",
+    "moral_sentiments_1759": "warm, empathetic, poetic 18th-century Scottish philosophical drama narration",
+    "why_nations_fail": "grand, vivid global economic history documentary narration",
+    "stock_operator_1923": "taut, gripping 1920s Wall Street trading-floor memoir narration",
+    "intelligent_investor": "calm, measured, reassuring Columbia value-investing classroom narration",
+    "random_walk_wallstreet": "breezy, witty, irreverent modern Wall Street commentary narration",
+    "behavioral_econ_traps": "engaging, insightful cognitive psychology documentary drama narration",
+    "psychology_of_money": "warm, intimate, reflective fireside personal-wealth storytelling narration",
+    "black_swan_antifragile": "incisive, suspenseful risk-philosophy documentary narration",
+    "big_short_2008": "tense, taut 2008 financial crisis investigative thriller narration",
+    "lords_of_finance_1929": "solemn, cinematic 1929 interwar central-bank historical epic narration",
+    "ascent_of_money": "sweeping, vibrant centuries-spanning financial history documentary narration",
+    "capitalism_and_freedom": "crisp, articulate 1962 Chicago public-policy debate narration",
+    "game_theory_strategy": "clever, brisk strategic game-theory thriller narration",
+    "debt_cycle_machine": "clear, steady macro-cycle analytical documentary drama narration",
+}
+
+
 def translate_cue_to_drama3_input(
     cue: TimelineCue,
     profile: VoiceProfile | None = None,
@@ -297,6 +322,8 @@ def translate_cue_to_drama3_input(
                         style_briefs.append("crisp, warm, incisive 1980 Chicago documentary intellectual drama narration")
                     elif domain == "keynes_1936":
                         style_briefs.append("reflective, lucid 1936 Cambridge interwar historical drama narration")
+                    elif domain in _ECON_FINANCE_NARRATOR_BRIEFS:
+                        style_briefs.append(_ECON_FINANCE_NARRATOR_BRIEFS[domain])
                     else:
                         style_briefs.append("steady, cinematic Xianxia narration")
 

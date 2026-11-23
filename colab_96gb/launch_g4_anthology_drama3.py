@@ -102,6 +102,139 @@ ANTHOLOGY_PROJECTS: dict[str, dict[str, str]] = {
         "drive_show_folder": "《1936剑桥迷雾》凯恩斯通论宏观思想剧场",
         "bgm_style": "keynes_1936",
     },
+    # --- Wave 2: 人性泡沫与大白话常识爽剧 ---
+    "extraordinary_delusions": {
+        "title": "《1841伦敦泡沫档案：〈大癫狂〉金融疯魔史》",
+        "project_rel": "projects/extraordinary_delusions",
+        "drive_show_folder": "《1841伦敦泡沫档案》大癫狂金融疯魔剧场",
+        "bgm_style": "extraordinary_delusions",
+    },
+    "bastiat_unseen": {
+        "title": "《1850巴黎议会讽刺剧：〈看得见的与看不见的〉》",
+        "project_rel": "projects/bastiat_unseen",
+        "drive_show_folder": "《1850巴黎议会讽刺剧》巴斯夏经济学剧场",
+        "bgm_style": "bastiat_unseen",
+    },
+    "one_lesson_econ": {
+        "title": "《一课经济学剧场：别只看眼前那一步》",
+        "project_rel": "projects/one_lesson_econ",
+        "drive_show_folder": "《一课经济学剧场》二阶思维商业广播剧",
+        "bgm_style": "one_lesson_econ",
+    },
+    # --- Wave 3: 接地气生活经济学与消费密码 ---
+    "basic_economics": {
+        "title": "《零公式常识课：〈常识经济学〉街头案例剧》",
+        "project_rel": "projects/basic_economics",
+        "drive_show_folder": "《零公式常识课》常识经济学街头案例剧",
+        "bgm_style": "basic_economics",
+    },
+    "freakonomics_theater": {
+        "title": "《激励侦探局：〈魔鬼经济学〉隐秘动机剧》",
+        "project_rel": "projects/freakonomics_theater",
+        "drive_show_folder": "《激励侦探局》魔鬼经济学隐秘动机剧",
+        "bgm_style": "freakonomics_theater",
+    },
+    "leisure_class_1899": {
+        "title": "《1899镀金时代：〈有闲阶级论〉奢侈消费剧》",
+        "project_rel": "projects/leisure_class_1899",
+        "drive_show_folder": "《1899镀金时代》有闲阶级论奢侈消费剧",
+        "bgm_style": "leisure_class_1899",
+    },
+    # --- Wave 4: 创业创新、商业伦理与制度国运 ---
+    "schumpeter_1911": {
+        "title": "《1911维也纳风暴：〈经济发展理论〉创新剧》",
+        "project_rel": "projects/schumpeter_1911",
+        "drive_show_folder": "《1911维也纳风暴》熊彼特创新思想剧",
+        "bgm_style": "schumpeter_1911",
+    },
+    "moral_sentiments_1759": {
+        "title": "《1759格拉斯哥灯火：〈道德情操论〉商业温度》",
+        "project_rel": "projects/moral_sentiments_1759",
+        "drive_show_folder": "《1759格拉斯哥灯火》道德情操论思想剧",
+        "bgm_style": "moral_sentiments_1759",
+    },
+    "why_nations_fail": {
+        "title": "《国运的开关：〈为什么国家会失败〉制度史剧》",
+        "project_rel": "projects/why_nations_fail",
+        "drive_show_folder": "《国运的开关》为什么国家会失败制度史剧",
+        "bgm_style": "why_nations_fail",
+    },
+    # --- Wave 5: 华尔街投资圣殿三部曲 ---
+    "stock_operator_1923": {
+        "title": "《1923华尔街风云：〈股票大作手回忆录〉》",
+        "project_rel": "projects/stock_operator_1923",
+        "drive_show_folder": "《1923华尔街风云》股票大作手回忆录剧场",
+        "bgm_style": "stock_operator_1923",
+    },
+    "intelligent_investor": {
+        "title": "《哥伦比亚价值课堂：〈聪明的投资者〉》",
+        "project_rel": "projects/intelligent_investor",
+        "drive_show_folder": "《哥伦比亚价值课堂》聪明的投资者思想剧",
+        "bgm_style": "intelligent_investor",
+    },
+    "random_walk_wallstreet": {
+        "title": "《华尔街脱口秀：〈漫步华尔街〉指数革命》",
+        "project_rel": "projects/random_walk_wallstreet",
+        "drive_show_folder": "《华尔街脱口秀》漫步华尔街指数思想剧",
+        "bgm_style": "random_walk_wallstreet",
+    },
+    # --- Wave 6: 金融心理、博弈与黑天鹅风险 ---
+    "behavioral_econ_traps": {
+        "title": "《决策的暗礁：行为经济学与〈思考，快与慢〉剧场》",
+        "project_rel": "projects/behavioral_econ_traps",
+        "drive_show_folder": "《决策的暗礁》行为经济学心理陷阱剧场",
+        "bgm_style": "behavioral_econ_traps",
+    },
+    "psychology_of_money": {
+        "title": "《财富长跑课：〈金钱心理学〉普通人致富剧》",
+        "project_rel": "projects/psychology_of_money",
+        "drive_show_folder": "《财富长跑课》金钱心理学普通人致富剧",
+        "bgm_style": "psychology_of_money",
+    },
+    "black_swan_antifragile": {
+        "title": "《感恩节火鸡警报：〈黑天鹅与反脆弱〉风险剧》",
+        "project_rel": "projects/black_swan_antifragile",
+        "drive_show_folder": "《感恩节火鸡警报》黑天鹅与反脆弱风险剧",
+        "bgm_style": "black_swan_antifragile",
+    },
+    # --- Wave 7: 华尔街大危机与央行史诗 ---
+    "big_short_2008": {
+        "title": "《2008次贷暗战：〈大空头〉金融危机剧》",
+        "project_rel": "projects/big_short_2008",
+        "drive_show_folder": "《2008次贷暗战》大空头金融危机广播剧",
+        "bgm_style": "big_short_2008",
+    },
+    "lords_of_finance_1929": {
+        "title": "《1929黄金镣铐：〈金融之王〉四央行行长博弈》",
+        "project_rel": "projects/lords_of_finance_1929",
+        "drive_show_folder": "《1929黄金镣铐》金融之王四央行博弈剧",
+        "bgm_style": "lords_of_finance_1929",
+    },
+    "ascent_of_money": {
+        "title": "《金钱的崛起：从美第奇银行到现代华尔街》",
+        "project_rel": "projects/ascent_of_money",
+        "drive_show_folder": "《金钱的崛起》世界金融演进史广播剧",
+        "bgm_style": "ascent_of_money",
+    },
+    # --- Wave 8: 货币秩序、博弈策略与债务大周期 ---
+    "capitalism_and_freedom": {
+        "title": "《1962芝加哥激辩：〈资本主义与自由〉》",
+        "project_rel": "projects/capitalism_and_freedom",
+        "drive_show_folder": "《1962芝加哥激辩》资本主义与自由思想剧",
+        "bgm_style": "capitalism_and_freedom",
+    },
+    "game_theory_strategy": {
+        "title": "《高手怎么出牌：〈策略思维与博弈论〉商业剧》",
+        "project_rel": "projects/game_theory_strategy",
+        "drive_show_folder": "《高手怎么出牌》策略思维与博弈论商业剧",
+        "bgm_style": "game_theory_strategy",
+    },
+    "debt_cycle_machine": {
+        "title": "《经济机器怎么转：〈原则与大债务危机〉周期剧》",
+        "project_rel": "projects/debt_cycle_machine",
+        "drive_show_folder": "《经济机器怎么转》大债务危机周期剧场",
+        "bgm_style": "debt_cycle_machine",
+    },
 }
 
 
@@ -676,6 +809,23 @@ def main() -> int:
 
     wave_aliases = {
         "wave1": ["wealth_of_nations", "free_to_choose", "keynes_1936"],
+        "wave2": ["extraordinary_delusions", "bastiat_unseen", "one_lesson_econ"],
+        "wave3": ["basic_economics", "freakonomics_theater", "leisure_class_1899"],
+        "wave4": ["schumpeter_1911", "moral_sentiments_1759", "why_nations_fail"],
+        "wave5": ["stock_operator_1923", "intelligent_investor", "random_walk_wallstreet"],
+        "wave6": ["behavioral_econ_traps", "psychology_of_money", "black_swan_antifragile"],
+        "wave7": ["big_short_2008", "lords_of_finance_1929", "ascent_of_money"],
+        "wave8": ["capitalism_and_freedom", "game_theory_strategy", "debt_cycle_machine"],
+        "all_econ24": [
+            "wealth_of_nations", "free_to_choose", "keynes_1936",
+            "extraordinary_delusions", "bastiat_unseen", "one_lesson_econ",
+            "basic_economics", "freakonomics_theater", "leisure_class_1899",
+            "schumpeter_1911", "moral_sentiments_1759", "why_nations_fail",
+            "stock_operator_1923", "intelligent_investor", "random_walk_wallstreet",
+            "behavioral_econ_traps", "psychology_of_money", "black_swan_antifragile",
+            "big_short_2008", "lords_of_finance_1929", "ascent_of_money",
+            "capitalism_and_freedom", "game_theory_strategy", "debt_cycle_machine",
+        ],
         "all": list(ANTHOLOGY_PROJECTS.keys()),
     }
     raw_proj = args.project.strip()

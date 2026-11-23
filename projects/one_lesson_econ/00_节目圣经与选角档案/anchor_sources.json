@@ -1,0 +1,55 @@
+{
+  "project_id": "one_lesson_econ",
+  "project_title": "《一课经济学剧场：别只看眼前那一步》",
+  "strategy": "zero_cost_hybrid_real_human_studio_plus_zhujie_dramatic_anchors",
+  "repo_local_anchors_dir": "projects/buffett_letters/00_节目圣经与第一季12期总纲/voice_anchors",
+  "drive_source_bundles": {
+    "zhujie_suoxian": {
+      "zip_name": "zhujie_suoxian_96gb_drama3_bundle.zip",
+      "drive_file_id": "1pTHmq6kw0y2-jUzGDY3ngApk91uSn4Ks",
+      "drive_glob": "*诸界锁仙*/04_有声剧与广播剧音频/05_Colab_96GB_FishDrama3*/zhujie_suoxian_96gb_drama3_bundle.zip"
+    }
+  },
+  "role_mappings": {
+    "mentor_gu": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_huaiyuan",
+      "source_voice_name": "Real-Human Studio Reuse: guest_huaiyuan (46岁温润犀利专栏经济学家/二阶思维导师·顾明远)"
+    },
+    "host_qiao": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "host_zhiwei",
+      "source_voice_name": "Real-Human Studio Reuse: host_zhiwei (30岁知性清亮真人财经节目主持人·乔安)"
+    },
+    "boss_zhao": {
+      "source_bundle": "repo_buffett_real_human",
+      "source_role_id": "guest_laozhou",
+      "source_voice_name": "Real-Human Studio Reuse: guest_laozhou (48岁接地气五金厂兼牛肉面馆实业老板·老赵)"
+    },
+    "planner_xu": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "pei_xuandu",
+      "source_voice_name": "Reuse: 诸界锁仙_裴玄度_体面锐利热衷行政干预与补贴的政策辩手·徐科长"
+    },
+    "landlord_liu": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_qingcang",
+      "source_voice_name": "Reuse: 诸界锁仙_陆擎苍_沧桑实在老城区房东兼退休老人·刘大爷"
+    },
+    "young_chen": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "lu_jin",
+      "source_voice_name": "Reuse: 诸界锁仙_陆烬_清亮锐气刚毕业租房找工作的年轻人·小陈"
+    },
+    "lin_mei": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "su_qinghan",
+      "source_voice_name": "Reuse: 诸界锁仙_苏清寒_干练诚恳纺织厂转型电商女主管·林梅"
+    },
+    "narrator": {
+      "source_bundle": "zhujie_suoxian",
+      "source_role_id": "narrator",
+      "source_voice_name": "Reuse: 诸界锁仙_旁白_低醇现代城市人文财经纪录片节目旁白"
+    }
+  }
+}
