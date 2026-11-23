@@ -1551,6 +1551,104 @@ class AudioPipelineTests(unittest.TestCase):
             self.assertEqual([k for k, _ in mod.resolve_targets("ALL", cs_dir, tmp)], ["D01", "D02", "T01", "T02"])
             self.assertIn("no vocals", mod.enrich_anthology_bgm_prompt("Warm night debate", bgm_style="hotline_roundtable").lower())
 
+    def test_hotline_chatroom_natural_speech_and_dry_mid_act(self) -> None:
+        import tempfile
+        import wave
+        from array import array
+
+        from aigc_audio_pipeline.drama3_adapter import translate_cue_to_drama3_input
+        from aigc_audio_pipeline.mixer import _compute_chatroom_pan_map, condition_dialogue_clip, master_episode_three_bus
+
+        # 1. Hotline chatroom strips theatrical stage-direction tags while keeping genuine point laughs/sighs
+        guest_prof = VoiceProfile(
+            role_id="guest_laozhou",
+            display_name="老周",
+            voice_id="anchor_laozhou",
+            status="locked",
+        )
+        over_tagged = TimelineCue(
+            cue_id="t01_c2",
+            act_id="act1",
+            kind="dialogue",
+            role_id="guest_laozhou",
+            text="[emphatic] [skeptical] 等会儿，这数你没多看一个零吧？",
+            stability=0.0,
+            acoustic_space="chatroom_table",
+        )
+        d3_clean = translate_cue_to_drama3_input(over_tagged, guest_prof, attempt=1, domain="hotline_roundtable")
+        self.assertEqual(d3_clean, "等会儿，这数你没多看一个零吧？")
+
+        chuckle_cue = TimelineCue(
+            cue_id="t01_c3",
+            act_id="act2",
+            kind="dialogue",
+            role_id="guest_laozhou",
+            text="[chuckles] 不是吧，真走错门了？",
+            stability=0.0,
+            acoustic_space="chatroom_table",
+        )
+        d3_laugh = translate_cue_to_drama3_input(chuckle_cue, guest_prof, attempt=1, domain="hotline_express")
+        self.assertEqual(d3_laugh, "[light chuckle] 不是吧，真走错门了？")
+
+        # 2. Dry silent middle chatroom act keeps Bus C silent during ACT2 & applies subtle stereo seating pan
+        host_prof = VoiceProfile(role_id="host_zhiwei", display_name="许知微", voice_id="a_host", status="locked")
+        sheet = EpisodeCueSheet(
+            episode_id="T99",
+            chapter_number=99,
+            title="聊天室干声与立体声落座测试",
+            mode="podcast_roundtable",
+            acts=[
+                ActMusicSpec(act_id="act1", title="开场", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.04, bgm_gain_gap=0.16),
+                ActMusicSpec(act_id="act2", title="干声深聊", bgm_prompt="", bgm_gain_speech=0.0, bgm_gain_gap=0.0),
+                ActMusicSpec(act_id="act3", title="收尾", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.045, bgm_gain_gap=0.18),
+            ],
+            cues=[
+                TimelineCue(cue_id="c1", act_id="act1", kind="dialogue", role_id="host_zhiwei", text="开场寒暄一句。", acoustic_space="chatroom_table", gap_after_s=0.12),
+                TimelineCue(cue_id="c2", act_id="act2", kind="dialogue", role_id="guest_laozhou", text="中段干声纯聊一段。", acoustic_space="chatroom_table", gap_after_s=0.12),
+                TimelineCue(cue_id="c3", act_id="act2", kind="dialogue", role_id="host_zhiwei", text="中段继续追问一句。", acoustic_space="chatroom_table", gap_after_s=0.12),
+                TimelineCue(cue_id="c4", act_id="act3", kind="dialogue", role_id="guest_laozhou", text="尾声收个口。", acoustic_space="chatroom_table", gap_after_s=0.15),
+            ],
+        )
+        pan_map = _compute_chatroom_pan_map(sheet)
+        self.assertEqual(set(pan_map.keys()), {"host_zhiwei", "guest_laozhou"})
+        self.assertLess(pan_map["host_zhiwei"] * pan_map["guest_laozhou"], 0.0)
+
+        with tempfile.TemporaryDirectory(prefix="test_chatroom_mix_") as td:
+            tmp = Path(td)
+            dlg_wav = tmp / "dlg.wav"
+            bgm_wav = tmp / "bgm.wav"
+            subprocess.run(
+                ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "sine=frequency=280:duration=2.0:sample_rate=48000", "-ac", "2", "-c:a", "pcm_s16le", str(dlg_wav)],
+                check=True,
+            )
+            subprocess.run(
+                ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "sine=frequency=180:duration=6.0:sample_rate=48000", "-ac", "2", "-c:a", "pcm_s16le", str(bgm_wav)],
+                check=True,
+            )
+            cond_z = condition_dialogue_clip(dlg_wav, tmp / "laozhou_cond.wav", acoustic_space="chatroom_table", role_id="guest_laozhou", stereo_pan=0.20)
+            self.assertTrue(cond_z.is_file() and cond_z.stat().st_size > 10000)
+
+            res = master_episode_three_bus(
+                cue_sheet=sheet,
+                cue_audio_map={"c1": dlg_wav, "c2": dlg_wav, "c3": dlg_wav, "c4": dlg_wav},
+                act_bgm_map={"act1": bgm_wav, "act3": bgm_wav},
+                output_dir=tmp / "out",
+                clean_work_dir=False,
+            )
+            manifest = json.loads(res["manifest_json"].read_text(encoding="utf-8"))
+            bgm_bus = Path(manifest["buses"]["bgm_ducked_bus"])
+            # Midpoint of ACT2 (between c2 start + 0.5s and c3 end - 0.8s) must be 100% digital zero in Bus C!
+            c2_item = next(it for it in manifest["timeline"] if it["cue_id"] == "c2")
+            c3_item = next(it for it in manifest["timeline"] if it["cue_id"] == "c3")
+            probe_st = int((c2_item["start_s"] + 0.5) * 48000) * 2
+            probe_en = int((c3_item["end_s"] - 0.8) * 48000) * 2
+            with wave.open(str(bgm_bus), "rb") as wf:
+                arr = array("h")
+                arr.frombytes(wf.readframes(wf.getnframes()))
+            mid_slice = arr[probe_st:probe_en]
+            self.assertGreater(len(mid_slice), 1000)
+            self.assertEqual(max(abs(x) for x in mid_slice), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

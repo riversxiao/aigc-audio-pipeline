@@ -638,9 +638,9 @@ _ECON_FINANCE_BGM_PRESETS: dict[str, str] = {
     "capitalism_and_freedom": "1962 Chicago late-night intellectual acoustic jazz piano, warm upright bass and mellow strings, no loud drums",
     "game_theory_strategy": "clever crisp minimalist chamber strings, rhythmic pizzicato cello and sharp felt piano, no heavy pop drums",
     "debt_cycle_machine": "steady cyclical macro documentary minimalist piano arpeggio, warm cello and subtle string swell, no pop drums",
-    "hotline": "warm modern investigative newsroom acoustic felt piano, subtle upright bass and clean chamber strings, no loud drums, no ancient Chinese instruments",
-    "hotline_roundtable": "warm late-night modern financial podcast acoustic felt piano, mellow upright bass and soft fingerstyle guitar, crisp studio intimacy, no loud drums",
-    "hotline_express": "crisp modern investigative news documentary minimalist piano pulse, light pizzicato strings and subtle upright bass, no loud pop drums",
+    "hotline": "warm intimate late-night podcast lo-fi Rhodes electric piano pad and soft muted upright bass, ultra minimal background warmth, no loud drums, no bright melody, no ancient Chinese instruments",
+    "hotline_roundtable": "ultra-minimal warm late-night podcast lo-fi Rhodes chord pad and soft muted upright bass pulse, intimate coffee-table ambience, no busy melody, no marimba, no loud drums",
+    "hotline_express": "minimal warm modern podcast soft Rhodes electric piano and gentle low muted upright bass, relaxed studio intimacy, no bright guitar arpeggio, no marimba, no loud drums",
     "hotline_drama": "cinematic modern urban social drama chamber cello, sparse late-night felt piano and restrained string tension, no EDM beat, no ancient instruments",
 }
 
@@ -1104,8 +1104,14 @@ def main() -> int:
             if not co_resident_96g and moss_worker is not None:
                 moss_worker.close()
 
-            # 3. Per-Act Instrumental BGM (ACE-Step 1.5 XL + SHA-256 Cache)
+            # 3. Per-Act Instrumental BGM (ACE-Step 1.5 XL + SHA-256 Cache; skip dry zero-BGM chatroom acts!)
             for act_spec in cue_sheet.acts:
+                if (
+                    not (act_spec.bgm_prompt or "").strip()
+                    or (float(act_spec.bgm_gain_speech) <= 1e-4 and float(act_spec.bgm_gain_gap) <= 1e-4)
+                ):
+                    print(f"   🎙️ [纯干声聊天室] {act_spec.act_id} ({act_spec.title}) 零背景配乐直出，突出真实人声交锋", flush=True)
+                    continue
                 target_dur = 75.0 if float(act_spec.bgm_duration_s or 75.0) >= 60.0 else 48.0
                 bgm_prompt = enrich_anthology_bgm_prompt(act_spec.bgm_prompt, bgm_style=ep_bgm_style)
                 bgm_key = _sha24({"prompt": bgm_prompt, "vocal_language": "unknown", "dur": round(target_dur, 1)})

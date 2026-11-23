@@ -60,13 +60,52 @@ def _format_srt_ts(seconds: float) -> str:
     return f"{hh:02d}:{mm:02d}:{ss:02d},{ms:03d}"
 
 
+# Gentle studio table seating pan map for multi-guest podcast chatrooms (`chatroom_table` space).
+# Subtle stereo placement (±10%–20%) gives unmistakable real-room round-table presence while staying 100% mono-safe.
+_CHATROOM_ROLE_PAN_HINTS: dict[str, float] = {
+    "host_zhiwei": -0.10,
+    "guest_huaiyuan": 0.14,
+    "guest_laozhou": -0.20,
+    "guest_linxi": 0.20,
+    "guest_azhe": 0.16,
+    "guest_sumin": -0.16,
+    "guest_chengfeng": 0.18,
+}
+_CHATROOM_FALLBACK_PANS: tuple[float, ...] = (-0.12, 0.15, -0.20, 0.20, -0.06, 0.08)
+
+
+def _compute_chatroom_pan_map(cue_sheet: EpisodeCueSheet) -> dict[str, float]:
+    """Assign deterministic subtle stereo seating positions for multi-speaker `chatroom_table` episodes."""
+    ordered_roles: list[str] = []
+    for c in cue_sheet.cues:
+        if c.kind == "dialogue" and c.acoustic_space == "chatroom_table" and c.role_id and c.role_id not in ordered_roles:
+            ordered_roles.append(c.role_id)
+    if len(ordered_roles) < 2:
+        return {}
+    pan_map: dict[str, float] = {}
+    used_signs: list[float] = []
+    for idx, rid in enumerate(ordered_roles):
+        if rid in _CHATROOM_ROLE_PAN_HINTS:
+            p = _CHATROOM_ROLE_PAN_HINTS[rid]
+        else:
+            p = _CHATROOM_FALLBACK_PANS[idx % len(_CHATROOM_FALLBACK_PANS)]
+        # If 2-person chatroom accidentally landed on the same side, mirror the second guest across the table
+        if len(ordered_roles) == 2 and idx == 1 and used_signs and (used_signs[0] * p > 0):
+            p = -p
+        pan_map[rid] = max(-0.28, min(0.28, p))
+        used_signs.append(pan_map[rid])
+    return pan_map
+
+
 def condition_dialogue_clip(
     raw_wav: Path,
     conditioned_wav: Path,
     *,
     acoustic_space: str = "dry",
+    role_id: str = "",
+    stereo_pan: float = 0.0,
 ) -> Path:
-    """Condition a 48kHz dialogue clip: rumble filter, gentle speech leveling, optional space."""
+    """Condition a 48kHz dialogue clip: rumble filter, gentle speech leveling, optional space & table pan."""
     conditioned_wav.parent.mkdir(parents=True, exist_ok=True)
     dur = probe_duration_seconds(raw_wav)
 
@@ -88,6 +127,13 @@ def condition_dialogue_clip(
     elif acoustic_space == "studio_warm":
         # Warm broadcast condenser podcast intimacy without room echo
         filters.append("equalizer=f=175:t=q:w=1.2:g=1.2,equalizer=f=3600:t=q:w=1.4:g=0.8")
+    elif acoustic_space == "chatroom_table":
+        # Intimate Xiaoyuzhou-style close-mic podcast table: clean low-end, de-boxed room mids, gentle glue compression
+        filters.append(
+            "highpass=f=85,equalizer=f=160:t=q:w=1.2:g=0.9,"
+            "equalizer=f=300:t=q:w=1.5:g=-1.4,equalizer=f=3400:t=q:w=1.4:g=0.7,"
+            "acompressor=threshold=-20dB:ratio=1.8:attack=12:release=90"
+        )
     elif acoustic_space == "vintage_study":
         # Prime-age Omaha / PBS studio close-mic warmth (crisp articulation, zero analog tape hiss or echo)
         filters.append("equalizer=f=220:t=q:w=1.2:g=0.9,lowpass=f=9600")
@@ -98,12 +144,23 @@ def condition_dialogue_clip(
         # Crisp modern streaming/voice-chat condenser presence (slightly compressed, intimate forward mids)
         filters.append("highpass=f=100,equalizer=f=2800:t=q:w=1.3:g=1.8,acompressor=threshold=-18dB:ratio=2.4:attack=8:release=80")
 
+    # Tame slight conference-room low-mid boxiness on guest_laozhou so all podcast guests share one studio room
+    if role_id == "guest_laozhou" and acoustic_space in ("chatroom_table", "studio_warm"):
+        filters.append("equalizer=f=260:t=q:w=1.4:g=-2.8,equalizer=f=500:t=q:w=1.6:g=-1.8")
+
     if dur >= 1.4:
         # EBU R128 / podcast-drama broadcast loudness target (-16 LUFS) for consistent actor levels
         filters.append("loudnorm=I=-16:TP=-1.5:LRA=11")
     else:
         # Very short gasps/exclamations (<1.4s): avoid loudnorm over-amplifying breath noise
         filters.append("alimiter=limit=0.84:level=disabled")
+
+    # Subtle equal-power stereo seating pan for multi-guest podcast chatrooms
+    pan_clamped = max(-0.35, min(0.35, float(stereo_pan)))
+    if abs(pan_clamped) > 1e-4:
+        l_gain = min(1.18, math.sqrt(1.0 - pan_clamped))
+        r_gain = min(1.18, math.sqrt(1.0 + pan_clamped))
+        filters.append(f"pan=stereo|c0={l_gain:.4f}*c0|c1={r_gain:.4f}*c1")
 
     cmd = [
         "ffmpeg",
@@ -615,13 +672,22 @@ def master_episode_three_bus(
     cue_meta_map = cue_meta_map or {}
 
     # 1. Condition each cue clip concurrently & compute exact natural timeline
+    chatroom_pan_map = _compute_chatroom_pan_map(cue_sheet)
+
     def _cond_one(cue: Any) -> tuple[str, array]:
         if preconditioned_samples and cue.cue_id in preconditioned_samples:
             return cue.cue_id, preconditioned_samples[cue.cue_id]
         raw_path = cue_audio_map[cue.cue_id]
         cond_path = work_dir / f"{cue.cue_id}_cond.wav"
         if cue.kind == "dialogue":
-            condition_dialogue_clip(raw_path, cond_path, acoustic_space=cue.acoustic_space)
+            pan_val = chatroom_pan_map.get(cue.role_id, 0.0) if cue.acoustic_space == "chatroom_table" else 0.0
+            condition_dialogue_clip(
+                raw_path,
+                cond_path,
+                acoustic_space=cue.acoustic_space,
+                role_id=cue.role_id,
+                stereo_pan=pan_val,
+            )
         else:
             condition_sfx_clip(raw_path, cond_path, gain_db=cue.gain_db)
         return cue.cue_id, _read_stereo_s16(cond_path)
@@ -729,19 +795,30 @@ def master_episode_three_bus(
         else:
             _mix_into_buffer(sfx_buf, samples, start_frame, gain=1.0)
 
-    # 3. Render Bus C (Per-Act BGM Bed with dialogue-only ducking: 0.11 speech / 0.34 gap)
+    # 3. Render Bus C (Per-Act BGM Bed with dialogue-only ducking; supports silent/dry chatroom acts!)
     bgm_ducked_buf = array("h", [0]) * (total_frames * CHANNELS)
-    acts_with_bgm = [a for a in cue_sheet.acts if a.act_id in act_bgm_map]
-    for idx, act in enumerate(acts_with_bgm):
-        if act.act_id not in act_spans:
+    active_acts = [a for a in cue_sheet.acts if a.act_id in act_spans]
+    for idx, act in enumerate(active_acts):
+        is_silent_act = (
+            act.act_id not in act_bgm_map
+            or not (act.bgm_prompt or "").strip()
+            or (act.bgm_gain_speech <= 1e-4 and act.bgm_gain_gap <= 1e-4)
+        )
+        if is_silent_act:
             continue
         act_st = 0.0 if idx == 0 else max(0.0, act_spans[act.act_id][0] - 0.6)
-        if idx == len(acts_with_bgm) - 1:
+        if idx == len(active_acts) - 1:
             act_en = total_duration_s
         else:
-            next_act = acts_with_bgm[idx + 1]
-            next_st = act_spans.get(next_act.act_id, [act_spans[act.act_id][1]])[0]
-            act_en = min(total_duration_s, next_st + 0.6)
+            next_act = active_acts[idx + 1]
+            next_st = act_spans[next_act.act_id][0]
+            next_is_silent = (
+                next_act.act_id not in act_bgm_map
+                or not (next_act.bgm_prompt or "").strip()
+                or (next_act.bgm_gain_speech <= 1e-4 and next_act.bgm_gain_gap <= 1e-4)
+            )
+            # Clean fade-out right before a silent dry chatroom act; smooth +0.6s crossfade into another scored act
+            act_en = min(total_duration_s, next_st + (0.15 if next_is_silent else 0.6))
         span_dur = max(1.0, act_en - act_st)
 
         fitted_wav = work_dir / f"bgm_{act.act_id}_fitted.wav"
@@ -977,19 +1054,31 @@ def recover_intact_dialogue_from_master(
             sfx_samples = _read_stereo_s16(cond_sfx)
             _mix_into_buffer(sfx_buf, sfx_samples, int(round(st_s * SAMPLE_RATE)), gain=1.0)
 
-    # 2. Reconstruct v001 Bus C (Ducked Per-Act BGM)
+    # 2. Reconstruct v001 Bus C (Ducked Per-Act BGM; respects silent dry acts)
     bgm_ducked_buf = array("h", [0]) * (total_frames * CHANNELS)
-    acts_with_bgm = [a for a in cue_sheet.acts if a.act_id in act_bgm_map and act_bgm_map[a.act_id].is_file()]
-    for idx, act in enumerate(acts_with_bgm):
-        if act.act_id not in act_spans:
+    active_acts = [a for a in cue_sheet.acts if a.act_id in act_spans]
+    for idx, act in enumerate(active_acts):
+        is_silent_act = (
+            act.act_id not in act_bgm_map
+            or not act_bgm_map[act.act_id].is_file()
+            or not (act.bgm_prompt or "").strip()
+            or (act.bgm_gain_speech <= 1e-4 and act.bgm_gain_gap <= 1e-4)
+        )
+        if is_silent_act:
             continue
         act_st = 0.0 if idx == 0 else max(0.0, act_spans[act.act_id][0] - 0.6)
-        if idx == len(acts_with_bgm) - 1:
+        if idx == len(active_acts) - 1:
             act_en = total_duration_s
         else:
-            next_act = acts_with_bgm[idx + 1]
-            next_st = act_spans.get(next_act.act_id, [act_spans[act.act_id][1]])[0]
-            act_en = min(total_duration_s, next_st + 0.6)
+            next_act = active_acts[idx + 1]
+            next_st = act_spans[next_act.act_id][0]
+            next_is_silent = (
+                next_act.act_id not in act_bgm_map
+                or not act_bgm_map[next_act.act_id].is_file()
+                or not (next_act.bgm_prompt or "").strip()
+                or (next_act.bgm_gain_speech <= 1e-4 and next_act.bgm_gain_gap <= 1e-4)
+            )
+            act_en = min(total_duration_s, next_st + (0.15 if next_is_silent else 0.6))
         span_dur = max(1.0, act_en - act_st)
 
         fitted_wav = tmp_dir / f"rec_bgm_{act.act_id}.wav"

@@ -16,6 +16,7 @@ ALLOWED_ACOUSTIC_SPACES: tuple[str, ...] = (
     "memory_echo",
     "vast_hall",
     "studio_warm",
+    "chatroom_table",
     "vintage_study",
     "phone_call",
     "livestream_mic",

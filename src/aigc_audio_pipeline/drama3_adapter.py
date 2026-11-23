@@ -246,6 +246,14 @@ _NATURAL_ZH_PODCAST_DOMAINS: frozenset[str] = frozenset({
     "hotline_express",
 })
 
+# Real-human multi-guest chatroom podcasts: NEVER inject Chinese stage-direction acting prefixes
+# (which override real-human anchor cadence into theatrical AI-announcer prosody!). Keep ONLY
+# genuine paralinguistic point events ([light chuckle], [sighs], [short pause]) and [whispers].
+_CHATROOM_PODCAST_DOMAINS: frozenset[str] = frozenset({
+    "hotline_roundtable",
+    "hotline_express",
+})
+
 
 def translate_cue_to_drama3_input(
     cue: TimelineCue,
@@ -260,14 +268,15 @@ def translate_cue_to_drama3_input(
     - `attempt == 1`: Full multi-segment natural-language acting directions (`[...]`), paralinguistic
       point events (`[sighs]`, `[sharp inhale]`), and paired prosody spans (`<whisper>…</whisper>`,
       `<forceful>…</forceful>`, `<slow>…</slow>`), plus domain-aware polyphone disambiguation.
-      In `finance_podcast` / `hotline_roundtable` / `hotline_express` mode for Chinese hosts/guests,
-      avoids artificial "podcast host tone" prefixes so real-human studio reference anchors preserve
-      genuine conversational breath and cadence.
+      In `hotline_roundtable` / `hotline_express` chatroom mode, strips ALL stage-direction adjective
+      tags and preserves ONLY organic paralinguistic events (`[light chuckle]`, `[sighs]`, `[short pause]`)
+      so real-human studio reference anchors carry 100% authentic conversational rhythm.
     - `attempt == 2`: Simplified single leading emotion bracket (or clean text for natural zh podcasts) for retry.
     - `attempt >= 3`: Zero-tag plain phonetic text (guaranteed 0% tag-reading fallback).
     """
     lang = cue.language_code or (profile.language_code if profile is not None else "") or "zh"
     is_zh_podcast = (domain in _NATURAL_ZH_PODCAST_DOMAINS) and (lang != "en")
+    is_chatroom_podcast = (domain in _CHATROOM_PODCAST_DOMAINS) and (lang != "en")
     source_tagged = cue.tts_text if (cue.tts_text and not use_phoneme_pins) else cue.text
     phonetic_tagged = _apply_drama3_phonetics(
         source_tagged,
@@ -312,6 +321,11 @@ def translate_cue_to_drama3_input(
                 continue
             if t in DRAMA3_POINT_EVENTS:
                 point_tokens.append(DRAMA3_POINT_EVENTS[t])
+                continue
+            if is_chatroom_podcast:
+                # Preserve only whisper/soft intimacy; drop all theatrical acting adjectives
+                if t in ("whispers", "whispering"):
+                    xml_span = xml_span or "whisper"
                 continue
             if is_zh_podcast:
                 if t in FINANCE_PODCAST_ZH_MICRO_MAP:
