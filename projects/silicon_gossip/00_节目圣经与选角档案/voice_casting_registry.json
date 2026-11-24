@@ -7,7 +7,7 @@
   "sfx_model_id": "OpenMOSS-Team/MOSS-SoundEffect-v2.0",
   "music_model_id": "ACE-Step/acestep-v15-xl-turbo-diffusers",
   "asr_model_id": "faster-whisper-small-int8",
-  "updated_at": "2026-11-23T23:24:24Z",
+  "updated_at": "2026-11-24T02:10:56Z",
   "drive_audio_root_id": "",
   "roles": {
     "host_xiaowei": {
@@ -22,24 +22,24 @@
       "age_group": "young_adult",
       "language_code": "zh-en",
       "accent_code": "zh_en_bilingual_us",
-      "vocal_register": "清亮灵动、语速明快、带笑意的现代小宇宙女主播，英文短句自然地道不装腔",
-      "persona_summary": "硅谷商业八卦主讲人，节奏极快、一针见血，专把高深商业英语拆成听完就能用的大白话狠句。",
-      "accent_requirement": "标准现代大陆普通话聊天口吻（零播音腔）+ 地道清晰美式英文短句",
+      "vocal_register": "清亮松弛、语速明快、不端着的小宇宙女主播（贴麦纯干声），英文短句自然地道",
+      "persona_summary": "硅谷商业故事主讲人，节奏利落、冷幽默、不喊麦不演戏，专把商战名场面里的短狠英文翻译成日常上班场景。",
+      "accent_requirement": "标准现代大陆普通话贴麦聊天口吻（零播音腔、零演戏感）+ 地道美式英文短句",
       "status": "locked",
       "voice_id": "drama3_anchor_host_xiaowei",
       "public_owner_id": "",
-      "library_voice_name": "Real-Human Studio Reuse: host_zhiwei (OpenMOSS Apache-2.0)",
-      "default_stability": 0.0,
+      "library_voice_name": "Real-Human Dry Studio: host_zhiwei (OpenMOSS Apache-2.0)",
+      "default_stability": 0.5,
       "similarity_boost": 0.82,
       "signature_tags": [
         "[conversational]",
         "[curious]",
-        "[chuckles]",
-        "[amused]"
+        "[chuckles]"
       ],
       "forbidden_habits": [
         "严禁晚会播音腔",
-        "严禁照本宣科英文老师腔"
+        "严禁夸张喊麦感",
+        "严禁英文老师说教腔"
       ],
       "first_appearance_chapter": 1,
       "appearance_chapters": [
@@ -48,43 +48,42 @@
       "audition_line": "[conversational] 估值八百六十亿美元的老板，居然在一个十五分钟视频会里被自己公司开除了。",
       "audition_history": []
     },
-    "guest_laozhou": {
-      "role_id": "guest_laozhou",
+    "guest_huaiyuan": {
+      "role_id": "guest_huaiyuan",
       "display_name": "大周",
       "aliases": [
         "搭档大周",
         "老周",
-        "host_dazhou"
+        "怀远"
       ],
       "tier": "core_supporting",
       "gender": "male",
       "age_group": "middle_aged",
       "language_code": "zh-en",
-      "accent_code": "zh_mainland_sz",
-      "vocal_register": "爽朗接地气、自带笑声和人间烟火气的现代男捧哏，擅长神吐槽与打工人嘴替",
-      "persona_summary": "普通打工人和创业者的超级嘴替，听到老外拐弯抹角就忍不住拆台爆笑，专把硅谷宫斗翻译成咱们日常上班场景。",
-      "accent_requirement": "接地气、带生活烟火气的标准大陆普通话聊天口吻",
+      "accent_code": "zh_en_bilingual_cn",
+      "vocal_register": "贴麦干声、温润松弛、带冷幽默吐槽感的现代男搭档（与小微同一无回音棚录声场），英文短词发音清晰自然",
+      "persona_summary": "普通打工人和创业者的清醒嘴替，松弛聊八卦不浮夸，专门一针见血把硅谷宫斗翻成咱们平时上班的人情世故。",
+      "accent_requirement": "标准大陆普通话近讲贴麦聊天口吻（严禁房间回音、严禁浮夸小品腔）+ 自然清晰英文词连读",
       "status": "locked",
-      "voice_id": "drama3_anchor_guest_laozhou",
+      "voice_id": "drama3_anchor_guest_huaiyuan",
       "public_owner_id": "",
-      "library_voice_name": "Real-Human Studio Reuse: guest_laozhou (Mainland studio)",
-      "default_stability": 0.0,
-      "similarity_boost": 0.8,
+      "library_voice_name": "Real-Human Dry Studio: guest_huaiyuan (OpenMOSS Apache-2.0, same booth as host_zhiwei)",
+      "default_stability": 0.5,
+      "similarity_boost": 0.82,
       "signature_tags": [
-        "[earthy]",
-        "[chuckles]",
-        "[shocked]",
-        "[amused]"
+        "[conversational]",
+        "[wryly]",
+        "[chuckles]"
       ],
       "forbidden_habits": [
-        "严禁书面语念稿感",
-        "严禁端着装精英"
+        "严禁房间混响回音",
+        "严禁过度亢奋演戏腔"
       ],
       "first_appearance_chapter": 1,
       "appearance_chapters": [
         1
       ],
-      "audition_line": "[chuckles] 好家伙，我投了一百三十亿美元当榜一大哥，你把主播封号了提前一分钟才通知我？",
+      "audition_line": "[conversational] 刷了一百三十亿当榜一大哥，临开播前一分钟才通知把头牌封号了，换谁都得上火。",
       "audition_history": []
     },
     "sam_altman": {
@@ -99,15 +98,15 @@
       "age_group": "young_adult",
       "language_code": "en",
       "accent_code": "us_silicon_valley",
-      "vocal_register": "Crisp, fast, confident Silicon Valley founder American male voice, sharp reaction under ambush",
-      "persona_summary": "OpenAI CEO Sam Altman in the November 2023 coup — caught off guard on Friday, icy comeback by Wednesday.",
-      "accent_requirement": "Standard Silicon Valley General American English (crisp, natural executive cadence)",
+      "vocal_register": "Authentic Sam Altman studio podcast voice: crisp, brisk, slightly dry Silicon Valley founder cadence",
+      "persona_summary": "OpenAI CEO Sam Altman in the November 2023 board coup — blindsided on Friday, ice-cold comeback by Wednesday.",
+      "accent_requirement": "Authentic Sam Altman Silicon Valley American English (real solo studio podcast anchor)",
       "status": "locked",
       "voice_id": "drama3_anchor_sam_altman",
       "public_owner_id": "",
-      "library_voice_name": "Real-Human Studio: Meta Expresso ex01 (48kHz Silicon Valley US Male)",
+      "library_voice_name": "Real-Person Studio Anchor: Sam Altman solo interview (014_AI dry close-mic)",
       "default_stability": 0.0,
-      "similarity_boost": 0.85,
+      "similarity_boost": 0.88,
       "signature_tags": [
         "[shocked]",
         "[firmly]",
@@ -116,7 +115,7 @@
       ],
       "forbidden_habits": [
         "No ESL slow textbook reading",
-        "No robotic flatness"
+        "No generic radio announcer baritone"
       ],
       "first_appearance_chapter": 1,
       "appearance_chapters": [
@@ -127,8 +126,9 @@
     },
     "board_ilya": {
       "role_id": "board_ilya",
-      "display_name": "Board Rep (Ilya)",
+      "display_name": "Ilya Sutskever",
       "aliases": [
+        "伊利亚",
         "董事会代表",
         "Ilya"
       ],
@@ -136,16 +136,16 @@
       "gender": "male",
       "age_group": "middle_aged",
       "language_code": "en",
-      "accent_code": "uk_london_rp",
-      "vocal_register": "Icy-polite, clipped, razor-calm British/European intellectual male baritone, chilling corporate formality",
-      "persona_summary": "OpenAI board representative reading the polite yet ruthless firing notice over Google Meet.",
-      "accent_requirement": "Crisp, restrained London RP / European intellectual English",
+      "accent_code": "intl_russian_canadian_ai",
+      "vocal_register": "Authentic Ilya Sutskever studio podcast voice: calm, deliberate, distinctive Russian-Israeli-Canadian AI scientist accent",
+      "persona_summary": "OpenAI Chief Scientist & board member Ilya Sutskever delivering the polite yet devastating firing notice over Google Meet.",
+      "accent_requirement": "Authentic Ilya Sutskever accented English (real solo Lex Fridman studio anchor, 022_AI)",
       "status": "locked",
       "voice_id": "drama3_anchor_board_ilya",
       "public_owner_id": "",
-      "library_voice_name": "Real-Human Studio Reuse: alistair_finch (OpenSLR-83 southern_male)",
+      "library_voice_name": "Real-Person Studio Anchor: Ilya Sutskever solo podcast (022_AI dry close-mic)",
       "default_stability": 0.0,
-      "similarity_boost": 0.85,
+      "similarity_boost": 0.88,
       "signature_tags": [
         "[coldly]",
         "[icy polite]",
@@ -179,9 +179,9 @@
       "status": "locked",
       "voice_id": "drama3_anchor_satya_nadella",
       "public_owner_id": "",
-      "library_voice_name": "Real-Human Studio Reuse: rajiv_menon (47.8dB Indian business podcaster)",
+      "library_voice_name": "Real-Human Studio Reuse: rajiv_menon (47.8dB dry Indian business podcaster)",
       "default_stability": 0.0,
-      "similarity_boost": 0.85,
+      "similarity_boost": 0.86,
       "signature_tags": [
         "[angry]",
         "[firmly]",
@@ -209,13 +209,13 @@
       "age_group": "young_adult",
       "language_code": "en",
       "accent_code": "us_silicon_valley",
-      "vocal_register": "Sharp, fast, high-energy Silicon Valley female tech executive American English",
-      "persona_summary": "Senior OpenAI executive / employee revolt spokesperson confronting the board with 700 signatures.",
+      "vocal_register": "Sharp, fast, crisp Silicon Valley female tech executive American English",
+      "persona_summary": "Senior OpenAI executive / employee revolt spokesperson rallying 700 signatures.",
       "accent_requirement": "Crisp Silicon Valley General American Female English",
       "status": "locked",
       "voice_id": "drama3_anchor_exec_female",
       "public_owner_id": "",
-      "library_voice_name": "Real-Human Studio Reuse: victoria_vance (Expresso ex02 48kHz studio)",
+      "library_voice_name": "Real-Human Studio Reuse: victoria_vance (Meta Expresso ex02 48kHz studio)",
       "default_stability": 0.0,
       "similarity_boost": 0.85,
       "signature_tags": [
@@ -230,7 +230,7 @@
       "appearance_chapters": [
         1
       ],
-      "audition_line": "[firmly] Seven hundred people signed. We have the leverage.",
+      "audition_line": "[urgent] Seven hundred people signed. We're backing you, Sam.",
       "audition_history": []
     }
   },
@@ -249,7 +249,7 @@
     "record_scratch_freeze": {
       "motif_id": "record_scratch_freeze",
       "name": "综艺定格切换叮咚提示音",
-      "description": "明快干脆的现代播客/脱口秀定格转场提示音（短剧狠话甩完立刻切回双主播爆笑拆台）",
+      "description": "明快干脆的现代播客定格转场提示音（短剧狠话甩完立刻切回双主播干声拆台）",
       "sfx_prompt": "Snappy clean modern broadcast transition pop chime with subtle percussive rim click, crisp podcast sting, pure foley, no human voice",
       "duration_seconds": 1.0,
       "prompt_influence": 0.6,

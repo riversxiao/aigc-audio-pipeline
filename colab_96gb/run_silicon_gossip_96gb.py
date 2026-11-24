@@ -433,6 +433,18 @@ def assemble_silicon_gossip_studio(
                 "repo_real_human:openmoss_host_zhiwei_studio",
             ),
         ],
+        "guest_huaiyuan": [
+            (
+                DRIVE_ANCHORS_DIR / "guest_huaiyuan.wav",
+                DRIVE_ANCHORS_DIR / "guest_huaiyuan.txt",
+                "drive_cached:openmoss_dry_guest_huaiyuan_studio",
+            ),
+            (
+                BUFFETT_ANCHORS_DIR / "guest_huaiyuan.wav",
+                BUFFETT_ANCHORS_DIR / "guest_huaiyuan.txt",
+                "repo_real_human:openmoss_dry_guest_huaiyuan_studio",
+            ),
+        ],
         "guest_laozhou": [
             (
                 DRIVE_ANCHORS_DIR / "guest_laozhou.wav",
@@ -449,7 +461,7 @@ def assemble_silicon_gossip_studio(
             (
                 DRIVE_ANCHORS_DIR / "board_ilya.wav",
                 DRIVE_ANCHORS_DIR / "board_ilya.txt",
-                "drive_cached:board_ilya_studio",
+                "drive_real_person:ilya_sutskever_022_ai_studio",
             ),
             (
                 DRIVE_GLOBAL_EDGE_STUDIO_DIR / "custom_anchors" / "alistair_finch.wav",
@@ -466,7 +478,7 @@ def assemble_silicon_gossip_studio(
             (
                 DRIVE_ANCHORS_DIR / "satya_nadella.wav",
                 DRIVE_ANCHORS_DIR / "satya_nadella.txt",
-                "drive_cached:satya_nadella_studio",
+                "drive_cached:satya_nadella_indian_exec_studio",
             ),
             (
                 DRIVE_GLOBAL_EDGE_STUDIO_DIR / "custom_anchors" / "rajiv_menon.wav",
@@ -500,13 +512,14 @@ def assemble_silicon_gossip_studio(
             (
                 DRIVE_ANCHORS_DIR / "sam_altman.wav",
                 DRIVE_ANCHORS_DIR / "sam_altman.txt",
-                "drive_cached:meta_expresso_ex01_sam_altman",
+                "drive_real_person:sam_altman_014_ai_studio",
             ),
         ],
     }
 
     stub_freqs = {
         "host_xiaowei": 215.0,
+        "guest_huaiyuan": 126.0,
         "guest_laozhou": 128.0,
         "sam_altman": 135.0,
         "board_ilya": 116.0,
@@ -651,7 +664,7 @@ def canonical_v2_stem(cue_sheet: EpisodeCueSheet) -> str:
 
 
 def sync_v2_outputs_to_drive(local_outputs: Path) -> None:
-    """Atomically sync rendered V2 masters (WAV, MP3, SRT, JSON, .done) to Google Drive via FUSE + API."""
+    """Atomically sync rendered V2 masters (WAV, MP3, SRT, JSON, .done) to Google Drive (single-copy, no duplicates)."""
     if not local_outputs.is_dir():
         return
     done_files = sorted(local_outputs.glob("*.done"))
@@ -670,7 +683,8 @@ def sync_v2_outputs_to_drive(local_outputs: Path) -> None:
         except Exception as exc:
             print(f"⚠️ Drive API 目录初始化回退 FUSE ({exc})", flush=True)
 
-    if DRIVE_ROOT.exists():
+    use_api = bool(tok and drive_out_id and drive_main_id)
+    if not use_api and DRIVE_ROOT.exists():
         DRIVE_OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
         DRIVE_MAIN_MASTERS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -682,17 +696,20 @@ def sync_v2_outputs_to_drive(local_outputs: Path) -> None:
             if done_p.with_suffix(ext).is_file()
         ]
         for fpath in siblings:
-            if DRIVE_ROOT.exists():
-                for tdir in (DRIVE_OUTPUTS_DIR, DRIVE_MAIN_MASTERS_DIR):
-                    dst = tdir / fpath.name
-                    if not dst.is_file() or dst.stat().st_size != fpath.stat().st_size:
-                        shutil.copy2(fpath, dst)
-            if tok and drive_out_id and drive_main_id:
+            api_ok = False
+            if use_api:
                 try:
                     drive_api_upsert_file(fpath, drive_out_id, tok)
                     drive_api_upsert_file(fpath, drive_main_id, tok)
+                    api_ok = True
                 except Exception as exc:
-                    print(f"⚠️ Drive API 上传 {fpath.name} 失败（FUSE 已落盘）: {exc}", flush=True)
+                    print(f"⚠️ Drive API 上传 {fpath.name} 失败，回退 FUSE ({exc})", flush=True)
+            if not api_ok and DRIVE_ROOT.exists():
+                for tdir in (DRIVE_OUTPUTS_DIR, DRIVE_MAIN_MASTERS_DIR):
+                    tdir.mkdir(parents=True, exist_ok=True)
+                    dst = tdir / fpath.name
+                    if not dst.is_file() or dst.stat().st_size != fpath.stat().st_size:
+                        shutil.copy2(fpath, dst)
         print(f"☁️  [{stem}] 已原子同步至 Google Drive: {DRIVE_MAIN_MASTERS_DIR}", flush=True)
 
 

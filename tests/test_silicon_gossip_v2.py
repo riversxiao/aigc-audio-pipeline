@@ -1,4 +1,4 @@
-"""Regression & contract tests for《商战大瓜英语局》Silicon Gossip V2 pilot and 96GB G4 studio runner."""
+"""Regression & contract tests for《商战大瓜英语局》Silicon Gossip V2.1 pilot and 96GB G4 studio runner."""
 
 from __future__ import annotations
 
@@ -55,25 +55,50 @@ class SiliconGossipV2Tests(unittest.TestCase):
                 f"V2 hard rule violated on {cue.cue_id}: {len(words)} words > 10 ({spoken!r})",
             )
 
-    def test_v2_chatroom_stereo_pan_and_laozhou_eq_role(self) -> None:
+    def test_v2_1_dry_same_booth_hosts_relaxed_tone_and_brisk_pace(self) -> None:
         pan_map = _compute_chatroom_pan_map(self.cue_sheet)
         self.assertIn("host_xiaowei", pan_map)
-        self.assertIn("guest_laozhou", pan_map)
+        self.assertIn("guest_huaiyuan", pan_map)
+        self.assertNotIn("guest_laozhou", pan_map)
         # Opposing table seating (left vs right)
-        self.assertLess(pan_map["host_xiaowei"] * pan_map["guest_laozhou"], 0.0)
+        self.assertLess(pan_map["host_xiaowei"] * pan_map["guest_huaiyuan"], 0.0)
+
+        host_cues = [
+            c for c in self.cue_sheet.cues
+            if c.kind == "dialogue" and c.role_id in ("host_xiaowei", "guest_huaiyuan")
+        ]
+        self.assertGreaterEqual(len(host_cues), 30)
+        chuckle_count = 0
+        for cue in host_cues:
+            self.assertAlmostEqual(cue.playback_rate, 1.16, places=2)
+            self.assertEqual(cue.stability, 0.5)
+            if "[chuckles]" in cue.text:
+                chuckle_count += 1
+        # Keep chuckles subtle & organic (never stage-acting over-laughing)
+        self.assertLessEqual(chuckle_count, 4)
+
+    def test_v2_1_act5_exact_character_voice_matching(self) -> None:
+        by_id = {c.cue_id: c for c in self.cue_sheet.cues}
+        # Phrase 1 (candid) -> Ilya (`board_ilya`)
+        self.assertEqual(by_id["v2_055"].role_id, "board_ilya")
+        self.assertEqual(by_id["v2_056"].role_id, "board_ilya")
+        # Phrases 2 & 3 (blindsided / Not on my watch) -> Satya Nadella (`satya_nadella`)
+        self.assertEqual(by_id["v2_058"].role_id, "satya_nadella")
+        self.assertEqual(by_id["v2_061"].role_id, "satya_nadella")
+        # Phrase 4 (leverage) -> Sam Altman (`sam_altman`)
+        self.assertEqual(by_id["v2_064"].role_id, "sam_altman")
+        self.assertEqual(by_id["v2_065"].role_id, "sam_altman")
 
     def test_v2_drama3_prompt_hybrid_natural_zh_and_dramatic_en(self) -> None:
         by_id = {c.cue_id: c for c in self.cue_sheet.cues}
-        # Chinese host line strips stiff theatrical adjectives while keeping organic chuckle
         zh_prompt = translate_cue_to_drama3_input(
-            by_id["v2_006"],
-            self.registry.resolve_role("guest_laozhou"),
+            by_id["v2_007"],
+            self.registry.resolve_role("host_xiaowei"),
             domain=self.registry.domain,
         )
         self.assertIn("[light chuckle]", zh_prompt)
         self.assertNotIn("conversational", zh_prompt.lower())
 
-        # Pure English flash-drama line keeps full expressive acting tags
         en_prompt = translate_cue_to_drama3_input(
             by_id["v2_029"],
             self.registry.resolve_role("satya_nadella"),
