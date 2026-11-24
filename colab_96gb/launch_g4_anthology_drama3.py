@@ -613,6 +613,48 @@ def stage_hf_models_nvme(drama_repo: str) -> None:
         print(f"✅ [HF CDN -> NVMe] 权重就绪: {repo_id} ({time.time() - t0:.1f}s)", flush=True)
 
 
+def stage_moss_ttsd_models_nvme() -> None:
+    from huggingface_hub import snapshot_download
+
+    HF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    for repo_id in (
+        "OpenMOSS-Team/MOSS-TTSD-v1.0",
+        "OpenMOSS-Team/MOSS-Audio-Tokenizer",
+    ):
+        t0 = time.time()
+        print(f"🚀 [HF CDN -> NVMe] 预取多人播客对话权重: {repo_id} ...", flush=True)
+        snapshot_download(repo_id=repo_id, cache_dir=str(HF_CACHE_DIR))
+        print(f"✅ [HF CDN -> NVMe] 播客权重就绪: {repo_id} ({time.time() - t0:.1f}s)", flush=True)
+
+
+def ensure_moss_ttsd_venv(uv_bin: str, refresh_envs: bool = False) -> Path:
+    """Build or reuse an isolated venv for OpenMOSS-Team/MOSS-TTSD-v1.0 (transformers==5.0.0)."""
+    ENV_ROOT.mkdir(parents=True, exist_ok=True)
+    ttsd_venv = ENV_ROOT / "moss-ttsd-venv"
+    if refresh_envs:
+        shutil.rmtree(ttsd_venv, ignore_errors=True)
+    py = ttsd_venv / "bin/python"
+    ok = (
+        py.exists()
+        and subprocess.run(
+            [str(py), "-c", "import torch, torchaudio, transformers, soundfile; assert transformers.__version__.startswith('5.')"],
+            capture_output=True,
+        ).returncode
+        == 0
+    )
+    if not ok:
+        sh(f"'{uv_bin}' venv '{ttsd_venv}' --python 3.12 --allow-existing")
+        sh(
+            f"'{uv_bin}' pip install --python '{ttsd_venv}/bin/python' "
+            f"--extra-index-url https://download.pytorch.org/whl/cu128 "
+            f"--index-strategy unsafe-best-match "
+            f"'torch==2.9.1+cu128' 'torchaudio==2.9.1+cu128' "
+            f"'transformers==5.0.0' 'safetensors==0.6.2' 'numpy==2.1.0' "
+            f"accelerate einops scipy soundfile tqdm pyyaml orjson hf_transfer sentencepiece protobuf"
+        )
+    return ttsd_venv
+
+
 def build_isolated_venvs(uv_bin: str, refresh_envs: bool = False) -> tuple[Path, Path, Path]:
     ENV_ROOT.mkdir(parents=True, exist_ok=True)
     drama_venv = ENV_ROOT / "drama3-venv"
@@ -675,6 +717,110 @@ def build_isolated_venvs(uv_bin: str, refresh_envs: bool = False) -> tuple[Path,
         )
 
     return drama_venv, moss_venv, acestep_venv
+
+
+def ensure_three_venvs(refresh_envs: bool = False) -> tuple[Path, Path, Path]:
+    """Convenience wrapper used by downstream project launchers (uv + 3 isolated venvs)."""
+    uv_bin = ensure_uv_and_hf_tools()
+    return build_isolated_venvs(uv_bin, refresh_envs=refresh_envs)
+
+
+def ensure_hotline_venvs(
+    *,
+    refresh_envs: bool = False,
+    need_drama3: bool = True,
+    need_moss_ttsd: bool = True,
+    drama_repo: str = "fishaudio/drama-3",
+) -> dict[str, Path]:
+    """Build only the venvs & NVMe weights needed for the requested hotline episodes.
+
+    When running talk-only batches (`T01-T10`) under MOSS-TTSD v1.0, skips building
+    `drama3-venv` and downloading 37GB `fishaudio/drama-3`, cutting cold boot by ~60%!
+    """
+    from huggingface_hub import snapshot_download
+
+    uv_bin = ensure_uv_and_hf_tools()
+    ENV_ROOT.mkdir(parents=True, exist_ok=True)
+    HF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    drama_venv = ENV_ROOT / "drama3-venv"
+    moss_venv = ENV_ROOT / "moss-venv"
+    acestep_venv = ENV_ROOT / "acestep-venv"
+    moss_repo = ENV_ROOT / "MOSS-TTS"
+
+    if need_drama3:
+        drama_venv, moss_venv, acestep_venv = build_isolated_venvs(uv_bin, refresh_envs=refresh_envs)
+    else:
+        # Build only moss-venv (SFX + faster-whisper) and acestep-venv (BGM), skipping sglang-omni
+        if refresh_envs:
+            for d in (moss_venv, acestep_venv):
+                shutil.rmtree(d, ignore_errors=True)
+        can_cache = DRIVE_WORKSTATION.exists()
+        if can_cache:
+            DRIVE_REPO_CACHE.mkdir(parents=True, exist_ok=True)
+
+        def _ok(vdir: Path, stmt: str) -> bool:
+            py = vdir / "bin/python"
+            return py.exists() and subprocess.run([str(py), "-c", stmt], capture_output=True).returncode == 0
+
+        if not _ok(moss_venv, "import moss_soundeffect_v2, scipy, soundfile, faster_whisper"):
+            moss_tar = DRIVE_REPO_CACHE / "moss_tts_v2.tar.gz"
+            if not moss_repo.exists():
+                if can_cache and moss_tar.exists():
+                    sh(f"tar -xzf '{moss_tar}' -C '{ENV_ROOT}'")
+                else:
+                    sh(f"git clone --depth 1 https://github.com/OpenMOSS/MOSS-TTS.git '{moss_repo}'")
+                    if can_cache:
+                        sh(f"tar -czf '{moss_tar}' -C '{ENV_ROOT}' MOSS-TTS || true")
+            sh(f"'{uv_bin}' venv '{moss_venv}' --python 3.12 --allow-existing")
+            sh(
+                f"'{uv_bin}' pip install --python '{moss_venv}/bin/python' "
+                f"--extra-index-url https://download.pytorch.org/whl/cu128 "
+                f"--index-strategy unsafe-best-match "
+                f"-e '{moss_repo}/moss_soundeffect_v2[torch-cu128]' "
+                f"scipy soundfile requests hf_transfer faster-whisper"
+            )
+        if not _ok(acestep_venv, "from diffusers import AceStepPipeline; import soundfile"):
+            sh(f"'{uv_bin}' venv '{acestep_venv}' --python 3.12 --allow-existing")
+            sh(
+                f"'{uv_bin}' pip install --python '{acestep_venv}/bin/python' "
+                f"--extra-index-url https://download.pytorch.org/whl/cu128 "
+                f"--index-strategy unsafe-best-match "
+                f"'torch==2.9.0+cu128' 'torchaudio==2.9.0+cu128' "
+                f"'diffusers>=0.41.0' transformers accelerate safetensors packaging "
+                f"soundfile scipy numpy requests hf_transfer sentencepiece protobuf"
+            )
+
+    out: dict[str, Path] = {
+        "drama_venv": drama_venv,
+        "moss_venv": moss_venv,
+        "acestep_venv": acestep_venv,
+    }
+    if need_moss_ttsd:
+        out["moss_ttsd_venv"] = ensure_moss_ttsd_venv(uv_bin, refresh_envs=refresh_envs)
+
+    # Pre-stage only required weights to NVMe
+    repos_to_stage: list[str] = [
+        "OpenMOSS-Team/MOSS-SoundEffect-v2.0",
+        "ACE-Step/acestep-v15-xl-turbo-diffusers",
+        "Systran/faster-whisper-small",
+    ]
+    if need_moss_ttsd:
+        repos_to_stage = [
+            "OpenMOSS-Team/MOSS-TTSD-v1.0",
+            "OpenMOSS-Team/MOSS-Audio-Tokenizer",
+            *repos_to_stage,
+        ]
+    if need_drama3:
+        repos_to_stage.append(drama_repo)
+
+    for repo_id in repos_to_stage:
+        t0 = time.time()
+        print(f"🚀 [HF CDN -> NVMe] 预取权重: {repo_id} ...", flush=True)
+        snapshot_download(repo_id=repo_id, cache_dir=str(HF_CACHE_DIR))
+        print(f"✅ [HF CDN -> NVMe] 权重就绪: {repo_id} ({time.time() - t0:.1f}s)", flush=True)
+
+    return out
 
 
 def sync_completed_outputs(

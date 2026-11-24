@@ -64,27 +64,40 @@ def _format_srt_ts(seconds: float) -> str:
     return f"{hh:02d}:{mm:02d}:{ss:02d},{ms:03d}"
 
 
-# Gentle studio table seating pan map for multi-guest podcast chatrooms (`chatroom_table` space).
-# Subtle stereo placement (±10%–20%) gives unmistakable real-room round-table presence while staying 100% mono-safe.
+# Real flagship Chinese podcasts (e.g. 硅谷101) keep all hosts & guests naturally centered
+# (mono-in-stereo center imaging) rather than theatrical left/right stage panning.
+# Bilingual hybrid chatroom-dramas (e.g. silicon_gossip with host_xiaowei) keep subtle opposing table seating.
+_CENTERED_CHINESE_PODCAST_ROLES: frozenset[str] = frozenset({
+    "podcast_ensemble",
+    "moss_ttsd_ensemble",
+    "host_zhiwei",
+    "guest_huaiyuan",
+    "guest_laozhou",
+    "guest_linxi",
+    "guest_azhe",
+    "guest_sumin",
+    "guest_chengfeng",
+})
 _CHATROOM_ROLE_PAN_HINTS: dict[str, float] = {
-    "host_zhiwei": -0.10,
-    "guest_huaiyuan": 0.14,
     "guest_laozhou": -0.20,
-    "guest_linxi": 0.20,
-    "guest_azhe": 0.16,
-    "guest_sumin": -0.16,
-    "guest_chengfeng": 0.18,
 }
 _CHATROOM_FALLBACK_PANS: tuple[float, ...] = (-0.12, 0.15, -0.20, 0.20, -0.06, 0.08)
 
 
 def _compute_chatroom_pan_map(cue_sheet: EpisodeCueSheet) -> dict[str, float]:
-    """Assign deterministic subtle stereo seating positions for multi-speaker `chatroom_table` episodes."""
+    """Return stereo seating pan overrides for `chatroom_table`.
+
+    Flagship Chinese deep podcasts (`ximalaya_hotline` & `MOSS-TTSD` continuous blocks) stay
+    strictly centered (`{}`) matching Silicon Valley 101; bilingual theater-chat hybrids
+    (e.g. `silicon_gossip` featuring `host_xiaowei`) keep subtle opposing table pan.
+    """
     ordered_roles: list[str] = []
     for c in cue_sheet.cues:
         if c.kind == "dialogue" and c.acoustic_space == "chatroom_table" and c.role_id and c.role_id not in ordered_roles:
             ordered_roles.append(c.role_id)
     if len(ordered_roles) < 2:
+        return {}
+    if set(ordered_roles).issubset(_CENTERED_CHINESE_PODCAST_ROLES):
         return {}
     pan_map: dict[str, float] = {}
     used_signs: list[float] = []
@@ -93,7 +106,6 @@ def _compute_chatroom_pan_map(cue_sheet: EpisodeCueSheet) -> dict[str, float]:
             p = _CHATROOM_ROLE_PAN_HINTS[rid]
         else:
             p = _CHATROOM_FALLBACK_PANS[idx % len(_CHATROOM_FALLBACK_PANS)]
-        # If 2-person chatroom accidentally landed on the same side, mirror the second guest across the table
         if len(ordered_roles) == 2 and idx == 1 and used_signs and (used_signs[0] * p > 0):
             p = -p
         pan_map[rid] = max(-0.28, min(0.28, p))
@@ -149,11 +161,12 @@ def condition_dialogue_clip(
         # Warm broadcast condenser podcast intimacy without room echo
         filters.append("equalizer=f=175:t=q:w=1.2:g=1.2,equalizer=f=3600:t=q:w=1.4:g=0.8")
     elif acoustic_space == "chatroom_table":
-        # Intimate Xiaoyuzhou-style close-mic podcast table: clean low-end, de-boxed room mids, gentle glue compression
+        # Silicon Valley 101-grade close-mic podcast mastering: clean sub-rumble roll-off,
+        # warm vocal body, subtle de-box mid dip, crisp clarity & smooth broadcast glue
         filters.append(
-            "highpass=f=85,equalizer=f=160:t=q:w=1.2:g=0.9,"
-            "equalizer=f=300:t=q:w=1.5:g=-1.4,equalizer=f=3400:t=q:w=1.4:g=0.7,"
-            "acompressor=threshold=-20dB:ratio=1.8:attack=12:release=90"
+            "highpass=f=80,equalizer=f=150:t=q:w=1.2:g=0.8,"
+            "equalizer=f=320:t=q:w=1.5:g=-1.1,equalizer=f=3200:t=q:w=1.4:g=0.9,"
+            "acompressor=threshold=-18dB:ratio=2.2:attack=10:release=85"
         )
     elif acoustic_space == "vintage_study":
         # Prime-age Omaha / PBS studio close-mic warmth (crisp articulation, zero analog tape hiss or echo)
@@ -171,18 +184,22 @@ def condition_dialogue_clip(
         # Crisp modern streaming/voice-chat condenser presence (slightly compressed, intimate forward mids)
         filters.append("highpass=f=100,equalizer=f=2800:t=q:w=1.3:g=1.8,acompressor=threshold=-18dB:ratio=2.4:attack=8:release=80")
 
-    # Tame slight conference-room low-mid boxiness on guest_laozhou so all podcast guests share one studio room
+    # Tame slight low-mid boxiness on legacy guest_laozhou clips when rendered in studio spaces
     if role_id == "guest_laozhou" and acoustic_space in ("chatroom_table", "studio_warm"):
-        filters.append("equalizer=f=260:t=q:w=1.4:g=-2.8,equalizer=f=500:t=q:w=1.6:g=-1.8")
+        filters.append("equalizer=f=260:t=q:w=1.4:g=-2.0,equalizer=f=500:t=q:w=1.6:g=-1.2")
 
     if effective_dur >= 1.4:
-        # EBU R128 / podcast-drama broadcast loudness target (-16 LUFS) for consistent actor levels
-        filters.append("loudnorm=I=-16:TP=-1.5:LRA=11")
+        if acoustic_space == "chatroom_table":
+            # Tight flagship Chinese podcast loudness (-15 LUFS, LRA 5 LU; matching 硅谷101's -14.4 LUFS / 3-4.5 LU)
+            filters.append("loudnorm=I=-15:TP=-1.5:LRA=5")
+        else:
+            # EBU R128 / cinema radio-drama broadcast loudness target (-16 LUFS, wider cinematic dynamic range)
+            filters.append("loudnorm=I=-16:TP=-1.5:LRA=11")
     else:
         # Very short gasps/exclamations (<1.4s): avoid loudnorm over-amplifying breath noise
         filters.append("alimiter=limit=0.84:level=disabled")
 
-    # Subtle equal-power stereo seating pan for multi-guest podcast chatrooms
+    # Optional equal-power stereo pan (0.0 for natural center-imaged podcasts)
     pan_clamped = max(-0.35, min(0.35, float(stereo_pan)))
     if abs(pan_clamped) > 1e-4:
         l_gain = min(1.18, math.sqrt(1.0 - pan_clamped))
@@ -1008,6 +1025,26 @@ def master_episode_three_bus(
         if next_dlg_start is not None and srt_end_s > next_dlg_start - 0.01:
             clamped = next_dlg_start - 0.01
             srt_end_s = clamped if clamped >= item.start_s + 0.05 else max(item.start_s, next_dlg_start)
+
+        meta = (cue_meta_map or {}).get(item.cue_id, {})
+        sub_segs = meta.get("subtitle_segments") if isinstance(meta, dict) else None
+        if isinstance(sub_segs, list) and sub_segs:
+            for seg in sub_segs:
+                seg_text = str(seg.get("text", "")).strip()
+                if not seg_text:
+                    continue
+                s0 = item.start_s + max(0.0, float(seg.get("start_rel_s", 0.0)))
+                s1 = min(srt_end_s, item.start_s + max(0.0, float(seg.get("end_rel_s", item.duration_s))))
+                if s1 <= s0 + 0.05:
+                    s1 = min(srt_end_s, s0 + 0.25)
+                srt_blocks.append(
+                    f"{sub_idx}\n"
+                    f"{_format_srt_ts(s0)} --> {_format_srt_ts(s1)}\n"
+                    f"{seg_text}\n"
+                )
+                sub_idx += 1
+            idx += 1
+            continue
 
         speaker_prefix = _resolve_speaker_prefix(item, registry)
         translation = " ".join(_CTRL_CHAR_RE.sub("", item.subtitle_translation).split())

@@ -55,9 +55,156 @@ from aigc_audio_pipeline.models import (  # noqa: E402
     extract_tags_and_spoken_text,
     utc_now_iso,
 )
+from aigc_audio_pipeline.moss_ttsd_adapter import (  # noqa: E402
+    MOSS_AUDIO_TOKENIZER_REPO,
+    MOSS_TTSD_MODEL_REPO,
+    DialogueBlock,
+    build_block_subtitle_segments,
+    build_moss_ttsd_prefixed_prompt,
+    build_synthetic_block_cue,
+    evaluate_dialogue_block_qa,
+    group_podcast_cues_into_dialogue_blocks,
+)
 from aigc_audio_pipeline.qa import evaluate_dialogue_qa, inspect_audio_peak_dbfs  # noqa: E402
 
 _CJK_RE = re.compile(r"[\u4e00-\u9fff]")
+
+_MOSS_TTSD_WORKER_CODE = r"""
+import gc, json, os, subprocess, sys
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
+def _probe_free_vram_gb() -> float:
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+        return float(out.splitlines()[0].strip()) / 1024.0
+    except Exception:
+        return 0.0
+
+free_gb = _probe_free_vram_gb()
+use_cuda = free_gb >= 16.0
+if not use_cuda:
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+import numpy as np
+import soundfile as sf
+import torch
+import torchaudio
+from transformers import AutoModel, AutoProcessor
+
+if torch.cuda.is_available():
+    # Per OpenMOSS official MOSS-TTSD v1.0 model card: disable broken cuDNN SDPA backend
+    torch.backends.cuda.enable_cudnn_sdp(False)
+    torch.backends.cuda.enable_flash_sdp(True)
+    torch.backends.cuda.enable_mem_efficient_sdp(True)
+    torch.backends.cuda.enable_math_sdp(True)
+
+model_id = sys.argv[1]
+codec_id = os.environ.get("MOSS_TTSD_CODEC_REPO", "OpenMOSS-Team/MOSS-Audio-Tokenizer")
+device = "cuda" if (use_cuda and torch.cuda.is_available()) else "cpu"
+dtype = torch.bfloat16 if (device == "cuda" and torch.cuda.is_bf16_supported()) else (torch.float16 if device == "cuda" else torch.float32)
+attn_impl = "sdpa" if device == "cuda" else "eager"
+
+print(f"[MOSS-TTSD v1.0] Loading {model_id} + {codec_id} on {device} ({dtype}, attn={attn_impl}, free={free_gb:.1f}GB)...", flush=True)
+processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True, codec_path=codec_id)
+if getattr(processor, "audio_tokenizer", None) is not None:
+    processor.audio_tokenizer = processor.audio_tokenizer.to(device)
+    processor.audio_tokenizer.eval()
+
+model = AutoModel.from_pretrained(
+    model_id,
+    trust_remote_code=True,
+    attn_implementation=attn_impl,
+    torch_dtype=dtype,
+).to(device)
+model.eval()
+
+target_sr = int(processor.model_config.sampling_rate)
+if device == "cuda":
+    torch.cuda.empty_cache()
+print("__RPC__:" + json.dumps({"status": "ready", "sample_rate": target_sr, "device": device}), flush=True)
+
+def _load_mono(wav_path: str):
+    audio, sr = sf.read(wav_path, dtype="float32", always_2d=True)
+    wav = torch.from_numpy(audio).transpose(0, 1).contiguous()
+    if wav.shape[0] > 1:
+        wav = wav.mean(dim=0, keepdim=True)
+    return wav.contiguous(), int(sr)
+
+def _resample(wav: torch.Tensor, orig_sr: int, dst_sr: int) -> torch.Tensor:
+    if orig_sr == dst_sr:
+        return wav
+    return torchaudio.functional.resample(waveform=wav, orig_freq=orig_sr, new_freq=dst_sr)
+
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    req = json.loads(line)
+    if req.get("cmd") == "quit":
+        break
+    try:
+        speaker_wavs = list(req["speaker_wavs"])
+        loaded = [_load_mono(p) for p in speaker_wavs]
+        min_sr = min(sr for _, sr in loaded) if len(loaded) > 1 else None
+        wav_list = []
+        for wav, sr in loaded:
+            if min_sr is not None and sr != min_sr:
+                wav = _resample(wav, sr, min_sr)
+                sr = min_sr
+            wav_list.append(_resample(wav, sr, target_sr))
+
+        with torch.inference_mode():
+            reference_codes = processor.encode_audios_from_wav(wav_list, sampling_rate=target_sr)
+            concat_prompt = torch.cat(wav_list, dim=-1)
+            prompt_audio = processor.encode_audios_from_wav([concat_prompt], sampling_rate=target_sr)[0]
+            conversations = [
+                [
+                    processor.build_user_message(text=req["prompt_text"], reference=reference_codes),
+                    processor.build_assistant_message(audio_codes_list=[prompt_audio]),
+                ]
+            ]
+            batch = processor(conversations, mode="continuation")
+            outputs = model.generate(
+                input_ids=batch["input_ids"].to(device),
+                attention_mask=batch["attention_mask"].to(device),
+                max_new_tokens=int(req.get("max_new_tokens", 2048)),
+                audio_temperature=float(req.get("temperature", 1.05)),
+                audio_top_p=float(req.get("top_p", 0.9)),
+                audio_top_k=int(req.get("top_k", 50)),
+                audio_repetition_penalty=float(req.get("repetition_penalty", 1.1)),
+            )
+            messages = processor.decode(outputs)
+
+        wav_segs = []
+        if messages and messages[0] is not None:
+            for seg in messages[0].audio_codes_list:
+                if isinstance(seg, torch.Tensor):
+                    wav_segs.append(seg.detach().to(dtype=torch.float32, device="cpu").reshape(-1))
+        del outputs, batch, messages, reference_codes, prompt_audio, concat_prompt, wav_list
+        gc.collect()
+        if device == "cuda":
+            torch.cuda.empty_cache()
+
+        if not wav_segs:
+            raise RuntimeError("MOSS-TTSD returned empty audio segments")
+        merged = torch.cat(wav_segs, dim=0).numpy()
+        peak = float(np.max(np.abs(merged))) if merged.size else 0.0
+        if peak > 1e-4:
+            merged = merged / peak * 0.90
+        out_p = req["out_path"]
+        os.makedirs(os.path.dirname(out_p) or ".", exist_ok=True)
+        sf.write(out_p, merged, target_sr, subtype="PCM_16")
+        print("__RPC__:" + json.dumps({"status": "ok", "out_path": out_p, "duration_s": float(merged.shape[-1] / target_sr)}), flush=True)
+    except Exception as exc:
+        gc.collect()
+        if device == "cuda":
+            torch.cuda.empty_cache()
+        print("__RPC__:" + json.dumps({"status": "error", "error": str(exc)}), flush=True)
+"""
 
 _MOSS_WORKER_CODE = r"""
 import gc, json, os, subprocess, sys
@@ -425,8 +572,10 @@ class Drama3ServerClient:
             return
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         cmd = [self.sgl_bin, "serve", "--model-path", self.model_repo, "--port", str(self.port), *self._budget_flags()]
+        self._using_reference_sampling = False
         if self.enable_ras and self._supports_reference_sampling_flag():
             cmd.extend(["--tts_engine.factory.reference_sampling", "true", "--tts_engine.factory.reference_sampling_fallback", "ras"])
+            self._using_reference_sampling = True
             print("✨ [Drama 3] 已开启 Reference Sampling + RAS 高表现力广播剧采样", flush=True)
         env = os.environ.copy()
         env["TORCHDYNAMO_DISABLE"] = "1"
@@ -471,18 +620,18 @@ class Drama3ServerClient:
 
         if not self.is_healthy():
             self.start()
-        payload = json.dumps(
-            {
-                "model": self.model_repo,
-                "input": drama3_input,
-                "response_format": "wav",
-                "references": [{"audio_path": str(anchor_wav.resolve()), "text": anchor_text}],
-                "temperature": 1.0,
-                "top_p": 0.9,
-                "max_new_tokens": max_new_tokens,
-            },
-            ensure_ascii=False,
-        ).encode("utf-8")
+        body: dict[str, Any] = {
+            "model": self.model_repo,
+            "input": drama3_input,
+            "response_format": "wav",
+            "references": [{"audio_path": str(anchor_wav.resolve()), "text": anchor_text}],
+            "temperature": 1.0,
+            "top_p": 1.0 if getattr(self, "_using_reference_sampling", False) else 0.9,
+            "max_new_tokens": max_new_tokens,
+        }
+        if getattr(self, "_using_reference_sampling", False):
+            body["epsilon_cutoff"] = 1e-3
+        payload = json.dumps(body, ensure_ascii=False).encode("utf-8")
         req = urllib.request.Request(
             f"{self.base_url}/v1/audio/speech",
             data=payload,
@@ -553,8 +702,8 @@ _WHISPER_PROMPTS: dict[str, str] = {
     "game_theory_strategy": "以下是简体中文策略思维与博弈论广播剧台词：囚徒困境、纳什均衡、破釜沉舟、可信威胁、先发优势、价格战、赢家诅咒、倒推法、信号传递、合作博弈。",
     "debt_cycle_machine": "以下是简体中文大债务危机周期剧场台词：信贷扩张、短期债务周期、长期债务周期、去杠杆、和谐去杠杆、央行降息、印钞货币化、通缩萧条、通胀泡沫、经济机器。",
     "hotline": "以下是简体中文现代热点新闻圆桌与都市广播剧台词，请使用标准简体中文输出。",
-    "hotline_roundtable": "以下是简体中文现代商业科技财经热点圆桌播客对谈，请使用标准简体中文输出。",
-    "hotline_express": "以下是简体中文现代热点快评播客节目，请使用标准简体中文输出。",
+    "hotline_roundtable": "以下是简体中文现代商业科技财经热点深度播客对谈，请使用标准简体中文输出。",
+    "hotline_express": "以下是简体中文现代热点深度对谈播客节目，请使用标准简体中文输出。",
     "hotline_drama": "以下是简体中文现代都市社会热点广播剧对白，请使用标准简体中文输出。",
     "xianxia": "以下是普通话简体中文仙侠有声剧对白，请使用简体中文输出。",
 }
@@ -568,9 +717,9 @@ class LocalChineseWhisperQA:
         self._model: Any = None
         self._available: bool | None = None
 
-    def transcribe(self, wav_path: Path) -> str | None:
+    def _ensure_model(self) -> bool:
         if not self.enabled or self._available is False:
-            return None
+            return False
         if self._model is None:
             try:
                 from faster_whisper import WhisperModel  # type: ignore[import-not-found]
@@ -581,7 +730,12 @@ class LocalChineseWhisperQA:
             except Exception as exc:
                 print(f"ℹ️ [简中 ASR 质检门] faster-whisper 不可用 ({exc})，回退纯语速信号质检。", flush=True)
                 self._available = False
-                return None
+                return False
+        return True
+
+    def transcribe_segments(self, wav_path: Path) -> tuple[str | None, list[tuple[float, float, str]]]:
+        if not self._ensure_model():
+            return None, []
         try:
             import numpy as np  # type: ignore[import-not-found]
 
@@ -596,9 +750,15 @@ class LocalChineseWhisperQA:
                 vad_filter=(len(audio_16k) > 36000),
                 initial_prompt=_WHISPER_PROMPTS.get(self.domain, _WHISPER_PROMPTS["xianxia"]),
             )
-            return "".join(seg.text for seg in segments).strip()
+            seg_list = [(float(seg.start), float(seg.end), str(seg.text or "").strip()) for seg in segments if str(seg.text or "").strip()]
+            full_text = "".join(t for _, _, t in seg_list).strip()
+            return full_text, seg_list
         except Exception:
-            return None
+            return None, []
+
+    def transcribe(self, wav_path: Path) -> str | None:
+        text, _ = self.transcribe_segments(wav_path)
+        return text
 
 
 _HUMAN_VOCAL_CLAUSE_RE = re.compile(
@@ -638,9 +798,9 @@ _ECON_FINANCE_BGM_PRESETS: dict[str, str] = {
     "capitalism_and_freedom": "1962 Chicago late-night intellectual acoustic jazz piano, warm upright bass and mellow strings, no loud drums",
     "game_theory_strategy": "clever crisp minimalist chamber strings, rhythmic pizzicato cello and sharp felt piano, no heavy pop drums",
     "debt_cycle_machine": "steady cyclical macro documentary minimalist piano arpeggio, warm cello and subtle string swell, no pop drums",
-    "hotline": "warm intimate late-night podcast lo-fi Rhodes electric piano pad and soft muted upright bass, ultra minimal background warmth, no loud drums, no bright melody, no ancient Chinese instruments",
-    "hotline_roundtable": "ultra-minimal warm late-night podcast lo-fi Rhodes chord pad and soft muted upright bass pulse, intimate coffee-table ambience, no busy melody, no marimba, no loud drums",
-    "hotline_express": "minimal warm modern podcast soft Rhodes electric piano and gentle low muted upright bass, relaxed studio intimacy, no bright guitar arpeggio, no marimba, no loud drums",
+    "hotline": "crisp modern tech documentary podcast intro underscore, warm clean felt piano, subtle muted electric pluck and soft light electronic pulse, Silicon Valley editorial feel, no loud drums, no ancient Chinese instruments",
+    "hotline_roundtable": "crisp modern Silicon Valley tech podcast editorial underscore, clean bright felt piano motif, subtle warm synth bass and delicate light rhythmic pulse, intelligent curious mood, no loud rock drums",
+    "hotline_express": "clean upbeat modern editorial podcast underscore, crisp muted plucked guitar, light warm piano chords and soft rhythmic pulse, curious forward energy, no heavy drums",
     "hotline_drama": "cinematic modern urban social drama chamber cello, sparse late-night felt piano and restrained string tension, no EDM beat, no ancient instruments",
 }
 
@@ -954,15 +1114,148 @@ def synthesize_cue_chunked(
     return joined, {"drama3_prompt": " || ".join(prompts), "qa_passed": all_ok}
 
 
+def synthesize_dialogue_block_with_moss_ttsd(
+    block: DialogueBlock,
+    *,
+    root: Path,
+    characters: dict[str, dict[str, Any]],
+    cache_dir: Path,
+    offline_dry_run: bool,
+    moss_ttsd_worker: SubprocessJsonWorker | None,
+    whisper_qa: LocalChineseWhisperQA,
+) -> tuple[Path, dict[str, Any]]:
+    """Synthesize a continuous 1–5 speaker podcast block in ONE unbroken MOSS-TTSD-v1.0 take."""
+    speaker_wavs: list[str] = []
+    speaker_texts: list[str] = []
+    anchor_digests: list[str] = []
+    for rid in block.speaker_roles:
+        if rid not in characters:
+            raise KeyError(f"[{block.block_id}] 角色 {rid!r} 未在 voice_cast_drama3.json 中注册！")
+        cinfo = characters[rid]
+        aw = (root / cinfo["anchor_wav"]).resolve()
+        speaker_wavs.append(str(aw))
+        speaker_texts.append(str(cinfo["anchor_text"]).strip())
+        anchor_digests.append(hashlib.sha256(aw.read_bytes()).hexdigest()[:12] if aw.is_file() else "missing")
+
+    prefixed_prompt = build_moss_ttsd_prefixed_prompt(block.dialogue_script, speaker_texts)
+    cache_key = _sha24(
+        {
+            "engine": MOSS_TTSD_MODEL_REPO,
+            "roles": block.speaker_roles,
+            "anchors": anchor_digests,
+            "prompt": prefixed_prompt,
+            "max_tok": block.estimated_max_new_tokens,
+        }
+    )
+    cached_wav = cache_dir / "moss_ttsd_tts" / f"{cache_key}.wav"
+    cached_meta_path = cache_dir / "moss_ttsd_tts" / f"{cache_key}.meta.json"
+
+    if offline_dry_run:
+        est_dur = max(2.0, min(60.0, (block.cjk_chars + 2.0 * block.en_words) / 4.2))
+        freq = 175.0 + (hash(block.block_id) % 120)
+        _write_synthetic_tone_wav(cached_wav, duration_s=est_dur, freq_hz=freq, amp=0.22)
+        sub_segs = build_block_subtitle_segments(block, whisper_segments=None, block_duration_s=est_dur)
+        return cached_wav, {
+            "engine": "moss_ttsd_offline_dry_run",
+            "moss_ttsd_script": block.dialogue_script,
+            "speakers": block.speaker_roles,
+            "qa_passed": True,
+            "subtitle_segments": sub_segs,
+        }
+
+    if cached_wav.is_file() and cached_wav.stat().st_size > 2048 and cached_meta_path.is_file():
+        try:
+            meta = json.loads(cached_meta_path.read_text(encoding="utf-8"))
+            if isinstance(meta, dict) and meta.get("subtitle_segments"):
+                return cached_wav, meta
+        except Exception:
+            pass
+
+    assert moss_ttsd_worker is not None
+    best_wav: Path | None = None
+    best_score = -1.0
+    best_meta: dict[str, Any] = {}
+
+    attempts = (
+        (1, 1.05, 0.90, 50, 1.10),
+        (2, 0.92, 0.88, 45, 1.14),
+    )
+    for attempt_no, temp, top_p, top_k, rep_pen in attempts:
+        raw_out = cache_dir / "moss_ttsd_tts" / f"{cache_key}_try{attempt_no}_raw.wav"
+        try_wav = cache_dir / "moss_ttsd_tts" / f"{cache_key}_try{attempt_no}.wav"
+        moss_ttsd_worker.request(
+            {
+                "prompt_text": prefixed_prompt,
+                "speaker_wavs": speaker_wavs,
+                "max_new_tokens": block.estimated_max_new_tokens,
+                "temperature": temp,
+                "top_p": top_p,
+                "top_k": top_k,
+                "repetition_penalty": rep_pen,
+                "out_path": str(raw_out),
+            }
+        )
+        subprocess.run(
+            ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(raw_out), "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le", str(try_wav)],
+            check=True,
+        )
+        raw_out.unlink(missing_ok=True)
+        trim_edge_silence_wav(try_wav)
+
+        dur_s, peak_dbfs = inspect_audio_peak_dbfs(try_wav)
+        if dur_s <= 0.0:
+            dur_s = probe_duration_seconds(try_wav)
+        asr_text, whisper_segs = whisper_qa.transcribe_segments(try_wav)
+        passed, recall, qa_note = evaluate_dialogue_block_qa(
+            block.plain_text,
+            asr_text,
+            duration_s=dur_s,
+            peak_dbfs=peak_dbfs,
+        )
+        score = (10.0 if passed else 0.0) + recall
+        if score > best_score:
+            best_score = score
+            best_wav = try_wav
+            best_meta = {
+                "engine": MOSS_TTSD_MODEL_REPO,
+                "moss_ttsd_script": block.dialogue_script,
+                "speakers": block.speaker_roles,
+                "qa_passed": passed,
+                "qa_note": qa_note,
+                "attempt": attempt_no,
+                "subtitle_segments": build_block_subtitle_segments(
+                    block,
+                    whisper_segments=whisper_segs,
+                    block_duration_s=dur_s,
+                ),
+            }
+        print(
+            f"   🎙️ [MOSS-TTSD v1.0] {block.block_id} (try {attempt_no}, {len(block.speaker_roles)}人连续对话) -> "
+            f"{dur_s:.1f}s | {qa_note}",
+            flush=True,
+        )
+        if passed:
+            break
+
+    assert best_wav is not None
+    shutil.copy2(best_wav, cached_wav)
+    cached_meta_path.write_text(json.dumps(best_meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for attempt_no, *_ in attempts:
+        (cache_dir / "moss_ttsd_tts" / f"{cache_key}_try{attempt_no}.wav").unlink(missing_ok=True)
+    return cached_wav, best_meta
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="通用精品广播剧矩阵 · 96GB G4 本地推理与三总线母带引擎")
+    parser = argparse.ArgumentParser(description="通用精品广播剧与深度播客矩阵 · 96GB G4 双引擎本地推理与三总线母带引擎")
     parser.add_argument("--studio-dir", required=True)
     parser.add_argument("--episodes", default="AUDITION,E001")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--cache-dir", required=True)
-    parser.add_argument("--bgm-style", default="", help="liaozhai_horror / cosmic_horror / hayek_economics / xianxia")
+    parser.add_argument("--bgm-style", default="", help="liaozhai_horror / cosmic_horror / hayek_economics / hotline / xianxia")
     parser.add_argument("--sgl-bin", default="sgl-omni")
     parser.add_argument("--moss-python", default=sys.executable)
+    parser.add_argument("--moss-ttsd-python", default="", help="Python binary in moss-ttsd-venv for OpenMOSS MOSS-TTSD-v1.0 continuous multi-speaker podcasts")
+    parser.add_argument("--podcast-engine", choices=("auto", "moss_ttsd", "drama3"), default="auto")
     parser.add_argument("--acestep-python", default=sys.executable)
     parser.add_argument("--sgl-port", type=int, default=8000)
     parser.add_argument("--existing-dir", default="")
@@ -979,7 +1272,7 @@ def main() -> int:
     out_dir = Path(args.output_dir).resolve()
     cache_dir = Path(args.cache_dir).resolve()
     extra_existing_dir = Path(args.existing_dir).resolve() if args.existing_dir else None
-    for sub in ("drama3_tts", "moss_sfx", "acestep_bgm", "logs"):
+    for sub in ("drama3_tts", "moss_ttsd_tts", "moss_sfx", "acestep_bgm", "logs"):
         (cache_dir / sub).mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -989,43 +1282,70 @@ def main() -> int:
     domain = registry.domain or "liaozhai_horror"
     bgm_style = args.bgm_style or domain
 
-    targets = resolve_targets(args.episodes, root / "cue_sheets", root / "auditions")
+    raw_targets = resolve_targets(args.episodes, root / "cue_sheets", root / "auditions")
     gpu_name, vram_gb, _ = detect_gpu_profile()
     co_resident_96g = (not args.offline_dry_run) and (vram_gb >= 80.0)
     drama_repo = "fishaudio/drama-3-int4" if (args.force_int4 or (not args.offline_dry_run and vram_gb < 80.0)) else "fishaudio/drama-3"
 
-    print(f"🎭 项目: {registry.project_title} | domain={domain} | bgm_style={bgm_style} | GPU={gpu_name} ({vram_gb:.1f}GB)", flush=True)
+    def _uses_moss_ttsd(cs: EpisodeCueSheet) -> bool:
+        is_podcast = cs.mode in ("podcast_roundtable", "express_commentary")
+        if not is_podcast:
+            return False
+        if args.podcast_engine == "drama3":
+            return False
+        if args.podcast_engine == "moss_ttsd":
+            return True
+        return bool(args.moss_ttsd_python) or args.offline_dry_run
+
+    # Smart VRAM scheduling: load cue sheets, skip already-rendered ones, and run MOSS-TTSD podcasts
+    # FIRST so MOSS-TTSD (~19GB) releases 100% VRAM cleanly before Fish Drama 3 (~46GB) ever boots!
+    loaded_targets: list[tuple[str, Path, EpisodeCueSheet, bool]] = []
+    for label, cs_path in raw_targets:
+        cs = EpisodeCueSheet.load(cs_path)
+        if args.skip_existing and cs.mode != "audition_pack":
+            check_dirs = [out_dir] + ([extra_existing_dir] if extra_existing_dir and extra_existing_dir.exists() else [])
+            existing = [p for d in check_dirs for p in sorted(d.glob(f"{cs.episode_id}_*.mp3"))]
+            if existing:
+                print(f"⏭️  [{cs.episode_id}] 已存在成片 {existing[-1].name}，跳过。", flush=True)
+                continue
+        loaded_targets.append((label, cs_path, cs, _uses_moss_ttsd(cs)))
+
+    loaded_targets.sort(key=lambda item: (0 if item[3] else 1))
+    need_moss_ttsd = any(use_ttsd for _, _, _, use_ttsd in loaded_targets)
+    need_drama3 = any(not use_ttsd for _, _, _, use_ttsd in loaded_targets)
+
+    print(
+        f"🎭 项目: {registry.project_title} | domain={domain} | bgm_style={bgm_style} | "
+        f"GPU={gpu_name} ({vram_gb:.1f}GB) | 播客(MOSS-TTSD)={sum(1 for x in loaded_targets if x[3])} | "
+        f"剧场(Drama3)={sum(1 for x in loaded_targets if not x[3])}",
+        flush=True,
+    )
 
     drama_client: Drama3ServerClient | None = None
+    moss_ttsd_worker: SubprocessJsonWorker | None = None
     moss_worker: SubprocessJsonWorker | None = None
     acestep_worker: SubprocessJsonWorker | None = None
     whisper_qa = LocalChineseWhisperQA(domain=domain, enabled=(not args.skip_asr_qa and not args.offline_dry_run))
 
     if not args.offline_dry_run:
-        drama_client = Drama3ServerClient(
-            sgl_bin=args.sgl_bin,
-            model_repo=drama_repo,
-            port=args.sgl_port,
-            co_resident_96g=co_resident_96g,
-            enable_ras=not args.disable_ras,
-            log_path=cache_dir / "logs" / f"sglang_omni_{registry.project_id}.log",
-        )
+        if need_moss_ttsd:
+            ttsd_py = args.moss_ttsd_python or args.moss_python
+            moss_ttsd_worker = SubprocessJsonWorker("MOSS-TTSD v1.0", ttsd_py, _MOSS_TTSD_WORKER_CODE, MOSS_TTSD_MODEL_REPO)
+        if need_drama3:
+            drama_client = Drama3ServerClient(
+                sgl_bin=args.sgl_bin,
+                model_repo=drama_repo,
+                port=args.sgl_port,
+                co_resident_96g=co_resident_96g,
+                enable_ras=not args.disable_ras,
+                log_path=cache_dir / "logs" / f"sglang_omni_{registry.project_id}.log",
+            )
         moss_worker = SubprocessJsonWorker("MOSS-SFX v2.0", args.moss_python, _MOSS_WORKER_CODE, "OpenMOSS-Team/MOSS-SoundEffect-v2.0")
         acestep_worker = SubprocessJsonWorker("ACE-Step 1.5 XL", args.acestep_python, _ACESTEP_WORKER_CODE, "ACE-Step/acestep-v15-xl-turbo-diffusers")
-        if co_resident_96g:
-            drama_client.start()
 
     rendered: list[dict[str, Any]] = []
     try:
-        for label, cs_path in targets:
-            cue_sheet = EpisodeCueSheet.load(cs_path)
-            if args.skip_existing and cue_sheet.mode != "audition_pack":
-                check_dirs = [out_dir] + ([extra_existing_dir] if extra_existing_dir and extra_existing_dir.exists() else [])
-                existing = [p for d in check_dirs for p in sorted(d.glob(f"{cue_sheet.episode_id}_*.mp3"))]
-                if existing:
-                    print(f"⏭️  [{cue_sheet.episode_id}] 已存在成片 {existing[-1].name}，跳过。", flush=True)
-                    continue
-
+        for label, cs_path, cue_sheet, use_moss_ttsd in loaded_targets:
             t_ep = time.time()
             ep_domain = domain
             ep_bgm_style = bgm_style
@@ -1038,43 +1358,102 @@ def main() -> int:
                     ep_domain = "hotline_drama"
                 if not args.bgm_style or args.bgm_style == "hotline":
                     ep_bgm_style = ep_domain
+            whisper_qa.domain = ep_domain
             dialogue_cues = [c for c in cue_sheet.cues if c.kind == "dialogue"]
             sfx_cues = [c for c in cue_sheet.cues if c.kind == "sfx"]
-            print(f"\n▶️  开始合成 [{label}] 《{cue_sheet.title}》 (domain={ep_domain} | 对白 {len(dialogue_cues)} | 拟音 {len(sfx_cues)} | 配乐 {len(cue_sheet.acts)} 幕)", flush=True)
+            engine_label = MOSS_TTSD_MODEL_REPO if use_moss_ttsd else drama_repo
+            print(
+                f"\n▶️  开始合成 [{label}] 《{cue_sheet.title}》 "
+                f"(domain={ep_domain} | engine={engine_label} | 对白 {len(dialogue_cues)} | 拟音 {len(sfx_cues)} | 配乐 {len(cue_sheet.acts)} 幕)",
+                flush=True,
+            )
 
             cue_audio_map: dict[str, Path] = {}
             cue_meta_map: dict[str, dict[str, Any]] = {}
             act_bgm_map: dict[str, Path] = {}
+            master_cue_sheet = cue_sheet
 
-            # 1. Dialogue Synthesis
-            if dialogue_cues and not args.offline_dry_run and not co_resident_96g:
-                assert drama_client is not None
-                drama_client.start()
-
-            for idx, cue in enumerate(dialogue_cues, 1):
-                if cue.role_id not in characters:
-                    raise KeyError(f"[{cue.cue_id}] 角色 {cue.role_id!r} 未在 voice_cast_drama3.json 中注册！")
-                cinfo = characters[cue.role_id]
-                prof = registry.resolve_role(cue.role_id)
-                wav_p, meta_d = synthesize_cue_chunked(
-                    cue,
-                    drama_repo=drama_repo,
-                    prof=prof,
-                    anchor_wav=root / cinfo["anchor_wav"],
-                    anchor_text=cinfo["anchor_text"],
-                    cache_dir=cache_dir,
-                    offline_dry_run=args.offline_dry_run,
-                    drama_client=drama_client,
-                    whisper_qa=whisper_qa,
+            # 1. Dialogue Synthesis (MOSS-TTSD-v1.0 continuous multi-speaker for podcasts, Drama 3 for dramas)
+            if use_moss_ttsd:
+                if drama_client is not None and not args.keep_drama_alive:
+                    drama_client.close()
+                grouped = group_podcast_cues_into_dialogue_blocks(
+                    cue_sheet,
+                    max_cjk_chars=850,
+                    max_speakers=5,
                     domain=ep_domain,
                 )
-                cue_audio_map[cue.cue_id] = wav_p
-                cue_meta_map[cue.cue_id] = meta_d
-                if idx % 8 == 0 or idx == len(dialogue_cues):
-                    print(f"   🎙️ 对白进度: {idx}/{len(dialogue_cues)} ({cue.cue_id} [{cue.speaker_name or cue.role_id}] -> {probe_duration_seconds(wav_p):.1f}s)", flush=True)
+                synth_cues: list[TimelineCue] = []
+                blk_total = sum(1 for k, _ in grouped if k == "dialogue_block")
+                blk_idx = 0
+                for kind, item in grouped:
+                    if kind == "sfx":
+                        assert isinstance(item, TimelineCue)
+                        synth_cues.append(item)
+                        continue
+                    assert isinstance(item, DialogueBlock)
+                    blk_idx += 1
+                    print(
+                        f"   🗣️  [连续播客录制 {blk_idx}/{blk_total}] {item.block_id} "
+                        f"({len(item.speaker_roles)}位真人声纹 · {item.cjk_chars}字 · {len(item.cues)}轮自然对谈)...",
+                        flush=True,
+                    )
+                    wav_p, meta_d = synthesize_dialogue_block_with_moss_ttsd(
+                        item,
+                        root=root,
+                        characters=characters,
+                        cache_dir=cache_dir,
+                        offline_dry_run=args.offline_dry_run,
+                        moss_ttsd_worker=moss_ttsd_worker,
+                        whisper_qa=whisper_qa,
+                    )
+                    syn_cue = build_synthetic_block_cue(item)
+                    synth_cues.append(syn_cue)
+                    cue_audio_map[syn_cue.cue_id] = wav_p
+                    cue_meta_map[syn_cue.cue_id] = meta_d
+                master_cue_sheet = EpisodeCueSheet(
+                    episode_id=cue_sheet.episode_id,
+                    chapter_number=cue_sheet.chapter_number,
+                    title=cue_sheet.title,
+                    mode=cue_sheet.mode,
+                    source_chapter_file=cue_sheet.source_chapter_file,
+                    head_pad_s=cue_sheet.head_pad_s,
+                    tail_pad_s=cue_sheet.tail_pad_s,
+                    acts=list(cue_sheet.acts),
+                    cues=synth_cues,
+                )
+            else:
+                # Reclaim MOSS-TTSD VRAM completely before starting 35B Drama 3
+                if moss_ttsd_worker is not None:
+                    moss_ttsd_worker.close()
+                if dialogue_cues and not args.offline_dry_run:
+                    assert drama_client is not None
+                    drama_client.start()
 
-            if dialogue_cues and not args.offline_dry_run and not co_resident_96g and drama_client is not None:
-                drama_client.close()
+                for idx, cue in enumerate(dialogue_cues, 1):
+                    if cue.role_id not in characters:
+                        raise KeyError(f"[{cue.cue_id}] 角色 {cue.role_id!r} 未在 voice_cast_drama3.json 中注册！")
+                    cinfo = characters[cue.role_id]
+                    prof = registry.resolve_role(cue.role_id)
+                    wav_p, meta_d = synthesize_cue_chunked(
+                        cue,
+                        drama_repo=drama_repo,
+                        prof=prof,
+                        anchor_wav=root / cinfo["anchor_wav"],
+                        anchor_text=cinfo["anchor_text"],
+                        cache_dir=cache_dir,
+                        offline_dry_run=args.offline_dry_run,
+                        drama_client=drama_client,
+                        whisper_qa=whisper_qa,
+                        domain=ep_domain,
+                    )
+                    cue_audio_map[cue.cue_id] = wav_p
+                    cue_meta_map[cue.cue_id] = meta_d
+                    if idx % 8 == 0 or idx == len(dialogue_cues):
+                        print(f"   🎙️ 对白进度: {idx}/{len(dialogue_cues)} ({cue.cue_id} [{cue.speaker_name or cue.role_id}] -> {probe_duration_seconds(wav_p):.1f}s)", flush=True)
+
+                if dialogue_cues and not args.offline_dry_run and not co_resident_96g and drama_client is not None:
+                    drama_client.close()
 
             # 2. Foreground Foley SFX (MOSS v2.0 + SHA-256 Cache)
             for idx, cue in enumerate(sfx_cues, 1):
@@ -1105,12 +1484,12 @@ def main() -> int:
                 moss_worker.close()
 
             # 3. Per-Act Instrumental BGM (ACE-Step 1.5 XL + SHA-256 Cache; skip dry zero-BGM chatroom acts!)
-            for act_spec in cue_sheet.acts:
+            for act_spec in master_cue_sheet.acts:
                 if (
                     not (act_spec.bgm_prompt or "").strip()
                     or (float(act_spec.bgm_gain_speech) <= 1e-4 and float(act_spec.bgm_gain_gap) <= 1e-4)
                 ):
-                    print(f"   🎙️ [纯干声聊天室] {act_spec.act_id} ({act_spec.title}) 零背景配乐直出，突出真实人声交锋", flush=True)
+                    print(f"   🎙️ [纯干声对谈正片] {act_spec.act_id} ({act_spec.title}) 零背景配乐直出，还原《硅谷101》级真实播客声场", flush=True)
                     continue
                 target_dur = 75.0 if float(act_spec.bgm_duration_s or 75.0) >= 60.0 else 48.0
                 bgm_prompt = enrich_anthology_bgm_prompt(act_spec.bgm_prompt, bgm_style=ep_bgm_style)
@@ -1140,10 +1519,10 @@ def main() -> int:
             if not co_resident_96g and acestep_worker is not None:
                 acestep_worker.close()
 
-            # 4. 3-Bus -16 LUFS Mastering + SRT + Atomic .done
-            stem_prefix = canonical_anthology_stem(cue_sheet, domain=ep_domain)
+            # 4. 3-Bus Mastering + SRT + Atomic .done
+            stem_prefix = canonical_anthology_stem(master_cue_sheet, domain=ep_domain)
             master_res = master_episode_three_bus(
-                cue_sheet=cue_sheet,
+                cue_sheet=master_cue_sheet,
                 cue_audio_map=cue_audio_map,
                 act_bgm_map=act_bgm_map,
                 output_dir=out_dir,
@@ -1158,11 +1537,11 @@ def main() -> int:
             done_marker = Path(str(master_res["master_wav"])).with_suffix(".done")
             summary_item = {
                 "project_id": registry.project_id,
-                "episode_id": cue_sheet.episode_id,
-                "chapter_number": cue_sheet.chapter_number,
-                "title": cue_sheet.title,
-                "mode": cue_sheet.mode,
-                "engine": "offline_dry_run" if args.offline_dry_run else drama_repo,
+                "episode_id": master_cue_sheet.episode_id,
+                "chapter_number": master_cue_sheet.chapter_number,
+                "title": master_cue_sheet.title,
+                "mode": master_cue_sheet.mode,
+                "engine": "offline_dry_run" if args.offline_dry_run else engine_label,
                 "rendered_at": utc_now_iso(),
                 "elapsed_s": round(time.time() - t_ep, 2),
                 "total_duration_s": master_res["total_duration_s"],
@@ -1176,12 +1555,14 @@ def main() -> int:
             done_marker.write_text(json.dumps(summary_item, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             rendered.append(summary_item)
             print(
-                f"✅ [{cue_sheet.episode_id}] 成片出炉！时长 {master_res['total_duration_s']/60.0:.2f} 分钟 | "
+                f"✅ [{master_cue_sheet.episode_id}] 成片出炉！引擎={engine_label} | 时长 {master_res['total_duration_s']/60.0:.2f} 分钟 | "
                 f"响度 {lufs:.1f} LUFS (TP {tp_db:.1f} dBTP) | 耗时 {time.time() - t_ep:.1f}s\n"
                 f"   🎧 MP3: {master_res['master_mp3']}",
                 flush=True,
             )
     finally:
+        if moss_ttsd_worker is not None:
+            moss_ttsd_worker.close()
         if drama_client is not None and not args.keep_drama_alive:
             drama_client.close()
         elif drama_client is not None and args.keep_drama_alive:

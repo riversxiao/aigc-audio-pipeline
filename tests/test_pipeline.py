@@ -1609,9 +1609,9 @@ class AudioPipelineTests(unittest.TestCase):
                 TimelineCue(cue_id="c4", act_id="act3", kind="dialogue", role_id="guest_laozhou", text="尾声收个口。", acoustic_space="chatroom_table", gap_after_s=0.15),
             ],
         )
+        # Silicon Valley 101 standard: voices stay naturally centered (no theatrical left/right stereo pan)
         pan_map = _compute_chatroom_pan_map(sheet)
-        self.assertEqual(set(pan_map.keys()), {"host_zhiwei", "guest_laozhou"})
-        self.assertLess(pan_map["host_zhiwei"] * pan_map["guest_laozhou"], 0.0)
+        self.assertEqual(pan_map, {})
 
         with tempfile.TemporaryDirectory(prefix="test_chatroom_mix_") as td:
             tmp = Path(td)
@@ -1625,7 +1625,7 @@ class AudioPipelineTests(unittest.TestCase):
                 ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "sine=frequency=180:duration=6.0:sample_rate=48000", "-ac", "2", "-c:a", "pcm_s16le", str(bgm_wav)],
                 check=True,
             )
-            cond_z = condition_dialogue_clip(dlg_wav, tmp / "laozhou_cond.wav", acoustic_space="chatroom_table", role_id="guest_laozhou", stereo_pan=0.20)
+            cond_z = condition_dialogue_clip(dlg_wav, tmp / "laozhou_cond.wav", acoustic_space="chatroom_table", role_id="guest_laozhou", stereo_pan=0.0)
             self.assertTrue(cond_z.is_file() and cond_z.stat().st_size > 10000)
 
             res = master_episode_three_bus(
@@ -1648,6 +1648,125 @@ class AudioPipelineTests(unittest.TestCase):
             mid_slice = arr[probe_st:probe_en]
             self.assertGreater(len(mid_slice), 1000)
             self.assertEqual(max(abs(x) for x in mid_slice), 0)
+
+    def test_moss_ttsd_adapter_blocks_and_subtitles(self) -> None:
+        import tempfile
+
+        from aigc_audio_pipeline.mixer import master_episode_three_bus
+        from aigc_audio_pipeline.moss_ttsd_adapter import (
+            DialogueBlock,
+            build_block_subtitle_segments,
+            build_moss_ttsd_prefixed_prompt,
+            build_synthetic_block_cue,
+            evaluate_dialogue_block_qa,
+            group_podcast_cues_into_dialogue_blocks,
+            normalize_moss_ttsd_text,
+        )
+
+        # 1. Text normalization maps laughs -> [笑], strips acting brackets, merges same-speaker turns
+        norm = normalize_moss_ttsd_text("[S1] [emphatic] 其实这个逻辑呢，很有意思。哈哈哈！ [S1] 我们可以再展开聊。[S2] [chuckles] 对，我同意。")
+        self.assertIn("[笑]", norm)
+        self.assertNotIn("emphatic", norm)
+        self.assertNotIn("chuckles", norm)
+        self.assertEqual(norm.count("[S1]"), 1)
+        self.assertEqual(norm.count("[S2]"), 1)
+
+        prefixed = build_moss_ttsd_prefixed_prompt(
+            "[S1]今天聊算力账单。[S2]对，其实账面上藏着大头。",
+            ["参考女声原话。", "参考男声原话。"],
+        )
+        self.assertTrue(prefixed.startswith("[S1]参考女声原话"))
+        self.assertIn("[S2]参考男声原话", prefixed)
+
+        # 2. Act-aware dialogue block grouping preserves SFX and act boundaries cleanly
+        sheet = EpisodeCueSheet(
+            episode_id="T88",
+            chapter_number=88,
+            title="硅谷101结构连续对话块测试",
+            mode="podcast_roundtable",
+            acts=[
+                ActMusicSpec(act_id="act1", title="导读", bgm_prompt="crisp piano pulse", bgm_gain_speech=0.11, bgm_gain_gap=0.28),
+                ActMusicSpec(act_id="act2", title="纯干声深聊", bgm_prompt="", bgm_gain_speech=0.0, bgm_gain_gap=0.0),
+                ActMusicSpec(act_id="act3", title="尾声", bgm_prompt="crisp piano pulse", bgm_gain_speech=0.09, bgm_gain_gap=0.25),
+            ],
+            cues=[
+                TimelineCue(cue_id="sfx1", act_id="act1", kind="sfx", role_id="sfx", motif_id="podcast_sv101_stinger", sfx_prompt="clean studio chime", duration_seconds=1.5),
+                TimelineCue(cue_id="c1", act_id="act1", kind="dialogue", role_id="host_zhiwei", speaker_name="许知微", text="哈喽大家好，欢迎收听热点第一线，我是许知微。", acoustic_space="chatroom_table"),
+                TimelineCue(cue_id="c2", act_id="act2", kind="dialogue", role_id="host_zhiwei", speaker_name="许知微", text="那我们先从第一个核心问题切入。", acoustic_space="chatroom_table"),
+                TimelineCue(cue_id="c3", act_id="act2", kind="dialogue", role_id="guest_huaiyuan", speaker_name="陈怀远", text="对，其实如果把招股书翻开看，逻辑会清晰很多。", acoustic_space="chatroom_table"),
+                TimelineCue(cue_id="c4", act_id="act2", kind="dialogue", role_id="guest_azhe", speaker_name="阿哲", text="我补充一个一线工程师视角，算力租约其实绑定得非常深。", acoustic_space="chatroom_table"),
+                TimelineCue(cue_id="c5", act_id="act3", kind="dialogue", role_id="host_zhiwei", speaker_name="许知微", text="好，非常感谢两位今天的分享，我们下期再见。", acoustic_space="chatroom_table"),
+            ],
+        )
+        grouped = group_podcast_cues_into_dialogue_blocks(sheet, max_cjk_chars=850)
+        self.assertEqual([k for k, _ in grouped], ["sfx", "dialogue_block", "dialogue_block", "dialogue_block"])
+        act2_blk = grouped[2][1]
+        assert isinstance(act2_blk, DialogueBlock)
+        self.assertEqual(act2_blk.act_id, "act2")
+        self.assertEqual(act2_blk.speaker_roles, ["host_zhiwei", "guest_huaiyuan", "guest_azhe"])
+        self.assertIn("[S1]", act2_blk.dialogue_script)
+        self.assertIn("[S2]", act2_blk.dialogue_script)
+        self.assertIn("[S3]", act2_blk.dialogue_script)
+
+        # 3. ASR block QA + Whisper-timed SRT mastering
+        ok_qa, recall, _ = evaluate_dialogue_block_qa(
+            act2_blk.plain_text,
+            "那我们先从第一个核心问题切入对其实如果把招股书翻开看逻辑会清晰很多我补充一个一线工程师视角算力租约其实绑定得非常深",
+            duration_s=14.0,
+            peak_dbfs=-10.0,
+        )
+        self.assertTrue(ok_qa)
+        self.assertGreaterEqual(recall, 0.90)
+
+        with tempfile.TemporaryDirectory(prefix="test_moss_ttsd_srt_") as td:
+            tmp = Path(td)
+            blk_wav = tmp / "blk.wav"
+            sfx_wav = tmp / "sfx.wav"
+            bgm_wav = tmp / "bgm.wav"
+            for p, f, d in [(blk_wav, 260, 4.0), (sfx_wav, 440, 1.5), (bgm_wav, 160, 8.0)]:
+                subprocess.run(
+                    ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", f"sine=frequency={f}:duration={d}:sample_rate=48000", "-ac", "2", "-c:a", "pcm_s16le", str(p)],
+                    check=True,
+                )
+            syn_cues = []
+            audio_map = {}
+            meta_map = {}
+            for kind, item in grouped:
+                if kind == "sfx":
+                    assert isinstance(item, TimelineCue)
+                    syn_cues.append(item)
+                    audio_map[item.cue_id] = sfx_wav
+                else:
+                    assert isinstance(item, DialogueBlock)
+                    sc = build_synthetic_block_cue(item)
+                    syn_cues.append(sc)
+                    audio_map[sc.cue_id] = blk_wav
+                    meta_map[sc.cue_id] = {
+                        "subtitle_segments": build_block_subtitle_segments(
+                            item,
+                            whisper_segments=[(0.1, 1.8, "测试第一段字幕"), (1.9, 3.8, "测试第二段字幕")] if item.act_id == "act2" else None,
+                            block_duration_s=4.0,
+                        )
+                    }
+            syn_sheet = EpisodeCueSheet(
+                episode_id="T88",
+                chapter_number=88,
+                title=sheet.title,
+                mode=sheet.mode,
+                acts=sheet.acts,
+                cues=syn_cues,
+            )
+            res = master_episode_three_bus(
+                cue_sheet=syn_sheet,
+                cue_audio_map=audio_map,
+                act_bgm_map={"act1": bgm_wav, "act3": bgm_wav},
+                cue_meta_map=meta_map,
+                output_dir=tmp / "out",
+            )
+            srt = res["subtitles_srt"].read_text(encoding="utf-8")
+            self.assertIn("测试第一段字幕", srt)
+            self.assertIn("测试第二段字幕", srt)
+            self.assertIn("许知微：哈喽大家好", srt)
 
 
 if __name__ == "__main__":
