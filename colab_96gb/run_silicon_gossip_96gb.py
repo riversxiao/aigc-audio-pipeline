@@ -41,6 +41,9 @@ import wave
 if os.path.isdir("/content/drive/My Drive") and not os.path.exists("/content/drive/MyDrive"):
     os.symlink("/content/drive/My Drive", "/content/drive/MyDrive")
 
+os.environ.setdefault("HF_HOME", "/content/hf_cache" if os.path.exists("/content") else "/tmp/hf_cache")
+os.environ.setdefault("HF_HUB_CACHE", os.environ["HF_HOME"])
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 for _p in (REPO_ROOT / "src", SCRIPT_DIR):
