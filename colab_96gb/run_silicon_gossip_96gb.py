@@ -728,7 +728,7 @@ def run_studio(args: argparse.Namespace) -> int:
     moss_py = args.moss_python or sys.executable
     acestep_py = args.acestep_python or sys.executable
     gpu_name, vram_gb, cc = detect_gpu_profile()
-    co_resident_96g = (not args.offline_dry_run) and (vram_gb >= 80.0) and (not args.force_int4)
+    co_resident_96g = (not args.offline_dry_run) and (vram_gb >= 85.0) and (not args.force_int4)
     drama_repo = "fishaudio/drama-3" if (co_resident_96g and not args.force_int4) else "fishaudio/drama-3-int4"
 
     if not args.offline_dry_run and not args.render_only:
