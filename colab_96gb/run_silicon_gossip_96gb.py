@@ -43,6 +43,7 @@ if os.path.isdir("/content/drive/My Drive") and not os.path.exists("/content/dri
 
 os.environ.setdefault("HF_HOME", "/content/hf_cache" if os.path.exists("/content") else "/tmp/hf_cache")
 os.environ.setdefault("HF_HUB_CACHE", os.environ["HF_HOME"])
+os.environ.setdefault("SGLANG_OMNI_STARTUP_TIMEOUT", "1800")
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
