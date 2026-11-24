@@ -317,8 +317,9 @@ def translate_cue_to_drama3_input(
     - `attempt >= 3`: Zero-tag plain phonetic text (guaranteed 0% tag-reading fallback).
     """
     lang = cue.language_code or (profile.language_code if profile is not None else "") or "zh"
-    is_zh_podcast = (domain in _NATURAL_ZH_PODCAST_DOMAINS) and (lang != "en")
-    is_chatroom_podcast = (domain in _CHATROOM_PODCAST_DOMAINS) and (lang != "en")
+    is_flash_scene_space = cue.acoustic_space in ("boardroom", "phone_call", "livestream_mic", "dry", "memory_echo")
+    is_zh_podcast = (domain in _NATURAL_ZH_PODCAST_DOMAINS) and (lang != "en") and (not (domain in _CHATROOM_PODCAST_DOMAINS and is_flash_scene_space))
+    is_chatroom_podcast = (domain in _CHATROOM_PODCAST_DOMAINS) and (lang != "en") and (not is_flash_scene_space)
     is_zh_business_drama = (domain == "business_english_drama") and (lang != "en")
     source_tagged = cue.tts_text if (cue.tts_text and not use_phoneme_pins) else cue.text
     phonetic_tagged = _apply_drama3_phonetics(

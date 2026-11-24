@@ -32,6 +32,9 @@ import wave
 
 os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("HF_HOME", "/content/hf_cache" if os.path.exists("/content") else "/tmp/hf_cache")
+os.environ.setdefault("HF_HUB_CACHE", os.environ["HF_HOME"])
+os.environ.setdefault("SGLANG_OMNI_STARTUP_TIMEOUT", "1800")
 
 STUDIO_DIR = Path(__file__).resolve().parent
 for candidate_src in (STUDIO_DIR / "src", STUDIO_DIR.parent / "src"):
@@ -844,6 +847,9 @@ def enrich_anthology_bgm_prompt(prompt: str, *, bgm_style: str) -> str:
             extras.append("1936 interwar Cambridge reflective chamber strings, deep solo cello and muted upright piano")
         if "no drums" not in lower and "no modern beat" not in lower:
             extras.append("no modern drums, no pop beat")
+    elif bgm_style in ("hotline", "hotline_roundtable", "hotline_express", "hotline_drama"):
+        if not any(k in lower for k in ("piano", "strings", "bass", "synth", "guitar", "rhodes", "cello", "pizzicato")):
+            extras.append(_ECON_FINANCE_BGM_PRESETS.get(bgm_style, _ECON_FINANCE_BGM_PRESETS["hotline"]))
     elif bgm_style in _ECON_FINANCE_BGM_PRESETS:
         if "chamber" not in lower and "piano" not in lower and "cello" not in lower and "strings" not in lower and "guitar" not in lower:
             extras.append(_ECON_FINANCE_BGM_PRESETS[bgm_style])
@@ -1284,8 +1290,8 @@ def main() -> int:
 
     raw_targets = resolve_targets(args.episodes, root / "cue_sheets", root / "auditions")
     gpu_name, vram_gb, _ = detect_gpu_profile()
-    co_resident_96g = (not args.offline_dry_run) and (vram_gb >= 80.0)
-    drama_repo = "fishaudio/drama-3-int4" if (args.force_int4 or (not args.offline_dry_run and vram_gb < 80.0)) else "fishaudio/drama-3"
+    co_resident_96g = (not args.offline_dry_run) and (vram_gb >= 85.0) and (not args.force_int4)
+    drama_repo = "fishaudio/drama-3-int4" if (args.force_int4 or (not args.offline_dry_run and vram_gb < 85.0)) else "fishaudio/drama-3"
 
     def _uses_moss_ttsd(cs: EpisodeCueSheet) -> bool:
         is_podcast = cs.mode in ("podcast_roundtable", "express_commentary")
@@ -1450,7 +1456,7 @@ def main() -> int:
                     cue_audio_map[cue.cue_id] = wav_p
                     cue_meta_map[cue.cue_id] = meta_d
                     if idx % 8 == 0 or idx == len(dialogue_cues):
-                        print(f"   🎙️ 对白进度: {idx}/{len(dialogue_cues)} ({cue.cue_id} [{cue.speaker_name or cue.role_id}] -> {probe_duration_seconds(wav_p):.1f}s)", flush=True)
+                        print(f"   🎙️ 对白进度: {idx}/{len(dialogue_cues)} ({cue.cue_id} [{cue.speaker_name or cue.role_id}, rate={cue.playback_rate:.2f}x] -> {probe_duration_seconds(wav_p):.1f}s)", flush=True)
 
                 if dialogue_cues and not args.offline_dry_run and not co_resident_96g and drama_client is not None:
                     drama_client.close()
@@ -1466,13 +1472,14 @@ def main() -> int:
                 elif not sfx_wav.is_file():
                     assert moss_worker is not None
                     raw_moss = cache_dir / "moss_sfx" / f"{sfx_key}_raw.wav"
+                    sfx_req = {"prompt": prompt, "seconds": cue.duration_seconds, "out_path": str(raw_moss), "seed": 208 + idx}
                     try:
-                        moss_worker.request({"prompt": prompt, "seconds": cue.duration_seconds, "out_path": str(raw_moss)})
+                        moss_worker.request(sfx_req)
                     except RuntimeError:
                         if acestep_worker is not None:
                             acestep_worker.close()
                         moss_worker.close()
-                        moss_worker.request({"prompt": prompt, "seconds": cue.duration_seconds, "out_path": str(raw_moss)})
+                        moss_worker.request(sfx_req)
                     subprocess.run(
                         ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(raw_moss), "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le", str(sfx_wav)],
                         check=True,
@@ -1484,14 +1491,14 @@ def main() -> int:
                 moss_worker.close()
 
             # 3. Per-Act Instrumental BGM (ACE-Step 1.5 XL + SHA-256 Cache; skip dry zero-BGM chatroom acts!)
-            for act_spec in master_cue_sheet.acts:
+            for a_idx, act_spec in enumerate(master_cue_sheet.acts, 1):
                 if (
                     not (act_spec.bgm_prompt or "").strip()
                     or (float(act_spec.bgm_gain_speech) <= 1e-4 and float(act_spec.bgm_gain_gap) <= 1e-4)
                 ):
-                    print(f"   🎙️ [纯干声对谈正片] {act_spec.act_id} ({act_spec.title}) 零背景配乐直出，还原《硅谷101》级真实播客声场", flush=True)
+                    print(f"   🎙️ [纯干声对谈正片] {act_spec.act_id} ({act_spec.title}) 零背景配乐直出，还原真实贴麦棚录互动感", flush=True)
                     continue
-                target_dur = 75.0 if float(act_spec.bgm_duration_s or 75.0) >= 60.0 else 48.0
+                target_dur = float(max(30.0, min(90.0, float(act_spec.bgm_duration_s or 50.0))))
                 bgm_prompt = enrich_anthology_bgm_prompt(act_spec.bgm_prompt, bgm_style=ep_bgm_style)
                 bgm_key = _sha24({"prompt": bgm_prompt, "vocal_language": "unknown", "dur": round(target_dur, 1)})
                 bgm_wav = cache_dir / "acestep_bgm" / f"{bgm_key}.wav"
@@ -1501,7 +1508,14 @@ def main() -> int:
                     assert acestep_worker is not None
                     raw_bgm = cache_dir / "acestep_bgm" / f"{bgm_key}_raw.wav"
                     print(f"   🎻 [ACE-Step 1.5 XL] 生成配乐 {act_spec.act_id} ({target_dur:.0f}s): {act_spec.title}", flush=True)
-                    bgm_req = {"prompt": bgm_prompt, "lyrics": "[Instrumental]", "vocal_language": "unknown", "duration_s": target_dur, "out_path": str(raw_bgm)}
+                    bgm_req = {
+                        "prompt": bgm_prompt,
+                        "lyrics": "[Instrumental]",
+                        "vocal_language": "unknown",
+                        "duration_s": target_dur,
+                        "out_path": str(raw_bgm),
+                        "seed": 5000 + master_cue_sheet.chapter_number * 10 + a_idx,
+                    }
                     try:
                         acestep_worker.request(bgm_req)
                     except RuntimeError:

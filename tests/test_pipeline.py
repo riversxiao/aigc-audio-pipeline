@@ -1590,7 +1590,21 @@ class AudioPipelineTests(unittest.TestCase):
         d3_laugh = translate_cue_to_drama3_input(chuckle_cue, guest_prof, attempt=1, domain="hotline_express")
         self.assertEqual(d3_laugh, "[light chuckle] 不是吧，真走错门了？")
 
-        # 2. Dry silent middle chatroom act keeps Bus C silent during ACT2 & applies subtle stereo seating pan
+        # 1b. Hybrid flash-drama micro-scene inside hotline_roundtable keeps full dramatic acting tags!
+        flash_cue = TimelineCue(
+            cue_id="t01_c_flash",
+            act_id="act2_scene",
+            kind="dialogue",
+            role_id="male_authority_lawyer",
+            text="[coldly] 董事会一致接受了他的辞职，不打算恢复他的职务。",
+            stability=0.0,
+            acoustic_space="boardroom",
+        )
+        d3_flash = translate_cue_to_drama3_input(flash_cue, None, attempt=1, domain="hotline_roundtable")
+        self.assertIn("cold", d3_flash.lower())
+        self.assertIn("董事会一致接受了他的辞职", d3_flash)
+
+        # 2. Dry silent middle chatroom act keeps Bus C silent during ACT2 & applies Silicon Gossip V2.1 opposing table pan
         host_prof = VoiceProfile(role_id="host_zhiwei", display_name="许知微", voice_id="a_host", status="locked")
         sheet = EpisodeCueSheet(
             episode_id="T99",
@@ -1598,20 +1612,21 @@ class AudioPipelineTests(unittest.TestCase):
             title="聊天室干声与立体声落座测试",
             mode="podcast_roundtable",
             acts=[
-                ActMusicSpec(act_id="act1", title="开场", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.04, bgm_gain_gap=0.16),
+                ActMusicSpec(act_id="act1", title="开场", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.07, bgm_gain_gap=0.22),
                 ActMusicSpec(act_id="act2", title="干声深聊", bgm_prompt="", bgm_gain_speech=0.0, bgm_gain_gap=0.0),
-                ActMusicSpec(act_id="act3", title="收尾", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.045, bgm_gain_gap=0.18),
+                ActMusicSpec(act_id="act3", title="收尾", bgm_prompt="warm lo-fi rhodes", bgm_gain_speech=0.05, bgm_gain_gap=0.20),
             ],
             cues=[
-                TimelineCue(cue_id="c1", act_id="act1", kind="dialogue", role_id="host_zhiwei", text="开场寒暄一句。", acoustic_space="chatroom_table", gap_after_s=0.12),
-                TimelineCue(cue_id="c2", act_id="act2", kind="dialogue", role_id="guest_laozhou", text="中段干声纯聊一段。", acoustic_space="chatroom_table", gap_after_s=0.12),
-                TimelineCue(cue_id="c3", act_id="act2", kind="dialogue", role_id="host_zhiwei", text="中段继续追问一句。", acoustic_space="chatroom_table", gap_after_s=0.12),
-                TimelineCue(cue_id="c4", act_id="act3", kind="dialogue", role_id="guest_laozhou", text="尾声收个口。", acoustic_space="chatroom_table", gap_after_s=0.15),
+                TimelineCue(cue_id="c1", act_id="act1", kind="dialogue", role_id="host_zhiwei", text="开场寒暄一句。", acoustic_space="chatroom_table", gap_after_s=0.04, playback_rate=1.16),
+                TimelineCue(cue_id="c2", act_id="act2", kind="dialogue", role_id="guest_huaiyuan", text="中段干声纯聊一段。", acoustic_space="chatroom_table", gap_after_s=0.04, playback_rate=1.16),
+                TimelineCue(cue_id="c3", act_id="act2", kind="dialogue", role_id="host_zhiwei", text="中段继续追问一句。", acoustic_space="chatroom_table", gap_after_s=-0.04, playback_rate=1.16),
+                TimelineCue(cue_id="c4", act_id="act3", kind="dialogue", role_id="guest_huaiyuan", text="尾声收个口。", acoustic_space="chatroom_table", gap_after_s=0.06, playback_rate=1.16),
             ],
         )
-        # Silicon Valley 101 standard: voices stay naturally centered (no theatrical left/right stereo pan)
         pan_map = _compute_chatroom_pan_map(sheet)
-        self.assertEqual(pan_map, {})
+        self.assertIn("host_zhiwei", pan_map)
+        self.assertIn("guest_huaiyuan", pan_map)
+        self.assertLess(pan_map["host_zhiwei"] * pan_map["guest_huaiyuan"], 0.0)
 
         with tempfile.TemporaryDirectory(prefix="test_chatroom_mix_") as td:
             tmp = Path(td)

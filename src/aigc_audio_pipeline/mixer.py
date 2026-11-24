@@ -64,40 +64,29 @@ def _format_srt_ts(seconds: float) -> str:
     return f"{hh:02d}:{mm:02d}:{ss:02d},{ms:03d}"
 
 
-# Real flagship Chinese podcasts (e.g. 硅谷101) keep all hosts & guests naturally centered
-# (mono-in-stereo center imaging) rather than theatrical left/right stage panning.
-# Bilingual hybrid chatroom-dramas (e.g. silicon_gossip with host_xiaowei) keep subtle opposing table seating.
-_CENTERED_CHINESE_PODCAST_ROLES: frozenset[str] = frozenset({
-    "podcast_ensemble",
-    "moss_ttsd_ensemble",
-    "host_zhiwei",
-    "guest_huaiyuan",
-    "guest_laozhou",
-    "guest_linxi",
-    "guest_azhe",
-    "guest_sumin",
-    "guest_chengfeng",
-})
+# Subtle studio table seating pan map for multi-guest `chatroom_table` podcasts (proven by Silicon Gossip V2.1 ear audit:
+# opposing -0.12 / +0.14 gives unmistakable same-table presence while staying 100% mono-safe).
+# Single-block continuous MOSS-TTSD ensemble cues remain dead-center ({}).
 _CHATROOM_ROLE_PAN_HINTS: dict[str, float] = {
-    "guest_laozhou": -0.20,
+    "host_zhiwei": -0.12,
+    "host_xiaowei": -0.12,
+    "guest_huaiyuan": 0.14,
+    "guest_laozhou": -0.18,
+    "guest_linxi": 0.18,
+    "guest_azhe": 0.16,
+    "guest_sumin": -0.16,
+    "guest_chengfeng": 0.16,
 }
-_CHATROOM_FALLBACK_PANS: tuple[float, ...] = (-0.12, 0.15, -0.20, 0.20, -0.06, 0.08)
+_CHATROOM_FALLBACK_PANS: tuple[float, ...] = (-0.12, 0.14, -0.18, 0.18, -0.08, 0.10)
 
 
 def _compute_chatroom_pan_map(cue_sheet: EpisodeCueSheet) -> dict[str, float]:
-    """Return stereo seating pan overrides for `chatroom_table`.
-
-    Flagship Chinese deep podcasts (`ximalaya_hotline` & `MOSS-TTSD` continuous blocks) stay
-    strictly centered (`{}`) matching Silicon Valley 101; bilingual theater-chat hybrids
-    (e.g. `silicon_gossip` featuring `host_xiaowei`) keep subtle opposing table pan.
-    """
+    """Assign deterministic subtle stereo seating positions for multi-speaker `chatroom_table` episodes."""
     ordered_roles: list[str] = []
     for c in cue_sheet.cues:
         if c.kind == "dialogue" and c.acoustic_space == "chatroom_table" and c.role_id and c.role_id not in ordered_roles:
             ordered_roles.append(c.role_id)
-    if len(ordered_roles) < 2:
-        return {}
-    if set(ordered_roles).issubset(_CENTERED_CHINESE_PODCAST_ROLES):
+    if len(ordered_roles) < 2 or any(r in ("podcast_ensemble", "moss_ttsd_ensemble") for r in ordered_roles):
         return {}
     pan_map: dict[str, float] = {}
     used_signs: list[float] = []
